@@ -1,0 +1,2 @@
+Added specular and ao maps. (Specular is using roughness maps b/c that's what texutres.com has)
+Also, there can be a variable amount of lights up to the max, and I think I did the gamma-correcting
