@@ -52,7 +52,7 @@ private:
 	void CreateShadowResources();
 
 	void RenderDirectionalShadowMap();
-	void RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range);
+	void RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ, float farZ);
 
 	DirectX::XMFLOAT3 ambientTerm;
 

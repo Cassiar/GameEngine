@@ -102,8 +102,8 @@ float4 main(VertexToPixel input) : SV_TARGET
 
 				float3 absDirToLight = abs(dirToLight);
 				float localZcomp = max(absDirToLight.x, max(absDirToLight.y, absDirToLight.z));
-				float near = 0.5f;
-				float far = 100.0f;
+				float near = lights[i].nearZ; // 0.5f;
+				float far = lights[i].farZ;// 100.0f;
 
 				float NormZComp = (far + near) / (far - near) - (2 * far * near) / (far - near) / localZcomp;
 				float distance = (NormZComp + 1.0) * 0.5;

@@ -16,5 +16,6 @@ struct Light {
 	DirectX::XMFLOAT3 Color; //all lights need a color
 	float SpotFalloff; //spot lights need to have cone size
 	bool CastsShadows;
-	DirectX::XMFLOAT2 Padding; //adding padding to preserve 16  byte boundry
+	float NearZ; //near and far z planes for shadows
+	float FarZ;
 };

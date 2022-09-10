@@ -360,6 +360,8 @@ void Game::CreateLights() {
 	temp.Direction = XMFLOAT3(0, 0, 0);
 	temp.Range = 30;
 	temp.Intensity = 0.25f;
+	temp.NearZ = 0.5f;
+	temp.FarZ = 100.0f;
 	temp.CastsShadows = true;
 
 	lights.push_back(temp);
@@ -544,7 +546,7 @@ void Game::RenderDirectionalShadowMap()
 	context->RSSetState(0); //reset
 }
 
-void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range)
+void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ, float farZ)
 {
 
 	//unbind shadow resource
@@ -572,7 +574,7 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range)
 	//render the right side
 	//create "camera" mats
 	//use perspective for point light shadows
-	XMMATRIX shProj = XMMatrixPerspectiveFovLH(XM_PIDIV2, 1.0f, 0.5f, 100.0f);
+	XMMATRIX shProj = XMMatrixPerspectiveFovLH(XM_PIDIV2, 1.0f, nearZ, farZ);
 	XMStoreFloat4x4(&shadowBoxProjMat, shProj);
 	
 #pragma region Right
@@ -862,7 +864,7 @@ void Game::Draw(float deltaTime, float totalTime)
 				RenderDirectionalShadowMap();
 			}	
 			else if (lights[i].Type == LIGHT_TYPE_POINT) {
-				RenderPointShadowMap(lights[i].Position, lights[i].Range);
+				RenderPointShadowMap(lights[i].Position, lights[i].Range, lights[i].NearZ, lights[i].FarZ);
 			}
 		}
 	}

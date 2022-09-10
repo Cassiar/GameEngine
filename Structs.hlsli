@@ -33,7 +33,7 @@ struct VertexToPixel
 	float3 tangent			: TANGENT;
 	//float3 bitangent		: BITANGENT;
 	float4 worldPos			: POSITION;
-	float cubeDepth		: CUBE_DEPTH;
+	float cubeDepth			: CUBE_DEPTH;
 };
 
 //major light types
@@ -54,7 +54,8 @@ struct Light {
 	float3 color			: COLOR; //all lights need a color
 	float spotFalloff		: SPOTFALLOFF; //spot lights need to have cone size
 	bool castsShadows		: CASTSHADOW;
-	float2 padding			: PADDING; //adding padding to preserve 16  byte boundry
+	float nearZ				: NEARZ; //near and far z values for shadow maps
+	float farZ				: FARZ; 
 };
 
 // Struct representing a single vertex worth of data
