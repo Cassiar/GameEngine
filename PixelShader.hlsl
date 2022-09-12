@@ -73,13 +73,13 @@ float4 main(VertexToPixel input) : SV_TARGET
 	for (int i = 0; i < numLights && i < MAX_LIGHTS_NUM; i++) {
 		float3 lightAmount = 0;
 		if (lights[i].type == LIGHT_TYPE_DIRECTIONAL) {
-			lightAmount += Directional(lights[i], input.normal, cameraPos, input.worldPos, specExponent, specColor, surfaceColor, roughnessMap, metalnessMap);
+			lightAmount += Directional(lights[i], input.normal, cameraPos, input.worldPos.xyz, specExponent, specColor, surfaceColor, roughnessMap, metalnessMap);
 		}
 		else if (lights[i].type == LIGHT_TYPE_POINT) {
-			lightAmount += Point(lights[i], input.normal, cameraPos, input.worldPos, specExponent, specColor, surfaceColor, roughnessMap, metalnessMap);
+			lightAmount += Point(lights[i], input.normal, cameraPos, input.worldPos.xyz, specExponent, specColor, surfaceColor, roughnessMap, metalnessMap);
 		}
 		else if (lights[i].type == LIGHT_TYPE_SPOT) {
-			lightAmount += Spot(lights[i], input.normal, cameraPos, input.worldPos, specExponent, specColor, surfaceColor, roughnessMap, metalnessMap);
+			lightAmount += Spot(lights[i], input.normal, cameraPos, input.worldPos.xyz, specExponent, specColor, surfaceColor, roughnessMap, metalnessMap);
 		}
 		if (lights[i].castsShadows) {
 			float shadowAmount = 1.0f; //value of one doesn't change light, value of 0 means no light
@@ -96,7 +96,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 				shadowAmount = ShadowMap.SampleCmpLevelZero(ShadowSampler, shadowMapUV, depthFromLight);
 			}
 			else if (lights[i].type == LIGHT_TYPE_POINT) {
-				float3 dirToLight = lights[i].position - input.worldPos;
+				float3 dirToLight = lights[i].position - input.worldPos.xyz;
 
 				//may all the gods bless this stackoverflow post https://stackoverflow.com/questions/10786951/omnidirectional-shadow-mapping-with-depth-cubemap
 
