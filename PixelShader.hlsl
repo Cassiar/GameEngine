@@ -82,7 +82,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 			lightAmount += Spot(lights[i], input.normal, cameraPos, input.worldPos, specExponent, specColor, surfaceColor, roughnessMap, metalnessMap);
 		}
 		if (lights[i].castsShadows) {
-			float shadowAmount = 1.0f;
+			float shadowAmount = 1.0f; //value of one doesn't change light, value of 0 means no light
 			if (lights[i].type == LIGHT_TYPE_DIRECTIONAL) {
 				// calculate shadow stuff
 				//convert form [-1,1] to [0,1]
@@ -102,36 +102,20 @@ float4 main(VertexToPixel input) : SV_TARGET
 
 				float3 absDirToLight = abs(dirToLight);
 				float localZcomp = max(absDirToLight.x, max(absDirToLight.y, absDirToLight.z));
-				float near = lights[i].nearZ; // 0.5f;
-				float far = lights[i].farZ;// 100.0f;
+				float near = lights[i].nearZ;
+				float far = lights[i].farZ;
 
 				float NormZComp = (far + near) / (far - near) - (2 * far * near) / (far - near) / localZcomp;
 				float distance = (NormZComp + 1.0) * 0.5;
 
 				float4 lightDirection = 0.0f;
-				float3 worldPos = input.worldPos.xyz;// / input.worldPos.w;
+				float3 worldPos = input.worldPos.xyz;
 				worldPos.z = input.worldPos.z / input.worldPos.w;
 
 
 				lightDirection.xyz = input.worldPos.xyz - float3(lights[i].position.xy, lights[i].position.z);
-				//depth
-				//distance = length(lightDirection.xyz);// / input.worldPos.w;// / input.worldPos.w;//length(lights[i].position.xyz - worldPos.xyz);// / input.worldPos.w;
-				//attenuation factor
-				//lightDirection.xyz = lightDirection.xyz / distance;
-				//lightDirection.w = max(0,1/(lightDirection.x + att))
 				
-				//float depthFromLight = abs(length((input.worldPos.xyz / input.worldPos.w) - lights[i].position));// / input.worldPos.w;// / input.cubePos.w;//length(input.cubePos.xyz)/input.cubePos.w
 				shadowAmount = ShadowBox.SampleCmpLevelZero(ShadowSampler, -normalize(dirToLight), distance);
-				//shadowAmount = ShadowBox.Sample(BasicSampler, -normalize(dirToLight));// *input.worldPos.w;
-
-				/*return shadowAmount.rrrr;
-				if (shadowAmount + 0.0001f < distance) {
-					//we're in shadow
-					return float4(0, 0, 0, 0);
-				}
-				else {
-					return float4(1, 1, 1, 1);
-				}*/
 			}
 			lightAmount *= shadowAmount;
 		}

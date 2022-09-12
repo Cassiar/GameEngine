@@ -27,13 +27,11 @@ struct VertexToPixel
 	//  v    v                v
 	float4 screenPosition	: SV_POSITION;
 	float4 shadowPos		: SHADOW_POSITION;
-	float4 cubePos			: CUBE_POSITION;
-	float2 uvCoord			: TEXCOORD;
+	float4 worldPos			: POSITION;
 	float3 normal			: NORMAL;
 	float3 tangent			: TANGENT;
 	//float3 bitangent		: BITANGENT;
-	float4 worldPos			: POSITION;
-	float cubeDepth			: CUBE_DEPTH;
+	float2 uvCoord			: TEXCOORD;
 };
 
 //major light types

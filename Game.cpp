@@ -71,23 +71,6 @@ void Game::Init()
 
 	LoadTextures();
 
-	//Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> turbulanceflow;
-	//	CreateWICTextureFromFile(device.Get(), context.Get(),
-	//	GetFullPathTo_Wide(L"../../Assets/Textures/flow_perlin.png").c_str(), nullptr, turbulanceflow.GetAddressOf());
-
-	//Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pigment;
-	//CreateWICTextureFromFile(device.Get(), context.Get(),
-	//		GetFullPathTo_Wide(L"../../Assets/Textures/hard_perlin.png").c_str(), nullptr, pigment.GetAddressOf());
-
-	//Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ramp;
-	//CreateWICTextureFromFile(device.Get(), context.Get(),
-	//	GetFullPathTo_Wide(L"../../Assets/Textures/ramp.png").c_str(), nullptr, ramp.GetAddressOf());
-
-
-	//Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> walbedo;
-	//CreateWICTextureFromFile(device.Get(), context.Get(),
-	//	GetFullPathTo_Wide(L"../../Assets/Textures/Toon/Textures/Shiba_DIF01.png").c_str(), nullptr, walbedo.GetAddressOf());
-
 	//create description and sampler state
 	D3D11_SAMPLER_DESC samplerDesc = {};
 	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -111,13 +94,6 @@ void Game::Init()
 	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for cobblestone wall
 	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for bronze
 	catapultMaterial = std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, catapultPixelShader);
-	//watercolorMaterial = std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, watercolorPixelShader);
-	//materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for rock
-	//materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 0, 0, 1.0f), 0.5f, vertexShader, pixelShader)); //red shader
-	//materials.push_back(std::make_shared<Material>(XMFLOAT4(0, 1.0f, 0, 1.0f), 0.0f, vertexShader, pixelShader)); //green shader
-	//materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 0, 1.0f), 1.0f, vertexShader, pixelShader)); //yellow shader
-	//materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material
-	//materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.25f, vertexShader, a5PixelShader)); //custom shader
 
 	//add textures to each material
 	for (unsigned int i = 0; i < materials.size(); i++) {
@@ -133,13 +109,6 @@ void Game::Init()
 	catapultMaterial->AddTextureSRV("AlbedoTexture", catapultMaps[0]);
 	catapultMaterial->AddTextureSRV("RoughnessTexture", catapultMaps[1]);
 	catapultMaterial->AddTextureSRV("NormalTexture", catapultMaps[2]);
-
-	//watercolorMaterial->AddSampler("BasicSampler", basicSampler);
-	////catapultMaterial->AddTextureSRV("AlbedoTexture", );
-	//watercolorMaterial->AddTextureSRV("AlbedoTexture", walbedo);
-	//watercolorMaterial->AddTextureSRV("TFlow", turbulanceflow);
-	//watercolorMaterial->AddTextureSRV("Pigment", pigment);
-	//watercolorMaterial->AddTextureSRV("Ramp", ramp);
 
 
 	//load create the shapes and skybox
@@ -268,7 +237,6 @@ void Game::LoadShaders()
 	shadowPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"ShadowPixelShader.cso").c_str());
 
 	catapultPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"CatapultPixelShader.cso").c_str());
-	//watercolorPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"WatercolorPixelShader.cso").c_str());
 	a5PixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"A5CustomPS.cso").c_str());
 }
 
@@ -306,11 +274,6 @@ void Game::CreateBasicGeometry()
 
 	//big cube to act as floor
 	gameEntities.push_back(GameEntity(meshes[4], materials[2], camera));
-
-	//toon obj
-	//gameEntities.push_back(GameEntity(meshes[5], watercolorMaterial, camera));
-
-
 
 	//move objects so there isn't overlap
 	gameEntities[0].GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));
@@ -820,20 +783,12 @@ void Game::Update(float deltaTime, float totalTime)
 	double dTotalTime = (double)totalTime;
 
 	//make objects move, scale, or rotate
-	//don't rotate the 'floor'
-	//for (int i = 0; i < gameEntities.size() - 1; i++) {
-		//gameEntities[i].GetTransform()->Rotate(XMFLOAT3(0, (double)deltaTime * 0.2f, 0));
-	//}
 	gameEntities[0].GetTransform()->MoveRelative(XMFLOAT3(-sin(dTotalTime * 2.0f) * 0.25f, 0, 0));
 	gameEntities[1].GetTransform()->MoveRelative(XMFLOAT3(0, sin(dTotalTime) * 0.25f, 0));
 
 	gameEntities[2].GetTransform()->Rotate(XMFLOAT3(0, 0, (double)deltaTime * 0.5f));
 	gameEntities[3].GetTransform()->Rotate(XMFLOAT3(0, (double)deltaTime * 0.5f, 0));
 	gameEntities[4].GetTransform()->Rotate(XMFLOAT3((double)deltaTime * 0.5f, 0, 0));
-	//float scale = sin(dTotalTime);
-	//gameEntities[3].GetTransform()->SetScale(XMFLOAT3(scale, scale, 1));
-
-	//gameEntities[4].GetMaterial()->SetColorTint(XMFLOAT4((cos(dTotalTime) + 1.0f) / 2.0f, (sin(dTotalTime) + 1.0f) / 2.0f, (-sin(dTotalTime) + 1.0f) / 2.0f, 1.0f));
 
 	camera->Update(deltaTime);
 }

@@ -42,15 +42,6 @@ VertexToPixel main( VertexShaderInput input )
 	float4 worldPos = mul(world, float4(input.localPosition, 1));
 	output.worldPos = worldPos;
 
-	output.cubePos = worldPos;// mul(wvp, float4(input.localPosition, 1.0f));
-	//'reset' to linear depth to make calculating point ligt shadow in ps easier
-	output.cubePos.z = length(worldPos.xyz) * worldPos.w / 100.0f;
-
-	//output.cubePos = mul(world, float4(input.localPosition, 1));
-	////'reset' to linear depth to make calculating point ligt shadow in ps easier
-	//output.cubePos.z = length(output.shadowPos.xyz) * output.screenPosition.w / 100.0f;
-	
-	output.cubeDepth = length(worldPos - lightPos) / worldPos.w;// abs(length(worldPos.xyz - lightPos) * worldPos.w) / 100;
 
 	// Pass the color through 
 	// - The values will be interpolated per-pixel by the rasterizer
