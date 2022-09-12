@@ -71,23 +71,23 @@ void Game::Init()
 
 	LoadTextures();
 
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> turbulanceflow;
-		CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/flow_perlin.png").c_str(), nullptr, turbulanceflow.GetAddressOf());
+	//Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> turbulanceflow;
+	//	CreateWICTextureFromFile(device.Get(), context.Get(),
+	//	GetFullPathTo_Wide(L"../../Assets/Textures/flow_perlin.png").c_str(), nullptr, turbulanceflow.GetAddressOf());
 
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pigment;
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-			GetFullPathTo_Wide(L"../../Assets/Textures/hard_perlin.png").c_str(), nullptr, pigment.GetAddressOf());
+	//Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pigment;
+	//CreateWICTextureFromFile(device.Get(), context.Get(),
+	//		GetFullPathTo_Wide(L"../../Assets/Textures/hard_perlin.png").c_str(), nullptr, pigment.GetAddressOf());
 
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ramp;
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/ramp.png").c_str(), nullptr, ramp.GetAddressOf());
+	//Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ramp;
+	//CreateWICTextureFromFile(device.Get(), context.Get(),
+	//	GetFullPathTo_Wide(L"../../Assets/Textures/ramp.png").c_str(), nullptr, ramp.GetAddressOf());
 
 
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> walbedo;
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Toon/Textures/Shiba_DIF01.png").c_str(), nullptr, walbedo.GetAddressOf());
-	
+	//Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> walbedo;
+	//CreateWICTextureFromFile(device.Get(), context.Get(),
+	//	GetFullPathTo_Wide(L"../../Assets/Textures/Toon/Textures/Shiba_DIF01.png").c_str(), nullptr, walbedo.GetAddressOf());
+
 	//create description and sampler state
 	D3D11_SAMPLER_DESC samplerDesc = {};
 	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -111,7 +111,7 @@ void Game::Init()
 	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for cobblestone wall
 	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for bronze
 	catapultMaterial = std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, catapultPixelShader);
-	watercolorMaterial = std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, watercolorPixelShader);
+	//watercolorMaterial = std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, watercolorPixelShader);
 	//materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for rock
 	//materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 0, 0, 1.0f), 0.5f, vertexShader, pixelShader)); //red shader
 	//materials.push_back(std::make_shared<Material>(XMFLOAT4(0, 1.0f, 0, 1.0f), 0.0f, vertexShader, pixelShader)); //green shader
@@ -120,7 +120,7 @@ void Game::Init()
 	//materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.25f, vertexShader, a5PixelShader)); //custom shader
 
 	//add textures to each material
-	for (int i = 0; i < materials.size(); i++) {
+	for (unsigned int i = 0; i < materials.size(); i++) {
 		materials[i]->AddSampler("BasicSampler", basicSampler);
 		materials[i]->AddTextureSRV("AlbedoTexture", albedoMaps[i]);
 		materials[i]->AddTextureSRV("RoughnessTexture", roughnessMaps[i]);
@@ -134,12 +134,12 @@ void Game::Init()
 	catapultMaterial->AddTextureSRV("RoughnessTexture", catapultMaps[1]);
 	catapultMaterial->AddTextureSRV("NormalTexture", catapultMaps[2]);
 
-	watercolorMaterial->AddSampler("BasicSampler", basicSampler);
-	//catapultMaterial->AddTextureSRV("AlbedoTexture", );
-	watercolorMaterial->AddTextureSRV("AlbedoTexture", walbedo);
-	watercolorMaterial->AddTextureSRV("TFlow", turbulanceflow);
-	watercolorMaterial->AddTextureSRV("Pigment", pigment);
-	watercolorMaterial->AddTextureSRV("Ramp", ramp);
+	//watercolorMaterial->AddSampler("BasicSampler", basicSampler);
+	////catapultMaterial->AddTextureSRV("AlbedoTexture", );
+	//watercolorMaterial->AddTextureSRV("AlbedoTexture", walbedo);
+	//watercolorMaterial->AddTextureSRV("TFlow", turbulanceflow);
+	//watercolorMaterial->AddTextureSRV("Pigment", pigment);
+	//watercolorMaterial->AddTextureSRV("Ramp", ramp);
 
 
 	//load create the shapes and skybox
@@ -148,7 +148,7 @@ void Game::Init()
 	//create the shadow resources
 	//unique sampler and rasterizer state
 	CreateShadowResources();
-	
+
 	// Tell the input assembler stage of the pipeline what kind of
 	// geometric primitives (points, lines or triangles) we want to draw.  
 	// Essentially: "What kind of shape should the GPU draw with our data?"
@@ -189,7 +189,7 @@ void Game::LoadTextures() {
 	CreateWICTextureFromFile(device.Get(), context.Get(),
 		GetFullPathTo_Wide(L"../../Assets/Textures/SciFi_Panel_Normal.tif").c_str(), nullptr, normalMaps[normalMaps.size() - 1].GetAddressOf());
 	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/SciFi_Panel_Metalness.png").c_str(), nullptr, metalnessMaps[metalnessMaps.size() - 1].GetAddressOf());
+		GetFullPathTo_Wide(L"../../Assets/Textures/SciFi_Panel_Metalness.tif").c_str(), nullptr, metalnessMaps[metalnessMaps.size() - 1].GetAddressOf());
 
 	albedoMaps.push_back(nullptr);
 	roughnessMaps.push_back(nullptr);
@@ -263,12 +263,12 @@ void Game::LoadShaders()
 	skyVertexShader = std::make_shared<SimpleVertexShader>(device, context, GetFullPathTo_Wide(L"SkyVertexShader.cso").c_str());
 	shadowVertexShader = std::make_shared<SimpleVertexShader>(device, context, GetFullPathTo_Wide(L"ShadowVertexShader.cso").c_str());
 
-	pixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"PixelShader.cso").c_str());  
+	pixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"PixelShader.cso").c_str());
 	skyPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"SkyPixelShader.cso").c_str());
 	shadowPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"ShadowPixelShader.cso").c_str());
-	
+
 	catapultPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"CatapultPixelShader.cso").c_str());
-	watercolorPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"WatercolorPixelShader.cso").c_str());
+	//watercolorPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"WatercolorPixelShader.cso").c_str());
 	a5PixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"A5CustomPS.cso").c_str());
 }
 
@@ -285,7 +285,7 @@ void Game::CreateBasicGeometry()
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/helix.obj").c_str(), device, context));
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/sphere.obj").c_str(), device, context));
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/quad.obj").c_str(), device, context));
-	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Toon/tree obj.obj").c_str(), device, context));
+	//meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Toon/tree obj.obj").c_str(), device, context));
 
 	std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
 
@@ -308,7 +308,7 @@ void Game::CreateBasicGeometry()
 	gameEntities.push_back(GameEntity(meshes[4], materials[2], camera));
 
 	//toon obj
-	gameEntities.push_back(GameEntity(meshes[5], watercolorMaterial, camera));
+	//gameEntities.push_back(GameEntity(meshes[5], watercolorMaterial, camera));
 
 
 
@@ -321,8 +321,8 @@ void Game::CreateBasicGeometry()
 	gameEntities[5].GetTransform()->MoveAbsolute(XMFLOAT3(2.5f, 0.0f, -2.5f));
 	gameEntities[6].GetTransform()->MoveAbsolute(XMFLOAT3(0.0f, -5.0f, 0.0f)); //move left and down
 	gameEntities[6].GetTransform()->Scale(XMFLOAT3(20, 20, 20));//scale up a bunch to act as floor
-		
-																//catapult
+
+	//catapult
 	if (catapult->GetVertexBuffer()) {
 		meshes.push_back(catapult);
 		gameEntities.push_back(GameEntity(meshes[5], catapultMaterial, camera));
@@ -342,7 +342,7 @@ void Game::CreateLights() {
 	temp.Type = LIGHT_TYPE_DIRECTIONAL;
 	temp.Direction = XMFLOAT3(1, -2, 0); // point directly 'right'
 	temp.Color = white;//XMFLOAT3(0, 0, 1);//bright blue 
-	temp.Intensity = 1; //each for testing right now
+	temp.Intensity = 0.005; //each for testing right now
 	temp.CastsShadows = false;
 
 	lights.push_back(temp);
@@ -365,7 +365,7 @@ void Game::CreateLights() {
 	temp.CastsShadows = true;
 
 	lights.push_back(temp);
-	
+
 	//test spot light
 	temp.Type = LIGHT_TYPE_SPOT;
 	temp.Color = XMFLOAT3(1, 0, 0);//red
@@ -398,7 +398,7 @@ void Game::CreateShadowResources()
 	shadowDesc.SampleDesc.Count = 1;
 	shadowDesc.SampleDesc.Quality = 0;
 	shadowDesc.Usage = D3D11_USAGE_DEFAULT;
-	
+
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> shadowTex;
 	device->CreateTexture2D(&shadowDesc, 0, shadowTex.GetAddressOf());
 
@@ -469,17 +469,17 @@ void Game::CreateShadowResources()
 		shadowBoxStencilDesc.Texture2DArray.FirstArraySlice = i;
 
 		shadowBoxStencils.push_back(nullptr);
-		device->CreateDepthStencilView(cubeMapTexture.Get(), &shadowBoxStencilDesc, shadowBoxStencils[shadowBoxStencils.size()-1].GetAddressOf());
+		device->CreateDepthStencilView(cubeMapTexture.Get(), &shadowBoxStencilDesc, shadowBoxStencils[shadowBoxStencils.size() - 1].GetAddressOf());
 	}
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = DXGI_FORMAT_R32_FLOAT; 
+	srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE; // Treat this as a cube!
 	srvDesc.TextureCube.MipLevels = 1; // Only need access to 1 mip
 	srvDesc.TextureCube.MostDetailedMip = 0; // Index of the first mip we want to see
 	device->CreateShaderResourceView(cubeMapTexture.Get(), &srvDesc, shadowBoxSRV.GetAddressOf());
 
-	
+
 }
 
 void Game::RenderDirectionalShadowMap()
@@ -500,7 +500,7 @@ void Game::RenderDirectionalShadowMap()
 	ID3D11ShaderResourceView* const pSRV[1] = { NULL };
 	//shadow map is slot 5 in ps
 	context->PSSetShaderResources(5, 1, pSRV);
-	
+
 	//setup pipline for shadow map
 	context->OMSetRenderTargets(0, 0, shadowStencil.Get());
 	context->ClearDepthStencilView(shadowStencil.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
@@ -516,7 +516,7 @@ void Game::RenderDirectionalShadowMap()
 	vp.MaxDepth = 1.0f;
 	context->RSSetViewports(1, &vp);
 
-		//turn on our special shadow shader
+	//turn on our special shadow shader
 	shadowVertexShader->SetShader();
 	//the view and proj will be the same for all objects
 	shadowVertexShader->SetMatrix4x4("view", shadowViewMat);
@@ -576,7 +576,7 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 	//use perspective for point light shadows
 	XMMATRIX shProj = XMMatrixPerspectiveFovLH(XM_PIDIV2, 1.0f, nearZ, farZ);
 	XMStoreFloat4x4(&shadowBoxProjMat, shProj);
-	
+
 #pragma region Right
 
 	XMMATRIX shView = XMMatrixLookToLH(
@@ -606,7 +606,7 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 		//draw. Don't need material
 		entity.GetMesh()->Draw();
 	}
-	
+
 #pragma endregion
 
 	//left side
@@ -860,9 +860,9 @@ void Game::Draw(float deltaTime, float totalTime)
 	//do shadow rendering stuff
 	for (int i = 0; i < lights.size(); i++) {
 		if (lights[i].CastsShadows) {
-			if(lights[i].Type == LIGHT_TYPE_DIRECTIONAL){
+			if (lights[i].Type == LIGHT_TYPE_DIRECTIONAL) {
 				RenderDirectionalShadowMap();
-			}	
+			}
 			else if (lights[i].Type == LIGHT_TYPE_POINT) {
 				RenderPointShadowMap(lights[i].Position, lights[i].Range, lights[i].NearZ, lights[i].FarZ);
 			}
@@ -870,14 +870,14 @@ void Game::Draw(float deltaTime, float totalTime)
 	}
 
 	//draw game entities
-	for (int i = 0; i < gameEntities.size();i++) {
+	for (int i = 0; i < gameEntities.size(); i++) {
 		std::shared_ptr<SimpleVertexShader> vs = gameEntities[i].GetMaterial()->GetVertexShader();
 		//send shadow info to vertex shader
 		vs->SetMatrix4x4("lightView", shadowViewMat);
 		vs->SetMatrix4x4("lightProj", shadowProjMat);
 		for (int j = 0; j < lights.size(); j++) {
-			if(lights[j].Type == LIGHT_TYPE_POINT)
-			vs->SetFloat3("lightPos", lights[j].Position);
+			if (lights[j].Type == LIGHT_TYPE_POINT)
+				vs->SetFloat3("lightPos", lights[j].Position);
 		}
 
 		std::shared_ptr<SimplePixelShader> ps = gameEntities[i].GetMaterial()->GetPixelShader();
@@ -886,7 +886,7 @@ void Game::Draw(float deltaTime, float totalTime)
 		ps->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
 		ps->SetShaderResourceView("ShadowMap", shadowSRV);
 		ps->SetShaderResourceView("ShadowBox", shadowBoxSRV);
-		
+
 		ps->SetFloat3("ambientTerm", ambientTerm);
 		ps->SetSamplerState("ShadowSampler", shadowSampler);
 		gameEntities[i].GetMaterial()->PrepareMaterial();
@@ -898,7 +898,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	sky->Draw(camera);
 
 	//stuff below unrelated to things being drawn
-	
+
 	// Present the back buffer to the user
 	//  - Puts the final frame we're drawing into the window so the user can see it
 	//  - Do this exactly ONCE PER FRAME (always at the very end of the frame)
@@ -968,7 +968,7 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Game::CreateCubemap(
 			0, // Which mip (zero, since there's only one)
 			i, // Which array element?
 			1); // How many mip levels are in the texture?
-			// Copy from one resource (texture) to another
+		// Copy from one resource (texture) to another
 		context->CopySubresourceRegion(
 			cubeMapTexture, // Destination resource
 			subresource, // Dest subresource index (one of the array elements)
