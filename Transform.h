@@ -4,6 +4,7 @@
 #pragma once
 
 #include <DirectXMath.h>
+#include <vector>
 
 class Transform
 {
@@ -23,6 +24,7 @@ public:
 	void SetPosition(DirectX::XMFLOAT3 in_pos);
 	void SetRotation(DirectX::XMFLOAT3 in_rot);
 	void SetScale(DirectX::XMFLOAT3 in_scale);
+	void SetTransformsFromMatrix(DirectX::XMFLOAT4X4 newWorldMatrix);
 
 	//get the pos, rot, scale, 
 	DirectX::XMFLOAT3 GetPosition();
@@ -36,14 +38,40 @@ public:
 	DirectX::XMFLOAT4X4 GetWorldMatrix();
 	DirectX::XMFLOAT4X4 GetWorldMatrixInverseTranspose();
 
+	void AddChild(Transform* child, bool makeRelative = true);
+	void RemoveChild(Transform* child);
+	Transform* RemoveChildByIndex(unsigned int index);
+	void SetParent(Transform* newParent);
+	void MarkChildrenDirty();
+
+	Transform* GetParent() const { return parent; }
+	Transform* GetChild(unsigned int index) const { return (index < children.size()) ? children[index] : nullptr; }
+	int GetNumChildren() const { return static_cast<int>(children.size()); }
+	int GetChildIndex(Transform* child) const {
+		if (!child) return -1;
+		for (unsigned int i = 0; i < children.size(); i++)
+			if (children[i] == child)
+				return i;
+		return -1;
+	}
+
 private:
-	void UpdateMatrices();
+	//Recalcutaes the m_m4WorldMatrix and m_m4WorldInverseTranspose member variables
+	//based on the values of the position, scale, and rotation the Transform is 
+	//currently in.
+	void RecalcWorldAndInverseTranspose();
 	void UpdateVectors();
+
+	Transform* parent;
+	std::vector<Transform*> children;
+
 	//raw transform data: pos, rot, scale
 	DirectX::XMFLOAT3 position;
 	//pitch (x), yaw (y), roll (z)
 	DirectX::XMFLOAT3 rotation;
 	DirectX::XMFLOAT3 scale;
+
+	DirectX::XMFLOAT4 rotationQuat;
 
 	//right, up, and forward vectors
 	DirectX::XMFLOAT3 right;
@@ -56,5 +84,8 @@ private:
 
 	//does our matrix need an update
 	bool needUpdate;
+	bool recalcNormals;
+
+	DirectX::XMFLOAT3 QuatToEuler(DirectX::XMFLOAT4 quat);
 };
 

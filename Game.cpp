@@ -272,6 +272,8 @@ void Game::CreateBasicGeometry()
 	//cylinder above cube
 	gameEntities.push_back(GameEntity(meshes[1], materials[3], camera));
 
+	gameEntities[5].GetTransform()->AddChild(gameEntities[4].GetTransform());
+
 	//big cube to act as floor
 	gameEntities.push_back(GameEntity(meshes[4], materials[2], camera));
 
