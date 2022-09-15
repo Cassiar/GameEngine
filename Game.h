@@ -43,6 +43,7 @@ private:
 
 	// Should we use vsync to limit the frame rate?
 	bool vsync;
+	const float toRadians = 3.1415 / 180;
 
 	// Initialization helper methods - feel free to customize, combine, etc.
 	void LoadTextures();
@@ -53,6 +54,7 @@ private:
 
 	void RenderDirectionalShadowMap();
 	void RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ, float farZ);
+	void RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, float range, float spotFallOff, float nearZ, float farZ);
 
 	DirectX::XMFLOAT3 ambientTerm;
 

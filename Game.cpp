@@ -756,6 +756,74 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 	context->RSSetState(0); //reset
 }
 
+void Game::RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, float range, float spotFallOff, float nearZ, float farZ)
+{
+
+	//unbind shadow resource
+	ID3D11ShaderResourceView* const pSRV[1] = { NULL };
+	context->PSSetShaderResources(7, 1, pSRV); //spot shadow map is 7th
+
+	//create "camera" mats
+	XMMATRIX shView = XMMatrixLookToLH(
+		XMVectorSet(pos.x, pos.y, pos.z, 0),
+		XMVectorSet(dir.x, dir.y, dir.z, 0),
+		XMVectorSet(0, 1, 0, 0));
+	XMStoreFloat4x4(&shadowViewMat, shView);
+
+	//light.range is adjacent side, half spot fall off is the near angle
+	//so tan(theta) = o/a, then a * tan(theta) = opposite, which would be 
+	//max projection size
+	float projSize = range * tanf((spotFallOff / 2.0f) * toRadians);
+
+	//use perspective for point light shadows
+	XMMATRIX shProj = XMMatrixPerspectiveLH(projSize, projSize, nearZ, farZ);
+	XMStoreFloat4x4(&shadowProjMat, shProj);
+
+	//setup pipline for shadow map
+	context->OMSetRenderTargets(0, 0, shadowStencil.Get());
+	context->ClearDepthStencilView(shadowStencil.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->RSSetState(shadowRasterizer.Get());
+
+	//Create viewport that matches shadow map resolution
+	D3D11_VIEWPORT vp = {};
+	vp.TopLeftX = 0.0f;
+	vp.TopLeftY = 0.0f;
+	vp.Width = (float)shadowResolution;
+	vp.Height = (float)shadowResolution;
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+	context->RSSetViewports(1, &vp);
+
+	//turn on our special shadow shader
+	shadowVertexShader->SetShader();
+	//the view and proj will be the same for all objects
+	shadowVertexShader->SetMatrix4x4("view", shadowViewMat);
+	shadowVertexShader->SetMatrix4x4("proj", shadowProjMat);
+	//turn off ps
+	context->PSSetShader(0, 0, 0);
+
+	//loop and draw all objects in range of shadow
+	// '&' is important because it prevents making copies
+	for (auto& entity : gameEntities) {
+		//set this game entity's world mat, send to gpu
+		shadowVertexShader->SetMatrix4x4("world", entity.GetTransform()->GetWorldMatrix());
+		//copy data over
+		shadowVertexShader->CopyAllBufferData();
+
+		//draw. Don't need material
+		entity.GetMesh()->Draw();
+	}
+
+
+
+	//reset all render states
+	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	vp.Width = (float)this->width;
+	vp.Height = (float)this->height;
+	context->RSSetViewports(1, &vp);
+	context->RSSetState(0); //reset
+}
+
 // --------------------------------------------------------
 // Handle resizing DirectX "stuff" to match the new window size.
 // For instance, updating our projection matrix's aspect ratio.
