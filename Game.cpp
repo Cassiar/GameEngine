@@ -260,39 +260,39 @@ void Game::CreateBasicGeometry()
 
 	//create some entities
 	//cube direectly in front of camera
-	gameEntities.push_back(GameEntity(meshes[0], materials[0], camera));
+	gameEntities.push_back(std::make_shared<GameEntity>(meshes[0], materials[0], camera));
 	//sphere to left of cube
-	gameEntities.push_back(GameEntity(meshes[3], materials[3], camera));
+	gameEntities.push_back(std::make_shared<GameEntity>(meshes[3], materials[3], camera));
 	//helix to right
-	gameEntities.push_back(GameEntity(meshes[2], materials[3], camera));
+	gameEntities.push_back(std::make_shared<GameEntity>(meshes[2], materials[3], camera));
 	//helix below cube
-	gameEntities.push_back(GameEntity(meshes[2], materials[2], camera));
+	gameEntities.push_back(std::make_shared<GameEntity>(meshes[2], materials[2], camera));
 	//cylinder one behind cube
-	gameEntities.push_back(GameEntity(meshes[1], materials[1], camera));
+	gameEntities.push_back(std::make_shared<GameEntity>(meshes[1], materials[1], camera));
 	//cylinder above cube
-	gameEntities.push_back(GameEntity(meshes[1], materials[3], camera));
+	gameEntities.push_back(std::make_shared<GameEntity>(meshes[1], materials[3], camera));
 
-	gameEntities[5].GetTransform()->AddChild(gameEntities[4].GetTransform());
+	gameEntities[2]->GetTransform()->AddChild(gameEntities[5]->GetTransform());
 
 	//big cube to act as floor
-	gameEntities.push_back(GameEntity(meshes[4], materials[2], camera));
+	gameEntities.push_back(std::make_shared<GameEntity>(meshes[4], materials[2], camera));
 
 	//move objects so there isn't overlap
-	gameEntities[0].GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));
-	gameEntities[1].GetTransform()->MoveAbsolute(XMFLOAT3(5.0f, 10.0f, 5.0f));
-	gameEntities[2].GetTransform()->MoveAbsolute(XMFLOAT3(7.0f, 3.0f, 3.0f));
-	gameEntities[3].GetTransform()->MoveAbsolute(XMFLOAT3(0.0f, 0.0f, -5.0f));
-	gameEntities[4].GetTransform()->MoveAbsolute(XMFLOAT3(4.0f, 0.0f, -4.0f));
-	gameEntities[5].GetTransform()->MoveAbsolute(XMFLOAT3(2.5f, 0.0f, -2.5f));
-	gameEntities[6].GetTransform()->MoveAbsolute(XMFLOAT3(0.0f, -5.0f, 0.0f)); //move left and down
-	gameEntities[6].GetTransform()->Scale(XMFLOAT3(20, 20, 20));//scale up a bunch to act as floor
+	gameEntities[0]->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));
+	gameEntities[1]->GetTransform()->MoveAbsolute(XMFLOAT3(5.0f, 10.0f, 5.0f));
+	gameEntities[2]->GetTransform()->MoveAbsolute(XMFLOAT3(7.0f, 3.0f, 3.0f));
+	gameEntities[3]->GetTransform()->MoveAbsolute(XMFLOAT3(0.0f, 0.0f, -5.0f));
+	gameEntities[4]->GetTransform()->MoveAbsolute(XMFLOAT3(4.0f, 0.0f, -4.0f));
+	gameEntities[5]->GetTransform()->MoveAbsolute(XMFLOAT3(2.5f, 0.0f, -2.5f));
+	gameEntities[6]->GetTransform()->MoveAbsolute(XMFLOAT3(0.0f, -5.0f, 0.0f)); //move left and down
+	gameEntities[6]->GetTransform()->Scale(20);//scale up a bunch to act as floor
 
 	//catapult
 	if (catapult->GetVertexBuffer()) {
 		meshes.push_back(catapult);
-		gameEntities.push_back(GameEntity(meshes[5], catapultMaterial, camera));
-		gameEntities[7].GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, -5.0f, -2.5f));
-		gameEntities[7].GetTransform()->SetScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
+		gameEntities.push_back(std::make_shared<GameEntity>(meshes[5], catapultMaterial, camera));
+		gameEntities[7]->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, -5.0f, -2.5f));
+		gameEntities[7]->GetTransform()->SetScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
 	}
 
 	//create sky obj
@@ -493,12 +493,12 @@ void Game::RenderDirectionalShadowMap()
 	// '&' is important because it prevents making copies
 	for (auto& entity : gameEntities) {
 		//set this game entity's world mat, send to gpu
-		shadowVertexShader->SetMatrix4x4("world", entity.GetTransform()->GetWorldMatrix());
+		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
 		shadowVertexShader->CopyAllBufferData();
 
 		//draw. Don't need material
-		entity.GetMesh()->Draw();
+		entity->GetMesh()->Draw();
 	}
 
 
@@ -564,12 +564,12 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 	// '&' is important because it prevents making copies
 	for (auto& entity : gameEntities) {
 		//set this game entity's world mat, send to gpu
-		shadowVertexShader->SetMatrix4x4("world", entity.GetTransform()->GetWorldMatrix());
+		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
 		shadowVertexShader->CopyAllBufferData();
 
 		//draw. Don't need material
-		entity.GetMesh()->Draw();
+		entity->GetMesh()->Draw();
 	}
 
 #pragma endregion
@@ -600,12 +600,12 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 	// '&' is important because it prevents making copies
 	for (auto& entity : gameEntities) {
 		//set this game entity's world mat, send to gpu
-		shadowVertexShader->SetMatrix4x4("world", entity.GetTransform()->GetWorldMatrix());
+		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
 		shadowVertexShader->CopyAllBufferData();
 
 		//draw. Don't need material
-		entity.GetMesh()->Draw();
+		entity->GetMesh()->Draw();
 	}
 
 #pragma endregion
@@ -635,12 +635,12 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 	// '&' is important because it prevents making copies
 	for (auto& entity : gameEntities) {
 		//set this game entity's world mat, send to gpu
-		shadowVertexShader->SetMatrix4x4("world", entity.GetTransform()->GetWorldMatrix());
+		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
 		shadowVertexShader->CopyAllBufferData();
 
 		//draw. Don't need material
-		entity.GetMesh()->Draw();
+		entity->GetMesh()->Draw();
 	}
 
 #pragma endregion
@@ -670,12 +670,12 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 	// '&' is important because it prevents making copies
 	for (auto& entity : gameEntities) {
 		//set this game entity's world mat, send to gpu
-		shadowVertexShader->SetMatrix4x4("world", entity.GetTransform()->GetWorldMatrix());
+		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
 		shadowVertexShader->CopyAllBufferData();
 
 		//draw. Don't need material
-		entity.GetMesh()->Draw();
+		entity->GetMesh()->Draw();
 	}
 
 #pragma endregion
@@ -705,12 +705,12 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 	// '&' is important because it prevents making copies
 	for (auto& entity : gameEntities) {
 		//set this game entity's world mat, send to gpu
-		shadowVertexShader->SetMatrix4x4("world", entity.GetTransform()->GetWorldMatrix());
+		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
 		shadowVertexShader->CopyAllBufferData();
 
 		//draw. Don't need material
-		entity.GetMesh()->Draw();
+		entity->GetMesh()->Draw();
 	}
 
 #pragma endregion
@@ -740,12 +740,12 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 	// '&' is important because it prevents making copies
 	for (auto& entity : gameEntities) {
 		//set this game entity's world mat, send to gpu
-		shadowVertexShader->SetMatrix4x4("world", entity.GetTransform()->GetWorldMatrix());
+		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
 		shadowVertexShader->CopyAllBufferData();
 
 		//draw. Don't need material
-		entity.GetMesh()->Draw();
+		entity->GetMesh()->Draw();
 	}
 
 #pragma endregion
@@ -785,12 +785,12 @@ void Game::Update(float deltaTime, float totalTime)
 	double dTotalTime = (double)totalTime;
 
 	//make objects move, scale, or rotate
-	gameEntities[0].GetTransform()->MoveRelative(XMFLOAT3(-sin(dTotalTime * 2.0f) * 0.25f, 0, 0));
-	gameEntities[1].GetTransform()->MoveRelative(XMFLOAT3(0, sin(dTotalTime) * 0.25f, 0));
+	gameEntities[0]->GetTransform()->MoveRelative(XMFLOAT3(-sin(dTotalTime * 2.0f) * 0.25f, 0, 0));
+	gameEntities[1]->GetTransform()->MoveRelative(XMFLOAT3(0, sin(dTotalTime) * 0.25f, 0));
 
-	gameEntities[2].GetTransform()->Rotate(XMFLOAT3(0, 0, (double)deltaTime * 0.5f));
-	gameEntities[3].GetTransform()->Rotate(XMFLOAT3(0, (double)deltaTime * 0.5f, 0));
-	gameEntities[4].GetTransform()->Rotate(XMFLOAT3((double)deltaTime * 0.5f, 0, 0));
+	gameEntities[2]->GetTransform()->Rotate(XMFLOAT3(0, 0, (double)deltaTime * 0.5f));
+	gameEntities[3]->GetTransform()->Rotate(XMFLOAT3(0, (double)deltaTime * 0.5f, 0));
+	gameEntities[4]->GetTransform()->Rotate(XMFLOAT3((double)deltaTime * 0.5f, 0, 0));
 
 	camera->Update(deltaTime);
 }
@@ -828,7 +828,7 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	//draw game entities
 	for (int i = 0; i < gameEntities.size(); i++) {
-		std::shared_ptr<SimpleVertexShader> vs = gameEntities[i].GetMaterial()->GetVertexShader();
+		std::shared_ptr<SimpleVertexShader> vs = gameEntities[i]->GetMaterial()->GetVertexShader();
 		//send shadow info to vertex shader
 		vs->SetMatrix4x4("lightView", shadowViewMat);
 		vs->SetMatrix4x4("lightProj", shadowProjMat);
@@ -837,7 +837,7 @@ void Game::Draw(float deltaTime, float totalTime)
 				vs->SetFloat3("lightPos", lights[j].Position);
 		}
 
-		std::shared_ptr<SimplePixelShader> ps = gameEntities[i].GetMaterial()->GetPixelShader();
+		std::shared_ptr<SimplePixelShader> ps = gameEntities[i]->GetMaterial()->GetPixelShader();
 		//send light data to shaders
 		ps->SetInt("numLights", lights.size());
 		ps->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
@@ -846,9 +846,9 @@ void Game::Draw(float deltaTime, float totalTime)
 
 		ps->SetFloat3("ambientTerm", ambientTerm);
 		ps->SetSamplerState("ShadowSampler", shadowSampler);
-		gameEntities[i].GetMaterial()->PrepareMaterial();
+		gameEntities[i]->GetMaterial()->PrepareMaterial();
 
-		gameEntities[i].Draw();
+		gameEntities[i]->Draw();
 	}
 
 	//draw sky, after everthying else to reduce overdraw

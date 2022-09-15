@@ -1,225 +1,180 @@
 #include "Transform.h"
 
-//ok since we're in cpp file.
-//also overloads math operators
 using namespace DirectX;
 
-Transform::Transform() {
-	//set inital transform values
-	SetPosition(XMFLOAT3(0, 0, 0));
-	SetRotation(XMFLOAT3(0, 0, 0));
-	SetScale(XMFLOAT3(1, 1, 1));
-	
-	//create initial matrix
-	//where to store it (pointer), what to store
-	XMStoreFloat4x4(&worldMatrix, XMMatrixIdentity());
-	XMStoreFloat4x4(&worldMatrixInverseTranspose, XMMatrixIdentity());
-	needUpdate = false;
-	parent = nullptr;
+Transform::Transform()
+{
+	SetPosition(0, 0, 0);
+	SetRotation(0, 0, 0);
+	SetScale(1, 1, 1);
+	RecalcNormals();
+
+	XMStoreFloat4x4(&m_m4WorldMatrix, XMMatrixIdentity());
+	XMStoreFloat4x4(&m_m4WorldInverseTranspose, XMMatrixIdentity());
+	m_bRecalcWorld = false;
+	m_pParent = nullptr;
 }
 
-Transform::~Transform() {}
-
-void Transform::MoveAbsolute(DirectX::XMFLOAT3 in_pos)
+void Transform::MoveAbsolute(float x, float y, float z)
 {
-	//using math library
-	//load previous position and offset
-	XMVECTOR prevPos = XMLoadFloat3(&position);
-	XMVECTOR offset = XMLoadFloat3(&in_pos);
-	//add and store into position
-	XMStoreFloat3(&position, prevPos + offset);
-	needUpdate = true;
+	XMVECTOR pos = XMLoadFloat3(&m_v3Position);
+	XMVECTOR offset = XMVectorSet(x, y, z, 0);
+	XMStoreFloat3(&m_v3Position, pos + offset);
+
+	m_bRecalcWorld = true;
+	MarkChildrenDirty();
 }
 
-void Transform::MoveRelative(DirectX::XMFLOAT3 in_pos)
+void Transform::MoveRelative(float x, float y, float z)
 {
-	XMVECTOR moveVec = XMLoadFloat3(&in_pos);
+	XMVECTOR moveVec = XMVectorSet(x, y, z, 0);
 
-	//vector rotated to match objects orientation
 	XMVECTOR rotatedVec = XMVector3Rotate(
-		//vector to rotate
 		moveVec,
-		//quaternion that represents rotation
-		XMQuaternionRotationRollPitchYawFromVector(XMLoadFloat3(&rotation))
+		XMLoadFloat4(&m_v4RotationQuat)
 	);
-	
-	//add rotated vector to old position, and update
-	XMStoreFloat3(&position, XMLoadFloat3(&position) + rotatedVec);
 
-	//matrix has been changed
-	needUpdate = true;
+	//Add and store new rotated vector
+	XMVECTOR pos = XMLoadFloat3(&m_v3Position);
+	XMStoreFloat3(&m_v3Position, pos + rotatedVec);
+
+	m_bRecalcWorld = true;
+	MarkChildrenDirty();
 }
 
-void Transform::Rotate(DirectX::XMFLOAT3 in_rot)
+void Transform::Rotate(float p, float y, float r)
 {
-	XMVECTOR prevRot = XMLoadFloat3(&rotation);
-	XMVECTOR offset = XMLoadFloat3(&in_rot);
-	XMStoreFloat3(&rotation, prevRot + offset);
-	UpdateVectors();
-	needUpdate = true;
-	recalcNormals = true;
+	XMVECTOR rot = XMLoadFloat3(&m_v3EulerAngles);
+	XMVECTOR offset = XMVectorSet(p, y, r, 0);
+	XMStoreFloat3(&m_v3EulerAngles, rot + offset);
+
+	m_bRecalcWorld = true;
+	m_bRecalcNormals = true;
+	MarkChildrenDirty();
 }
 
-void Transform::Scale(DirectX::XMFLOAT3 in_scale)
+void Transform::Scale(float x, float y, float z)
 {
-	XMVECTOR prevScale = XMLoadFloat3(&scale);
-	XMVECTOR offset = XMLoadFloat3(&in_scale);
-	XMStoreFloat3(&scale, prevScale * offset);
-	needUpdate = true;
+	XMVECTOR scale = XMLoadFloat3(&m_v3Scale);
+	XMVECTOR offset = XMVectorSet(x, y, z, 0);
+	XMStoreFloat3(&m_v3Scale, scale * offset);
+
+	m_bRecalcWorld = true;
+	MarkChildrenDirty();
 }
 
-void Transform::SetPosition(DirectX::XMFLOAT3 in_pos)
+void Transform::Scale(float scalar)
 {
-	position = in_pos;
-	needUpdate = true;
+	XMVECTOR scale = XMLoadFloat3(&m_v3Scale);
+	XMStoreFloat3(&m_v3Scale, scale * scalar);
+
+	m_bRecalcWorld = true;
+	MarkChildrenDirty();
 }
 
-void Transform::SetRotation(DirectX::XMFLOAT3 in_rot)
+void Transform::SetPosition(float x, float y, float z)
 {
-	rotation = in_rot;
-	UpdateVectors();
-	needUpdate = true;
-	recalcNormals = true;
+	m_v3Position.x = x;
+	m_v3Position.y = y;
+	m_v3Position.z = z;
+
+	m_bRecalcWorld = true;
+	MarkChildrenDirty();
 }
 
-void Transform::SetScale(DirectX::XMFLOAT3 in_scale)
+void Transform::SetPosition(DirectX::XMFLOAT3 newPos)
 {
-	scale = in_scale;
-	needUpdate = true;
+	m_v3Position = newPos;
+	m_bRecalcWorld = true;
+	MarkChildrenDirty();
+}
+
+void Transform::SetRotation(float p, float y, float r)
+{
+	m_v3EulerAngles.x = p;
+	m_v3EulerAngles.y = y;
+	m_v3EulerAngles.z = r;
+
+	m_bRecalcWorld = true;
+	m_bRecalcNormals = true;
+	MarkChildrenDirty();
+}
+
+void Transform::SetRotation(DirectX::XMFLOAT3 newRot)
+{
+	m_v3EulerAngles = newRot;
+	m_bRecalcWorld = true;
+	m_bRecalcNormals = true;
+	MarkChildrenDirty();
+}
+
+void Transform::SetScale(float x, float y, float z)
+{
+	m_v3Scale.x = x;
+	m_v3Scale.y = y;
+	m_v3Scale.z = z;
+
+	m_bRecalcWorld = true;
+	MarkChildrenDirty();
+}
+
+void Transform::SetScale(DirectX::XMFLOAT3 newScale)
+{
+	m_v3Scale = newScale;
+	m_bRecalcWorld = true;
+	MarkChildrenDirty();
 }
 
 void Transform::SetTransformsFromMatrix(DirectX::XMFLOAT4X4 newWorldMatrix)
 {
-	XMVECTOR pos;
+	XMVECTOR position;
 	//Gets stored as a quaternion
-	XMVECTOR rot;
-	XMVECTOR l_scale;
+	XMVECTOR rotation;
+	XMVECTOR scale;
 
-	XMMatrixDecompose(&l_scale, &rot, &pos, XMLoadFloat4x4(&newWorldMatrix));
+	XMMatrixDecompose(&scale, &rotation, &position, XMLoadFloat4x4(&newWorldMatrix));
 
 	//Makes sure to store both the Euler and quaternion
-	XMStoreFloat4(&rotationQuat, rot);
-	rotation = QuatToEuler(rotationQuat);
+	XMStoreFloat4(&m_v4RotationQuat, rotation);
+	m_v3EulerAngles = QuatToEuler(m_v4RotationQuat);
 
-	XMStoreFloat3(&position, pos);
-	XMStoreFloat3(&scale, l_scale);
+	XMStoreFloat3(&m_v3Position, position);
+	XMStoreFloat3(&m_v3Scale, scale);
 
-	needUpdate = true;
-	recalcNormals = true;
+	m_bRecalcWorld = true;
+	m_bRecalcNormals = true;
+	MarkChildrenDirty();
 }
 
-DirectX::XMFLOAT3 Transform::GetPosition()
-{
-	return position;
-}
-
-DirectX::XMFLOAT3 Transform::GetRotation()
-{
-	return rotation;
-}
-
-DirectX::XMFLOAT3 Transform::GetScale()
-{
-	return scale;
-}
-
-//return objcs right vector
-DirectX::XMFLOAT3 Transform::GetRight()
-{
-	return right;
-}
-
-//return object's up vector
-DirectX::XMFLOAT3 Transform::GetUp()
-{	
-	return up;
-}
-
-//get object's forward vector
 DirectX::XMFLOAT3 Transform::GetForward()
 {
-	return forward;
+	RecalcNormals();
+	return m_v3Forward;
+}
+
+DirectX::XMFLOAT3 Transform::GetUp()
+{
+	RecalcNormals();
+	return m_v3Up;
+}
+
+DirectX::XMFLOAT3 Transform::GetRight()
+{
+	RecalcNormals();
+	return m_v3Right;
 }
 
 DirectX::XMFLOAT4X4 Transform::GetWorldMatrix()
 {
-	//only update world matrix when we ask for it
-	//prevents extra unneccessary calculations if pos, rot, scale changes multiple times before getting world matrix
-	if (needUpdate) {
-		RecalcWorldAndInverseTranspose();
-	}
-
-	return worldMatrix;
+	RecalcWorldAndInverseTranspose();
+	return m_m4WorldMatrix;
 }
 
-DirectX::XMFLOAT4X4 Transform::GetWorldMatrixInverseTranspose() {
-	//only update world matrix when we ask for it
-//prevents extra unneccessary calculations if pos, rot, scale changes multiple times before getting world matrix
-	if (needUpdate) {
-		RecalcWorldAndInverseTranspose();
-	}
-
-	return worldMatrixInverseTranspose;
+DirectX::XMFLOAT4X4 Transform::GetWorldInverseTransposeMatrix()
+{
+	RecalcWorldAndInverseTranspose();
+	return m_m4WorldInverseTranspose;
 }
-
-//void Transform::UpdateMatrices() {
-//	//create individual transform matrices for each type
-//	XMMATRIX transMat = XMMatrixTranslationFromVector(XMLoadFloat3(&position));
-//	//does rotation in roll, then pitch, then yaw. Params are passed in as pitch, then yaw, then roll
-//	XMMATRIX rotMat = XMMatrixRotationRollPitchYawFromVector(XMLoadFloat3(&rotation));
-//	XMMATRIX scaleMat = XMMatrixScalingFromVector(XMLoadFloat3(&scale));
-//	XMMATRIX world = scaleMat * rotMat * transMat;
-//
-//	// Is there a parent?
-//	if (parent)
-//	{
-//		XMFLOAT4X4 parentWorld = parent->GetWorldMatrix();
-//		world *= XMLoadFloat4x4(&parentWorld);
-//	}
-//	
-//	XMStoreFloat4x4(&worldMatrix, world);
-//	//store inverse
-//	XMStoreFloat4x4(&worldMatrixInverseTranspose, XMMatrixInverse(0, XMMatrixTranspose(world)));
-//
-//	//matrix has been updated
-//	needUpdate = false;
-//}
-
-void Transform::UpdateVectors() {
-	//rotate right vector
-	XMVECTOR rotatedVec = XMVector3Rotate(
-		//vector to rotate
-		XMVectorSet(1, 0, 0, 0),
-		//quaternion that represents rotation
-		XMQuaternionRotationRollPitchYawFromVector(XMLoadFloat3(&rotation))
-	);
-
-	//add rotated vector to old position, and update
-	XMStoreFloat3(&right, rotatedVec);
-
-	//rotate up vector
-	rotatedVec = XMVector3Rotate(
-		//vector to rotate
-		XMVectorSet(0, 1, 0, 0),
-		//quaternion that represents rotation
-		XMQuaternionRotationRollPitchYawFromVector(XMLoadFloat3(&rotation))
-	);
-
-	//add rotated vector to old position, and update
-	XMStoreFloat3(&up, rotatedVec);
-
-	//rotate forwward vector
-	rotatedVec = XMVector3Rotate(
-		//vector to rotate
-		XMVectorSet(0, 0, 1, 0),
-		//quaternion that represents rotation
-		XMQuaternionRotationRollPitchYawFromVector(XMLoadFloat3(&rotation))
-	);
-
-	//add rotated vector to old position, and update
-	XMStoreFloat3(&forward, rotatedVec);
-}
-
 
 void Transform::AddChild(Transform* child, bool makeRelative)
 {
@@ -247,11 +202,11 @@ void Transform::AddChild(Transform* child, bool makeRelative)
 		child->SetTransformsFromMatrix(relativeChildWorld);
 	}
 
-	children.push_back(child);
-	child->parent = this;
+	m_lChildren.push_back(child);
+	child->m_pParent = this;
 
-	child->needUpdate = true;
-	child->recalcNormals = true;
+	child->m_bRecalcWorld = true;
+	child->m_bRecalcNormals = true;
 	child->MarkChildrenDirty();
 }
 
@@ -265,24 +220,24 @@ void Transform::RemoveChild(Transform* child)
 	if (childIndex == -1)
 		return;
 
-	children.erase(children.begin() + childIndex);
-	child->parent = nullptr;
-	child->needUpdate = true;
-	child->recalcNormals = true;
+	m_lChildren.erase(m_lChildren.begin() + childIndex);
+	child->m_pParent = nullptr;
+	child->m_bRecalcWorld = true;
+	child->m_bRecalcNormals = true;
 	child->MarkChildrenDirty();
 }
 
 Transform* Transform::RemoveChildByIndex(unsigned int index)
 {
-	if (index >= children.size())
+	if (index >= m_lChildren.size())
 		return nullptr;
 
-	Transform* removedChild = children[index];
-	children.erase(children.begin() + index);
+	Transform* removedChild = m_lChildren[index];
+	m_lChildren.erase(m_lChildren.begin() + index);
 
-	removedChild->parent = nullptr;
-	removedChild->needUpdate = true;
-	removedChild->recalcNormals = true;
+	removedChild->m_pParent = nullptr;
+	removedChild->m_bRecalcWorld = true;
+	removedChild->m_bRecalcNormals = true;
 	removedChild->MarkChildrenDirty();
 
 	return removedChild;
@@ -290,8 +245,8 @@ Transform* Transform::RemoveChildByIndex(unsigned int index)
 
 void Transform::SetParent(Transform* newParent)
 {
-	if (parent)
-		parent->RemoveChild(this);
+	if (m_pParent)
+		m_pParent->RemoveChild(this);
 
 	//This works because the m_pParent field is set in add child
 	if (newParent)
@@ -300,33 +255,61 @@ void Transform::SetParent(Transform* newParent)
 
 void Transform::MarkChildrenDirty()
 {
-	for (auto& child : children) {
-		child->needUpdate = true;
-		child->recalcNormals = true;
+	for (auto& child : m_lChildren) {
+		child->m_bRecalcWorld = true;
+		child->m_bRecalcNormals = true;
 	}
 }
 
 void Transform::RecalcWorldAndInverseTranspose()
 {
-	if (!needUpdate)
+	if (!m_bRecalcWorld)
 		return;
 
-	XMMATRIX translation = XMMatrixTranslation(position.x, position.y, position.z);
-	XMMATRIX rot = XMMatrixRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
-	XMMATRIX l_scale = XMMatrixScaling(scale.x, scale.y, scale.z);
+	XMMATRIX translation = XMMatrixTranslation(m_v3Position.x, m_v3Position.y, m_v3Position.z);
+	XMMATRIX rotation = XMMatrixRotationRollPitchYaw(m_v3EulerAngles.x, m_v3EulerAngles.y, m_v3EulerAngles.z);
+	XMMATRIX scale = XMMatrixScaling(m_v3Scale.x, m_v3Scale.y, m_v3Scale.z);
 
-	XMMATRIX worldMat = l_scale * rot * translation;
+	XMMATRIX worldMat = scale * rotation * translation;
 
 	// Is there a parent?
-	if (parent)
+	if (m_pParent)
 	{
-		XMFLOAT4X4 parentWorld = parent->GetWorldMatrix();
+		XMFLOAT4X4 parentWorld = m_pParent->GetWorldMatrix();
 		worldMat *= XMLoadFloat4x4(&parentWorld);
 	}
 
-	XMStoreFloat4x4(&worldMatrix, worldMat);
-	XMStoreFloat4x4(&worldMatrixInverseTranspose, XMMatrixInverse(0, XMMatrixTranspose(worldMat)));
-	needUpdate = false;
+	XMStoreFloat4x4(&m_m4WorldMatrix, worldMat);
+	XMStoreFloat4x4(&m_m4WorldInverseTranspose, XMMatrixInverse(0, XMMatrixTranspose(worldMat)));
+	m_bRecalcWorld = false;
+}
+
+void Transform::RecalcNormals()
+{
+	//Only does work if the normals actually needs to be recalced
+	if (!m_bRecalcNormals)
+		return;
+
+	XMVECTOR rotationQuat = XMQuaternionRotationRollPitchYaw(m_v3EulerAngles.x, m_v3EulerAngles.y, m_v3EulerAngles.z);
+	//Storing rotation quaternion for other use since it's already being calculated here every time
+	XMStoreFloat4(&m_v4RotationQuat, rotationQuat);
+
+	//Recalculates Forward Vector
+	XMStoreFloat3(&m_v3Forward, XMVector3Rotate(
+		XMVectorSet(0, 0, 1, 0),
+		rotationQuat));
+
+	//Recalculates Up Vector
+	XMStoreFloat3(&m_v3Up, XMVector3Rotate(
+		XMVectorSet(0, 1, 0, 0),
+		rotationQuat));
+
+	//Recalculates Right Vector
+	XMStoreFloat3(&m_v3Right, XMVector3Rotate(
+		XMVectorSet(1, 0, 0, 0),
+		rotationQuat));
+
+	m_bRecalcNormals = false;
 }
 
 XMFLOAT3 Transform::QuatToEuler(XMFLOAT4 quat)

@@ -42,7 +42,7 @@ void GameEntity::Draw()
 	//set the values for the vertex shader
 	//string names MUST match those in VertexShader.hlsl
 	vs->SetMatrix4x4("world", transform.GetWorldMatrix());
-	vs->SetMatrix4x4("worldInvTranspose", transform.GetWorldMatrixInverseTranspose());
+	vs->SetMatrix4x4("worldInvTranspose", transform.GetWorldInverseTransposeMatrix());
 	vs->SetMatrix4x4("view", camera->GetViewMatrix());
 	vs->SetMatrix4x4("proj", camera->GetProjectionMatrix());
 	//set pixel shader buffer values
