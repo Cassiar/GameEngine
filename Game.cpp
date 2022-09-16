@@ -3,6 +3,10 @@
 #include "Input.h"
 #include "BufferStructs.h"
 
+#include "imgui.h"
+#include "imgui_impl_dx11.h"
+#include "imgui_impl_win32.h"
+
 #include "WICTextureLoader.h" //loading textures, in DirectX namespace
 
 // Needed for a helper function to read compiled shader files from the hard drive
@@ -51,11 +55,12 @@ Game::Game(HINSTANCE hInstance)
 // --------------------------------------------------------
 Game::~Game()
 {
-	// Note: Since we're using smart pointers (ComPtr),
-	// we don't need to explicitly clean up those DirectX objects
-	// - If we weren't using smart pointers, we'd need
-	//   to call Release() on each DirectX object created in Game
-
+	{
+		// Shutdown
+		ImGui_ImplDX11_Shutdown();
+		ImGui_ImplWin32_Shutdown();
+		ImGui::DestroyContext();
+	}
 }
 
 
@@ -65,6 +70,21 @@ Game::~Game()
 // --------------------------------------------------------
 void Game::Init()
 {
+	{
+		// Initialize ImGui
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		ImGuiIO& io = ImGui::GetIO();
+
+		// Pick a style
+		ImGui::StyleColorsDark();
+		//ImGui::StyleColorsClassic();
+
+		// Initialize helper Platform and Renderer backends (here we are using imgui_impl_win32.cpp and imgui_impl_dx11.cpp)
+		ImGui_ImplWin32_Init(this->hWnd);
+		ImGui_ImplDX11_Init(device.Get(), context.Get());
+	}
+
 	//get's the next multiple of 16, so that they'll be extra space
 	unsigned int size = sizeof(VertexShaderData);
 	size = (size + 15) / 16 * 16; //integer division to get rid of excess, * 16 to get byte size.
@@ -777,8 +797,10 @@ void Game::OnResize()
 // --------------------------------------------------------
 void Game::Update(float deltaTime, float totalTime)
 {
+	Input& input = Input::GetInstance();
+
 	// Example input checking: Quit if the escape key is pressed
-	if (Input::GetInstance().KeyDown(VK_ESCAPE)) {
+	if (input.KeyDown(VK_ESCAPE)) {
 		Quit();
 	}
 
@@ -791,6 +813,226 @@ void Game::Update(float deltaTime, float totalTime)
 	gameEntities[2]->GetTransform()->Rotate(XMFLOAT3(0, 0, (double)deltaTime * 0.5f));
 	gameEntities[3]->GetTransform()->Rotate(XMFLOAT3(0, (double)deltaTime * 0.5f, 0));
 	gameEntities[4]->GetTransform()->Rotate(XMFLOAT3((double)deltaTime * 0.5f, 0, 0));
+
+	{
+		// Reset input manager's gui state
+		// so we don't taint our own input
+		//input.SetGuiKeyboardCapture(false);
+		//input.SetGuiMouseCapture(false);
+
+		// Set io info
+		ImGuiIO& io = ImGui::GetIO();
+		io.DeltaTime = deltaTime;
+		io.DisplaySize.x = (float)this->width;
+		io.DisplaySize.y = (float)this->height;
+		io.KeyCtrl = input.KeyDown(VK_CONTROL);
+		io.KeyShift = input.KeyDown(VK_SHIFT);
+		io.KeyAlt = input.KeyDown(VK_MENU);
+		io.MousePos.x = (float)input.GetMouseX();
+		io.MousePos.y = (float)input.GetMouseY();
+		io.MouseDown[0] = input.MouseLeftDown();
+		io.MouseDown[1] = input.MouseRightDown();
+		io.MouseDown[2] = input.MouseMiddleDown();
+		io.MouseWheel = input.GetMouseWheel();
+		input.GetKeyArray(io.KeysDown, 256);
+
+		// Reset the frame
+		ImGui_ImplDX11_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
+
+		//Keeps track of the fps in the ImGui UI
+		static float timer = 0.0f;
+		timer += deltaTime;
+		static int frameCount = 0;
+		static int lastFrameCount = frameCount;
+
+		frameCount++;
+		if (timer > 1.0f) {
+			timer = 0.0f;
+			lastFrameCount = frameCount;
+			frameCount = 0;
+		}
+
+		ImGui::Text("FPS: %i", lastFrameCount);
+
+		ImGui::PushID(1);
+		bool entitiesOpen = ImGui::TreeNode("Entities", "%s", "Entities");
+		if (entitiesOpen) {
+
+			//Lambda function cause I thought it'd be cool but as it turns out it was more of a hassle than it was worth lol
+			static auto addEntity = [&](auto&& addEntity, Transform* entityTransform, int entityNum) {
+
+				ImGui::PushID(entityTransform);
+				bool nodeOpen = ImGui::TreeNode("Entity", "%s %i", "Entity", entityNum);
+				if (!nodeOpen) {
+					ImGui::PopID();
+					return;
+				}
+
+				//Allows for control over position of entities
+				DirectX::XMFLOAT3 position = entityTransform->GetPosition();
+				ImGui::Text("Position: ");
+				ImGui::SameLine();
+				ImGui::DragFloat3("", &position.x, .5f, -D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX);
+				entityTransform->SetPosition(position);
+
+				//Allows for control over rotation of entities
+				DirectX::XMFLOAT3 rotation = entityTransform->GetEulerAngles();
+				ImGui::Text("Rotation: ");
+				ImGui::SameLine();
+				ImGui::DragFloat3(" ", &rotation.x, .05f, -DirectX::XM_PI, DirectX::XM_PI);
+				entityTransform->SetRotation(rotation);
+
+				//Allows for control over scale of entities
+				DirectX::XMFLOAT3 scale = entityTransform->GetScale();
+				ImGui::Text("Scale: ");
+				ImGui::SameLine();
+				ImGui::DragFloat3("  ", &scale.x, .25f, 0.0f, D3D11_FLOAT32_MAX);
+				entityTransform->SetScale(scale);
+
+				int numChildren = entityTransform->GetNumChildren();
+				for (int i = 0; i < numChildren; i++)
+				{
+					addEntity(addEntity, entityTransform->GetChild(i), i + 1);
+				}
+
+				ImGui::TreePop();
+				ImGui::PopID();
+			};
+
+			int entityID = 1;
+			for (int i = 0; i < gameEntities.size(); i++) {
+				std::shared_ptr<GameEntity> currEntity = gameEntities[i];
+
+
+				if (currEntity->GetTransform()->GetParent())
+					continue;
+
+				addEntity(addEntity, currEntity->GetTransform(), entityID);
+				entityID++;
+			}
+			ImGui::TreePop();
+		}
+		ImGui::PopID();
+		/*
+		ImGui::PushID(2);
+		bool shadowsOpen = ImGui::TreeNode("Shadows", "%s", "Shadows");
+		if (shadowsOpen)
+		{
+			/*ImGui::Text("Resolution: ");
+			ImGui::SameLine();
+			int resolution = m_shadowManager->GetResolution();
+			int prevResolution = resolution;
+			ImGui::DragInt("resolution", &resolution, 8, 16, 16384);
+			if (resolution != prevResolution)
+			{
+				m_shadowManager->SetResolution(resolution);
+			}
+			ImGui::Text("Dist From Center: ");
+			ImGui::SameLine();
+			ImGui::DragFloat(" ", &dirLightShadowDistFromOrigin, 0.05f, 1.0f, 50.0f);
+
+			ImGui::Text("Projection Size: ");
+			ImGui::SameLine();
+			float projectionSize = shadow->GetProjectionSize();
+			float prevProjectionSize = projectionSize;
+			ImGui::DragFloat("   ", &projectionSize, 1.0f, 1.0f, 512.0f);
+			if (projectionSize != prevProjectionSize)
+			{
+				m_shadowManager->SetProjectionSize(projectionSize);
+			}
+
+
+
+			// Determine new input capture
+			//input.SetGuiKeyboardCapture(io.WantCaptureKeyboard);
+			//input.SetGuiMouseCapture(io.WantCaptureMouse);
+			ImVec2 pos = ImGui::GetCursorScreenPos();
+			ImVec2 uv_min = ImVec2(0.0f, 0.0f);                 // Top-left
+			ImVec2 uv_max = ImVec2(1.0f, 1.0f);                 // Lower-right
+			ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+			ImVec4 border_col = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+			ImGui::Image(m_shadowManager->GetShadowSRV().Get(), ImVec2(256, 256), uv_min, uv_max, tint_col, border_col);
+
+			ImGui::TreePop();
+		}
+		ImGui::PopID();
+		*/
+
+		ImGui::PushID(2);
+		bool lightsOpen = ImGui::TreeNode("Lights", "%s", "Lights");
+		if (lightsOpen)
+		{
+			ImGui::Text("Num Lights");
+			ImGui::SameLine();
+			//ImGui::SliderInt("             ", &numLightsToRender, 0, static_cast<int>(m_lights.size()));
+
+			for (int i = 0; i < lights.size(); i++) {
+				Light& currLight = lights[i];
+
+				//Since this isn't a pointer I want a new guid rather than mem address
+				static GUID lightID;
+				if (lightID.Data1 == 0)
+					CoCreateGuid(&lightID);
+
+				ImGui::PushID(static_cast<int>(lightID.Data1) + i);
+
+				bool nodeOpen = ImGui::TreeNode("Light", "%s %i", "Light", i + 1);
+				if (nodeOpen) {
+					const char* items[] = { "Directional", "Point" };
+					ImGui::Text("Light Type: ");
+					ImGui::SameLine();
+					ImGui::Combo("        ", &currLight.Type, items, IM_ARRAYSIZE(items));
+
+					switch (currLight.Type)
+					{
+					case 0:
+						ImGui::Text("Direction: ");
+						ImGui::SameLine();
+						ImGui::DragFloat3(" ", &currLight.Direction.x, .01f, -1.0f, 1.0f);
+
+						//I would use casts shadows here but for some reason the bool is being turned to false
+						//if (i == 0)
+						//	m_shadowManager->SetLightPosition(DirectX::XMFLOAT3(currLight.Direction.x * dirLightShadowDistFromOrigin, currLight.Direction.y * dirLightShadowDistFromOrigin, currLight.Direction.z * dirLightShadowDistFromOrigin));
+
+						break;
+
+					case 1:
+						ImGui::Text("Position: ");
+						ImGui::SameLine();
+						ImGui::DragFloat3(" ", &currLight.Position.x, .1f, -D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX);
+
+						ImGui::Text("Range: ");
+						ImGui::SameLine();
+						ImGui::DragFloat("  ", &currLight.Range, 0.1f, 0.1f, D3D11_FLOAT32_MAX);
+						break;
+
+					default:
+						break;
+					}
+
+					ImGui::Text("Intensity: ");
+					ImGui::SameLine();
+					ImGui::DragFloat(" ", &currLight.Intensity, .01f, 0.01f, 2.0f);
+
+					ImGui::Text("Color: ");
+					ImGui::SameLine();
+					ImGui::ColorEdit3(" ", &currLight.Color.x);
+
+					ImGui::TreePop();
+				}
+
+				ImGui::PopID();
+			}
+
+			ImGui::TreePop();
+		}
+		ImGui::PopID();
+
+		// Show the demo window
+		//ImGui::ShowDemoWindow();
+	}
 
 	camera->Update(deltaTime);
 }
@@ -853,6 +1095,12 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	//draw sky, after everthying else to reduce overdraw
 	sky->Draw(camera);
+
+	{
+		// Render dear imgui into screen
+		ImGui::Render();
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	}
 
 	//stuff below unrelated to things being drawn
 

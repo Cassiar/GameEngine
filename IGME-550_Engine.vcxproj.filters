@@ -16,6 +16,12 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{e76f01f5-08db-40d4-8720-b5b21f7ec0a3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\im_gui_src">
+      <UniqueIdentifier>{db3c9aaf-a694-41f0-85c5-08cd79a4d94f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\im_gui_headers">
+      <UniqueIdentifier>{2a823b62-091b-4eb4-9b4d-357ef49aae21}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DXCore.cpp">
@@ -50,6 +56,27 @@
     </ClCompile>
     <ClCompile Include="Sky.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Vendor\imgui-1.87\imgui.cpp">
+      <Filter>Source Files\im_gui_src</Filter>
+    </ClCompile>
+    <ClCompile Include="Vendor\imgui-1.87\imgui_demo.cpp">
+      <Filter>Source Files\im_gui_src</Filter>
+    </ClCompile>
+    <ClCompile Include="Vendor\imgui-1.87\imgui_draw.cpp">
+      <Filter>Source Files\im_gui_src</Filter>
+    </ClCompile>
+    <ClCompile Include="Vendor\imgui-1.87\imgui_impl_dx11.cpp">
+      <Filter>Source Files\im_gui_src</Filter>
+    </ClCompile>
+    <ClCompile Include="Vendor\imgui-1.87\imgui_impl_win32.cpp">
+      <Filter>Source Files\im_gui_src</Filter>
+    </ClCompile>
+    <ClCompile Include="Vendor\imgui-1.87\imgui_tables.cpp">
+      <Filter>Source Files\im_gui_src</Filter>
+    </ClCompile>
+    <ClCompile Include="Vendor\imgui-1.87\imgui_widgets.cpp">
+      <Filter>Source Files\im_gui_src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -91,6 +118,30 @@
     </ClInclude>
     <ClInclude Include="Sky.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendor\imgui-1.87\imconfig.h">
+      <Filter>Header Files\im_gui_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendor\imgui-1.87\imgui.h">
+      <Filter>Header Files\im_gui_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendor\imgui-1.87\imgui_impl_dx11.h">
+      <Filter>Header Files\im_gui_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendor\imgui-1.87\imgui_impl_win32.h">
+      <Filter>Header Files\im_gui_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendor\imgui-1.87\imgui_internal.h">
+      <Filter>Header Files\im_gui_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendor\imgui-1.87\imstb_rectpack.h">
+      <Filter>Header Files\im_gui_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendor\imgui-1.87\imstb_textedit.h">
+      <Filter>Header Files\im_gui_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendor\imgui-1.87\imstb_truetype.h">
+      <Filter>Header Files\im_gui_headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
