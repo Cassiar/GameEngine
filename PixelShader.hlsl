@@ -18,6 +18,7 @@ Texture2D NormalTexture : register(t3);
 Texture2D MetalnessTexture : register(t4);
 Texture2D ShadowMap : register(t5);
 TextureCube ShadowBox : register(t6);
+Texture2D ShadowSpotMap : register(t7);
 
 SamplerState BasicSampler : register(s0);
 SamplerComparisonState ShadowSampler : register(s1);
@@ -116,6 +117,30 @@ float4 main(VertexToPixel input) : SV_TARGET
 				lightDirection.xyz = input.worldPos.xyz - float3(lights[i].position.xy, lights[i].position.z);
 				
 				shadowAmount = ShadowBox.SampleCmpLevelZero(ShadowSampler, -normalize(dirToLight), distance);
+			}
+			else if (lights[i].type == LIGHT_TYPE_SPOT) {
+				// calculate shadow stuff
+				//convert form [-1,1] to [0,1]
+				float2 shadowMapUV = input.spotShadowPos.xy / input.spotShadowPos.w * 0.5f + 0.5f;
+				//flip y since we're in uv space and y is flipped
+				shadowMapUV.y = 1.0f - shadowMapUV.y;
+
+				float3 dirToLight = lights[i].position - input.worldPos.xyz;
+
+				//may all the gods bless this stackoverflow post https://stackoverflow.com/questions/10786951/omnidirectional-shadow-mapping-with-depth-cubemap
+
+				float3 absDirToLight = abs(dirToLight);
+				float localZcomp = max(absDirToLight.x, max(absDirToLight.y, absDirToLight.z));
+				float near = lights[i].nearZ;
+				float far = lights[i].farZ;
+
+				float NormZComp = (far + near) / (far - near) - (2 * far * near) / (far - near) / localZcomp;
+				float distance = (NormZComp + 1.0) * 0.5;
+
+				//test how far from ligt
+				float depthFromLight = input.spotShadowPos.z / input.spotShadowPos.w;
+				//use comparison sampler to check if pixel is in shadow
+				shadowAmount = ShadowSpotMap.SampleCmpLevelZero(ShadowSampler, shadowMapUV, depthFromLight);
 			}
 			lightAmount *= shadowAmount;
 		}

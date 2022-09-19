@@ -31,7 +31,7 @@ Game::Game(HINSTANCE hInstance)
 		1280,			   // Width of the window's client area
 		720,			   // Height of the window's client area
 		true),			   // Show extra stats (fps) in title bar?
-	vsync(false)			//should we lock framerate
+	vsync(true)			//should we lock framerate
 {
 #if defined(DEBUG) || defined(_DEBUG)
 	// Do we want a console window?  Probably only in debug mode
@@ -294,7 +294,7 @@ void Game::CreateBasicGeometry()
 
 	gameEntities[2]->GetTransform()->AddChild(gameEntities[5]->GetTransform());
 
-	//big cube to act as floor
+	//big plane to act as floor
 	gameEntities.push_back(std::make_shared<GameEntity>(meshes[4], materials[2], camera));
 
 	//move objects so there isn't overlap
@@ -304,8 +304,9 @@ void Game::CreateBasicGeometry()
 	gameEntities[3]->GetTransform()->MoveAbsolute(XMFLOAT3(0.0f, 0.0f, -5.0f));
 	gameEntities[4]->GetTransform()->MoveAbsolute(XMFLOAT3(4.0f, 0.0f, -4.0f));
 	gameEntities[5]->GetTransform()->MoveAbsolute(XMFLOAT3(2.5f, 0.0f, -2.5f));
-	gameEntities[6]->GetTransform()->MoveAbsolute(XMFLOAT3(0.0f, -5.0f, 0.0f)); //move left and down
-	gameEntities[6]->GetTransform()->Scale(20);//scale up a bunch to act as floor
+	gameEntities[6]->GetTransform()->MoveAbsolute(XMFLOAT3(0.0f, 0.0f, 5.0f)); //move left and down
+	gameEntities[6]->GetTransform()->Rotate(XMFLOAT3(-1 * XM_PIDIV2, 0, 0));
+	gameEntities[6]->GetTransform()->Scale(XMFLOAT3(20, 20, 20));//scale up a bunch to act as floor
 
 	//catapult
 	if (catapult->GetVertexBuffer()) {
@@ -347,7 +348,7 @@ void Game::CreateLights() {
 	temp.Intensity = 0.25f;
 	temp.NearZ = 0.5f;
 	temp.FarZ = 100.0f;
-	temp.CastsShadows = true;
+	temp.CastsShadows = false;
 
 	lights.push_back(temp);
 
@@ -359,7 +360,7 @@ void Game::CreateLights() {
 	temp.Direction = XMFLOAT3(0, 0, 1); //directly toward starting camera pos
 	temp.SpotFalloff = 20.0f;
 	temp.Intensity = 1;
-	temp.CastsShadows = false;
+	temp.CastsShadows = true;
 
 	lights.push_back(temp);
 }
@@ -387,12 +388,16 @@ void Game::CreateShadowResources()
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> shadowTex;
 	device->CreateTexture2D(&shadowDesc, 0, shadowTex.GetAddressOf());
 
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> shadowSpotTex;
+	device->CreateTexture2D(&shadowDesc, 0, shadowSpotTex.GetAddressOf());
+
 	//create depth/stencil
 	D3D11_DEPTH_STENCIL_VIEW_DESC shadowStencilDesc = {};
 	shadowStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
 	shadowStencilDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	shadowStencilDesc.Texture2D.MipSlice = 0;
 	device->CreateDepthStencilView(shadowTex.Get(), &shadowStencilDesc, shadowStencil.GetAddressOf());
+	device->CreateDepthStencilView(shadowSpotTex.Get(), &shadowStencilDesc, shadowSpotStencil.GetAddressOf());
 
 	//create SRV
 	D3D11_SHADER_RESOURCE_VIEW_DESC shadowSRVDesc = {};
@@ -401,6 +406,7 @@ void Game::CreateShadowResources()
 	shadowSRVDesc.Texture2D.MipLevels = 1;
 	shadowSRVDesc.Texture2D.MostDetailedMip = 0;
 	device->CreateShaderResourceView(shadowTex.Get(), &shadowSRVDesc, shadowSRV.GetAddressOf());
+	device->CreateShaderResourceView(shadowSpotTex.Get(), &shadowSRVDesc, shadowSpotSRV.GetAddressOf());
 
 	//create special comparison smapler state
 	D3D11_SAMPLER_DESC shadowSamplerDesc = {};
@@ -778,6 +784,75 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 	context->RSSetState(0); //reset
 }
 
+void Game::RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, float range, float spotFallOff, float nearZ, float farZ)
+{
+
+	//unbind shadow resource
+	ID3D11ShaderResourceView* const pSRV[1] = { NULL };
+	context->PSSetShaderResources(7, 1, pSRV); //spot shadow map is 7th
+
+	//create "camera" mats
+	XMMATRIX shView = XMMatrixLookToLH(
+		XMVectorSet(pos.x, pos.y, pos.z, 0),
+		XMVectorSet(dir.x, dir.y, dir.z, 0),
+		XMVectorSet(0, 1, 0, 0));
+	XMStoreFloat4x4(&spotShadowViewMat, shView);
+
+	//light.range is adjacent side, half spot fall off is the opposit side
+	//so tan(theta) = opposite/adjacent, then aadjacent * tan(theta) = opposite, which would be 
+	//max projection size
+	//float projSize = range * tanf((spotFallOff / 2.0f) * toRadians);
+
+	float yAngle = (spotFallOff / 2.0f) / range;
+	//use perspective for point light shadows
+	XMMATRIX shProj = XMMatrixPerspectiveFovLH(45.0f * toRadians, 1.0f, nearZ, farZ);// XMMatrixPerspectiveLH(spotFallOff, spotFallOff, nearZ, farZ);
+	XMStoreFloat4x4(&spotShadowProjMat, shProj);
+
+	//setup pipline for shadow map
+	context->OMSetRenderTargets(0, 0, shadowSpotStencil.Get());
+	context->ClearDepthStencilView(shadowSpotStencil.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->RSSetState(shadowRasterizer.Get());
+
+	//Create viewport that matches shadow map resolution
+	D3D11_VIEWPORT vp = {};
+	vp.TopLeftX = 0.0f;
+	vp.TopLeftY = 0.0f;
+	vp.Width = (float)shadowResolution;
+	vp.Height = (float)shadowResolution;
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+	context->RSSetViewports(1, &vp);
+
+	//turn on our special shadow shader
+	shadowVertexShader->SetShader();
+	//the view and proj will be the same for all objects
+	shadowVertexShader->SetMatrix4x4("view", spotShadowViewMat);
+	shadowVertexShader->SetMatrix4x4("proj", spotShadowProjMat);
+	//turn off ps
+	context->PSSetShader(0, 0, 0);
+
+	//loop and draw all objects in range of shadow
+	// '&' is important because it prevents making copies
+	for (auto& entity : gameEntities) {
+		//set this game entity's world mat, send to gpu
+		shadowVertexShader->SetMatrix4x4("world", entity.GetTransform()->GetWorldMatrix());
+		//copy data over
+		shadowVertexShader->CopyAllBufferData();
+
+		//draw. Don't need material
+		entity.GetMesh()->Draw();
+	}
+
+
+
+	//reset all render states
+	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	vp.Width = (float)this->width;
+	vp.Height = (float)this->height;
+	context->RSSetViewports(1, &vp);
+	context->RSSetState(0); //reset
+}
+
 // --------------------------------------------------------
 // Handle resizing DirectX "stuff" to match the new window size.
 // For instance, updating our projection matrix's aspect ratio.
@@ -1065,6 +1140,9 @@ void Game::Draw(float deltaTime, float totalTime)
 			else if (lights[i].Type == LIGHT_TYPE_POINT) {
 				RenderPointShadowMap(lights[i].Position, lights[i].Range, lights[i].NearZ, lights[i].FarZ);
 			}
+			else if (lights[i].Type == LIGHT_TYPE_SPOT) {
+				RenderSpotShadowMap(lights[i].Position, lights[i].Direction, lights[i].Range, lights[i].SpotFalloff, lights[i].NearZ, lights[i].FarZ);
+			}
 		}
 	}
 
@@ -1074,6 +1152,8 @@ void Game::Draw(float deltaTime, float totalTime)
 		//send shadow info to vertex shader
 		vs->SetMatrix4x4("lightView", shadowViewMat);
 		vs->SetMatrix4x4("lightProj", shadowProjMat);
+		vs->SetMatrix4x4("spotLightView", spotShadowViewMat);
+		vs->SetMatrix4x4("spotLightProj", spotShadowProjMat);
 		for (int j = 0; j < lights.size(); j++) {
 			if (lights[j].Type == LIGHT_TYPE_POINT)
 				vs->SetFloat3("lightPos", lights[j].Position);
@@ -1085,6 +1165,7 @@ void Game::Draw(float deltaTime, float totalTime)
 		ps->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
 		ps->SetShaderResourceView("ShadowMap", shadowSRV);
 		ps->SetShaderResourceView("ShadowBox", shadowBoxSRV);
+		ps->SetShaderResourceView("ShadowSpotMap", shadowSpotSRV);
 
 		ps->SetFloat3("ambientTerm", ambientTerm);
 		ps->SetSamplerState("ShadowSampler", shadowSampler);

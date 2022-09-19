@@ -9,6 +9,8 @@ cbuffer ExternalData : register(b0) {
 	matrix proj;
 	matrix lightView;
 	matrix lightProj;
+	matrix spotLightView;
+	matrix spotLightProj;
 	float3 lightPos;
 }
 
@@ -31,6 +33,9 @@ VertexToPixel main( VertexShaderInput input )
 	//position in shadow map
 	matrix swvp = mul(mul(lightProj, lightView), world);
 	output.shadowPos = mul(swvp, float4(input.localPosition, 1.0f));
+
+	matrix spotswvp = mul(mul(spotLightProj, spotLightView), world);
+	output.spotShadowPos = mul(spotswvp, float4(input.localPosition, 1.0f));
 	 
 	//rotate normal
 	//cast to 3x3 to only apply rotatation. Use inverse transpose to ignore non-uniform scale
