@@ -123,7 +123,9 @@ private:
 	float shadowProjSize; //size of world that it can see
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shadowBoxSRV;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shadowSRV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shadowSpotSRV;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> shadowStencil;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> shadowSpotStencil;
 	std::vector<Microsoft::WRL::ComPtr<ID3D11DepthStencilView>> shadowBoxStencils;
 
 	//need custom samplers and rasterizers
@@ -131,5 +133,8 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> shadowRasterizer;
 	DirectX::XMFLOAT4X4 shadowViewMat;
 	DirectX::XMFLOAT4X4 shadowProjMat;
+
+	DirectX::XMFLOAT4X4 spotShadowViewMat;
+	DirectX::XMFLOAT4X4 spotShadowProjMat;
 };
 
