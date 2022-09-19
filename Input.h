@@ -65,6 +65,10 @@ public:
 	bool MouseMiddlePress();
 	bool MouseMiddleRelease();
 
+	void SetGuiKeyboardFocus(bool guiKeyboardFocus) { guiHasKeyboardFocus = guiKeyboardFocus; }
+	void SetGuiMouseFocus(bool guiMouseFocus) { guiHasMouseFocus = guiMouseFocus; }
+
+
 private:
 	// Arrays for the current and previous key states
 	unsigned char* kbState {0};
@@ -82,5 +86,8 @@ private:
 	// The window's handle (id) from the OS, so
 	// we can get the cursor's position
 	HWND windowHandle {0};
+
+	bool guiHasKeyboardFocus {false};
+	bool guiHasMouseFocus {false};
 };
 

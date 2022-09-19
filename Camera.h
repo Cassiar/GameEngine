@@ -55,6 +55,9 @@ public:
 	/// <returns>A copy of the matrix</returns>
 	DirectX::XMFLOAT4X4 GetProjectionMatrix();
 
+	float* GetMoveSpeed() { return &moveSpeed; }
+	float* GetMouseMoveSpeed() { return &mouseMoveSpeed; }
+
 private:
 	//camera matrices
 	DirectX::XMFLOAT4X4 viewMatrix;

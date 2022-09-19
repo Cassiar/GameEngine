@@ -84,6 +84,9 @@ void Input::Initialize(HWND windowHandle)
 	prevMouseX = 0; prevMouseY = 0;
 	mouseXDelta = 0; mouseYDelta = 0;
 
+	guiHasKeyboardFocus = false;
+	guiHasMouseFocus = false;
+
 	this->windowHandle = windowHandle;
 }
 
@@ -175,7 +178,7 @@ bool Input::KeyDown(int key)
 {
 	if (key < 0 || key > 255) return false;
 
-	return (kbState[key] & 0x80) != 0;
+	return (kbState[key] & 0x80) != 0 && !guiHasKeyboardFocus;
 }
 
 // ----------------------------------------------------------
@@ -189,7 +192,7 @@ bool Input::KeyUp(int key)
 {
 	if (key < 0 || key > 255) return false;
 
-	return !(kbState[key] & 0x80);
+	return !(kbState[key] & 0x80) && !guiHasKeyboardFocus;
 }
 
 // ----------------------------------------------------------
@@ -205,7 +208,8 @@ bool Input::KeyPress(int key)
 
 	return
 		kbState[key] & 0x80 &&			// Down now
-		!(prevKbState[key] & 0x80);		// Up last frame
+		!(prevKbState[key] & 0x80) &&	// Up last frame
+		!guiHasKeyboardFocus;
 }
 
 // ----------------------------------------------------------
@@ -221,7 +225,8 @@ bool Input::KeyRelease(int key)
 
 	return
 		!(kbState[key] & 0x80) &&	// Up now
-		prevKbState[key] & 0x80;	// Down last frame
+		prevKbState[key] & 0x80 &&	// Down last frame
+		!guiHasKeyboardFocus;		// Gui has input focus;
 }
 
 
@@ -257,28 +262,28 @@ bool Input::GetKeyArray(bool* keyArray, int size)
 // ----------------------------------------------------------
 //  Is the specific mouse button down this frame?
 // ----------------------------------------------------------
-bool Input::MouseLeftDown() { return (kbState[VK_LBUTTON] & 0x80) != 0; }
-bool Input::MouseRightDown() { return (kbState[VK_RBUTTON] & 0x80) != 0; }
-bool Input::MouseMiddleDown() { return (kbState[VK_MBUTTON] & 0x80) != 0; }
+bool Input::MouseLeftDown() { return (kbState[VK_LBUTTON] & 0x80) != 0 && !guiHasMouseFocus; }
+bool Input::MouseRightDown() { return (kbState[VK_RBUTTON] & 0x80) != 0 && !guiHasMouseFocus; }
+bool Input::MouseMiddleDown() { return (kbState[VK_MBUTTON] & 0x80) != 0 && !guiHasMouseFocus; }
 
 
 // ----------------------------------------------------------
 //  Is the specific mouse button up this frame?
 // ----------------------------------------------------------
-bool Input::MouseLeftUp() { return !(kbState[VK_LBUTTON] & 0x80); }
-bool Input::MouseRightUp() { return !(kbState[VK_RBUTTON] & 0x80); }
-bool Input::MouseMiddleUp() { return !(kbState[VK_MBUTTON] & 0x80); }
+bool Input::MouseLeftUp() { return !(kbState[VK_LBUTTON] & 0x80) && !guiHasMouseFocus; }
+bool Input::MouseRightUp() { return !(kbState[VK_RBUTTON] & 0x80) && !guiHasMouseFocus; }
+bool Input::MouseMiddleUp() { return !(kbState[VK_MBUTTON] & 0x80) && !guiHasMouseFocus; }
 
 
 // ----------------------------------------------------------
 //  Was the specific mouse button initially 
 // pressed or released this frame?
 // ----------------------------------------------------------
-bool Input::MouseLeftPress() { return kbState[VK_LBUTTON] & 0x80 && !(prevKbState[VK_LBUTTON] & 0x80); }
-bool Input::MouseLeftRelease() { return !(kbState[VK_LBUTTON] & 0x80) && prevKbState[VK_LBUTTON] & 0x80; }
+bool Input::MouseLeftPress() { return kbState[VK_LBUTTON] & 0x80 && !(prevKbState[VK_LBUTTON] & 0x80) && !guiHasMouseFocus; }
+bool Input::MouseLeftRelease() { return !(kbState[VK_LBUTTON] & 0x80) && prevKbState[VK_LBUTTON] & 0x80 && !guiHasMouseFocus; }
 
-bool Input::MouseRightPress() { return kbState[VK_RBUTTON] & 0x80 && !(prevKbState[VK_RBUTTON] & 0x80); }
-bool Input::MouseRightRelease() { return !(kbState[VK_RBUTTON] & 0x80) && prevKbState[VK_RBUTTON] & 0x80; }
+bool Input::MouseRightPress() { return kbState[VK_RBUTTON] & 0x80 && !(prevKbState[VK_RBUTTON] & 0x80) && !guiHasMouseFocus; }
+bool Input::MouseRightRelease() { return !(kbState[VK_RBUTTON] & 0x80) && prevKbState[VK_RBUTTON] & 0x80 && !guiHasMouseFocus; }
 
-bool Input::MouseMiddlePress() { return kbState[VK_MBUTTON] & 0x80 && !(prevKbState[VK_MBUTTON] & 0x80); }
-bool Input::MouseMiddleRelease() { return !(kbState[VK_MBUTTON] & 0x80) && prevKbState[VK_MBUTTON] & 0x80; }
+bool Input::MouseMiddlePress() { return kbState[VK_MBUTTON] & 0x80 && !(prevKbState[VK_MBUTTON] & 0x80) && !guiHasMouseFocus; }
+bool Input::MouseMiddleRelease() { return !(kbState[VK_MBUTTON] & 0x80) && prevKbState[VK_MBUTTON] & 0x80 && !guiHasMouseFocus; }

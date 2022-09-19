@@ -306,7 +306,7 @@ void Game::CreateBasicGeometry()
 	gameEntities[5]->GetTransform()->MoveAbsolute(XMFLOAT3(2.5f, 0.0f, -2.5f));
 	gameEntities[6]->GetTransform()->MoveAbsolute(XMFLOAT3(0.0f, 0.0f, 5.0f)); //move left and down
 	gameEntities[6]->GetTransform()->Rotate(XMFLOAT3(-1 * XM_PIDIV2, 0, 0));
-	gameEntities[6]->GetTransform()->Scale(XMFLOAT3(20, 20, 20));//scale up a bunch to act as floor
+	gameEntities[6]->GetTransform()->Scale(20);//scale up a bunch to act as floor
 
 	//catapult
 	if (catapult->GetVertexBuffer()) {
@@ -328,7 +328,7 @@ void Game::CreateLights() {
 	temp.Type = LIGHT_TYPE_DIRECTIONAL;
 	temp.Direction = XMFLOAT3(1, -2, 0); // point directly 'right'
 	temp.Color = white;//XMFLOAT3(0, 0, 1);//bright blue 
-	temp.Intensity = 0.005; //each for testing right now
+	temp.Intensity = 0.005f; //each for testing right now
 	temp.CastsShadows = false;
 
 	lights.push_back(temp);
@@ -835,12 +835,12 @@ void Game::RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, flo
 	// '&' is important because it prevents making copies
 	for (auto& entity : gameEntities) {
 		//set this game entity's world mat, send to gpu
-		shadowVertexShader->SetMatrix4x4("world", entity.GetTransform()->GetWorldMatrix());
+		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
 		shadowVertexShader->CopyAllBufferData();
 
 		//draw. Don't need material
-		entity.GetMesh()->Draw();
+		entity->GetMesh()->Draw();
 	}
 
 
@@ -867,33 +867,14 @@ void Game::OnResize()
 	}
 }
 
-// --------------------------------------------------------
-// Update your game here - user input, move objects, AI, etc.
-// --------------------------------------------------------
-void Game::Update(float deltaTime, float totalTime)
-{
+void Game::CreateGui(float deltaTime) {
 	Input& input = Input::GetInstance();
-
-	// Example input checking: Quit if the escape key is pressed
-	if (input.KeyDown(VK_ESCAPE)) {
-		Quit();
-	}
-
-	double dTotalTime = (double)totalTime;
-
-	//make objects move, scale, or rotate
-	gameEntities[0]->GetTransform()->MoveRelative(XMFLOAT3(-sin(dTotalTime * 2.0f) * 0.25f, 0, 0));
-	gameEntities[1]->GetTransform()->MoveRelative(XMFLOAT3(0, sin(dTotalTime) * 0.25f, 0));
-
-	gameEntities[2]->GetTransform()->Rotate(XMFLOAT3(0, 0, (double)deltaTime * 0.5f));
-	gameEntities[3]->GetTransform()->Rotate(XMFLOAT3(0, (double)deltaTime * 0.5f, 0));
-	gameEntities[4]->GetTransform()->Rotate(XMFLOAT3((double)deltaTime * 0.5f, 0, 0));
 
 	{
 		// Reset input manager's gui state
 		// so we don't taint our own input
-		//input.SetGuiKeyboardCapture(false);
-		//input.SetGuiMouseCapture(false);
+		input.SetGuiKeyboardFocus(false);
+		input.SetGuiMouseFocus(false);
 
 		// Set io info
 		ImGuiIO& io = ImGui::GetIO();
@@ -915,6 +896,9 @@ void Game::Update(float deltaTime, float totalTime)
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
+
+		input.SetGuiKeyboardFocus(io.WantCaptureKeyboard);
+		input.SetGuiMouseFocus(io.WantCaptureMouse);
 
 		//Keeps track of the fps in the ImGui UI
 		static float timer = 0.0f;
@@ -1039,8 +1023,8 @@ void Game::Update(float deltaTime, float totalTime)
 		bool lightsOpen = ImGui::TreeNode("Lights", "%s", "Lights");
 		if (lightsOpen)
 		{
-			ImGui::Text("Num Lights");
-			ImGui::SameLine();
+			//ImGui::Text("Num Lights");
+			//ImGui::SameLine();
 			//ImGui::SliderInt("             ", &numLightsToRender, 0, static_cast<int>(m_lights.size()));
 
 			for (int i = 0; i < lights.size(); i++) {
@@ -1048,8 +1032,9 @@ void Game::Update(float deltaTime, float totalTime)
 
 				//Since this isn't a pointer I want a new guid rather than mem address
 				static GUID lightID;
+				HRESULT guidCreationRes;
 				if (lightID.Data1 == 0)
-					CoCreateGuid(&lightID);
+					guidCreationRes = CoCreateGuid(&lightID);
 
 				ImGui::PushID(static_cast<int>(lightID.Data1) + i);
 
@@ -1105,9 +1090,46 @@ void Game::Update(float deltaTime, float totalTime)
 		}
 		ImGui::PopID();
 
+		ImGui::PushID(3);
+
+		if (camera) {
+			ImGui::Text("Move Speed: ");
+			ImGui::SameLine();
+			ImGui::DragFloat(" ", camera->GetMoveSpeed(), .01f, 0.01f, 10.0f);
+
+			ImGui::Text("Mouse Move Speed: ");
+			ImGui::SameLine();
+			ImGui::DragFloat("  ", camera->GetMouseMoveSpeed(), .01f, 0.01f, 2.0f);
+		}
+
+		ImGui::PopID();
+
 		// Show the demo window
 		//ImGui::ShowDemoWindow();
 	}
+}
+
+// --------------------------------------------------------
+// Update your game here - user input, move objects, AI, etc.
+// --------------------------------------------------------
+void Game::Update(float deltaTime, float totalTime)
+{
+	
+
+	// Example input checking: Quit if the escape key is pressed
+	if (Input::GetInstance().KeyDown(VK_ESCAPE)) {
+		Quit();
+	}
+
+	//make objects move, scale, or rotate
+	gameEntities[0]->GetTransform()->MoveRelative(XMFLOAT3(-sin(totalTime * 2.0f) * 0.25f, 0, 0));
+	gameEntities[1]->GetTransform()->MoveRelative(XMFLOAT3(0, sin(totalTime) * 0.25f, 0));
+
+	gameEntities[2]->GetTransform()->Rotate(XMFLOAT3(0, 0, deltaTime * 0.5f));
+	gameEntities[3]->GetTransform()->Rotate(XMFLOAT3(0, deltaTime * 0.5f, 0));
+	gameEntities[4]->GetTransform()->Rotate(XMFLOAT3(deltaTime * 0.5f, 0, 0));
+
+	CreateGui(deltaTime);
 
 	camera->Update(deltaTime);
 }
@@ -1161,7 +1183,7 @@ void Game::Draw(float deltaTime, float totalTime)
 
 		std::shared_ptr<SimplePixelShader> ps = gameEntities[i]->GetMaterial()->GetPixelShader();
 		//send light data to shaders
-		ps->SetInt("numLights", lights.size());
+		ps->SetInt("numLights", static_cast<int>(lights.size()));
 		ps->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
 		ps->SetShaderResourceView("ShadowMap", shadowSRV);
 		ps->SetShaderResourceView("ShadowBox", shadowBoxSRV);
@@ -1255,13 +1277,15 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Game::CreateCubemap(
 			i, // Which array element?
 			1); // How many mip levels are in the texture?
 		// Copy from one resource (texture) to another
-		context->CopySubresourceRegion(
-			cubeMapTexture, // Destination resource
-			subresource, // Dest subresource index (one of the array elements)
-			0, 0, 0, // XYZ location of copy
-			textures[i], // Source resource
-			0, // Source subresource index (we're assuming there's only one)
-			0); // Source subresource "box" of data to copy (zero means the whole thing)
+		if (cubeMapTexture && textures[i]) {
+			context->CopySubresourceRegion(
+				cubeMapTexture, // Destination resource
+				subresource, // Dest subresource index (one of the array elements)
+				0, 0, 0, // XYZ location of copy
+				textures[i], // Source resource
+				0, // Source subresource index (we're assuming there's only one)
+				0); // Source subresource "box" of data to copy (zero means the whole thing)
+		}
 	}
 	// At this point, all of the faces have been copied into the
 	// cube map texture, so we can describe a shader resource view for it
@@ -1272,7 +1296,9 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Game::CreateCubemap(
 	srvDesc.TextureCube.MostDetailedMip = 0; // Index of the first mip we want to see
 	// Make the SRV
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> cubeSRV;
-	device->CreateShaderResourceView(cubeMapTexture, &srvDesc, cubeSRV.GetAddressOf());
+	if (cubeMapTexture) {
+		device->CreateShaderResourceView(cubeMapTexture, &srvDesc, cubeSRV.GetAddressOf());
+	}
 	// Now that we're done, clean up the stuff we don't need anymore
 	cubeMapTexture->Release(); // Done with this particular reference (the SRV has another)
 	for (int i = 0; i < 6; i++)
