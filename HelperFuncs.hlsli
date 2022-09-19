@@ -207,7 +207,7 @@ float3 Point(Light light, float3 normal, float3 cameraPos, float3 worldPos, floa
 // (Reflected light doesn't get diffused)
 	float3 balancedDiff = DiffuseEnergyConserve(diffuse, spec, metalness);
 	// Combine the final diffuse and specular values for this light
-	float3 total = (balancedDiff *surfaceColor.rgb + spec) * light.intensity * light.color;
+	float3 total = (balancedDiff * surfaceColor.rgb + spec) * light.intensity * light.color;
 
 	return total * Attenuate(light, worldPos);
 }

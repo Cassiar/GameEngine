@@ -43,6 +43,7 @@ private:
 
 	// Should we use vsync to limit the frame rate?
 	bool vsync;
+	const float toRadians = 3.1415 / 180;
 
 	// Initialization helper methods - feel free to customize, combine, etc.
 	void LoadTextures();
@@ -53,6 +54,7 @@ private:
 
 	void RenderDirectionalShadowMap();
 	void RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ, float farZ);
+	void RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, float range, float spotFallOff, float nearZ, float farZ);
 
 	DirectX::XMFLOAT3 ambientTerm;
 
@@ -121,7 +123,9 @@ private:
 	float shadowProjSize; //size of world that it can see
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shadowBoxSRV;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shadowSRV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shadowSpotSRV;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> shadowStencil;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> shadowSpotStencil;
 	std::vector<Microsoft::WRL::ComPtr<ID3D11DepthStencilView>> shadowBoxStencils;
 
 	//need custom samplers and rasterizers
@@ -129,5 +133,8 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> shadowRasterizer;
 	DirectX::XMFLOAT4X4 shadowViewMat;
 	DirectX::XMFLOAT4X4 shadowProjMat;
+
+	DirectX::XMFLOAT4X4 spotShadowViewMat;
+	DirectX::XMFLOAT4X4 spotShadowProjMat;
 };
 
