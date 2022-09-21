@@ -1040,7 +1040,7 @@ void Game::CreateGui(float deltaTime) {
 
 				bool nodeOpen = ImGui::TreeNode("Light", "%s %i", "Light", i + 1);
 				if (nodeOpen) {
-					const char* items[] = { "Directional", "Point" };
+					const char* items[] = { "Directional", "Point", "Spot" };
 					ImGui::Text("Light Type: ");
 					ImGui::SameLine();
 					ImGui::Combo("        ", &currLight.Type, items, IM_ARRAYSIZE(items));
@@ -1068,6 +1068,15 @@ void Game::CreateGui(float deltaTime) {
 						ImGui::DragFloat("  ", &currLight.Range, 0.1f, 0.1f, D3D11_FLOAT32_MAX);
 						break;
 
+					case 2:
+						ImGui::Text("Direction: ");
+						ImGui::SameLine();
+						ImGui::DragFloat3(" ", &currLight.Direction.x, .01f, -1.0f, 1.0f);
+
+						ImGui::Text("Spot Falloff: ");
+						ImGui::SameLine();
+						ImGui::DragFloat("  ", &currLight.SpotFalloff);
+						break;
 					default:
 						break;
 					}
@@ -1079,6 +1088,10 @@ void Game::CreateGui(float deltaTime) {
 					ImGui::Text("Color: ");
 					ImGui::SameLine();
 					ImGui::ColorEdit3(" ", &currLight.Color.x);
+
+					ImGui::Text("Casts Shadows: ");
+					ImGui::SameLine();
+					ImGui::Checkbox("   ", &currLight.CastsShadows);
 
 					ImGui::TreePop();
 				}
