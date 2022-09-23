@@ -27,6 +27,7 @@ struct VertexToPixel
 	//  v    v                v
 	float4 screenPosition	: SV_POSITION;
 	float4 shadowPos		: SHADOW_POSITION;
+	float4 spotShadowPos	: SPOT_SHADOW_POSITION;
 	float4 worldPos			: POSITION;
 	float3 normal			: NORMAL;
 	float3 tangent			: TANGENT;

@@ -83,13 +83,13 @@ float4 main(VertexToPixel input) : SV_TARGET
 	for (int i = 0; i < numLights || i < MAX_LIGHTS_NUM; i++) {
 		float3 lightAmount = 0;
 		if (lights[i].type == LIGHT_TYPE_DIRECTIONAL) {
-			lightAmount += DirectionalOld(lights[i], input.normal, cameraPos, input.worldPos, specExponent, surfaceColor, roughnessMap);
+			lightAmount += DirectionalOld(lights[i], input.normal, cameraPos, input.worldPos.xyz, specExponent, surfaceColor, roughnessMap);
 		}
 		else if (lights[i].type == LIGHT_TYPE_POINT) {
-			lightAmount += PointOld(lights[i], input.normal, cameraPos, input.worldPos, specExponent, surfaceColor, roughnessMap);
+			lightAmount += PointOld(lights[i], input.normal, cameraPos, input.worldPos.xyz, specExponent, surfaceColor, roughnessMap);
 		}
 		else if (lights[i].type == LIGHT_TYPE_SPOT) {
-			lightAmount += SpotOld(lights[i], input.normal, cameraPos, input.worldPos, specExponent, surfaceColor, roughnessMap);
+			lightAmount += SpotOld(lights[i], input.normal, cameraPos, input.worldPos.xyz, specExponent, surfaceColor, roughnessMap);
 		}
 		if (lights[i].castsShadows) {
 			//lightAmount *= shadowAmount;
