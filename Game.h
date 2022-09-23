@@ -99,7 +99,7 @@ private:
 
 	//array to hold meshes
 	std::vector<std::shared_ptr<Mesh>> meshes;
-	//array to hold game entities
+
 	std::shared_ptr<EntityManager> m_EntityManager;
 
 	std::shared_ptr<Camera> camera;
