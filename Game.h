@@ -4,20 +4,17 @@
 #include "DXCore.h"
 #include "EntityManager.h"
 #include "GameEntity.h"
+#include "Lights.h"
 #include "Material.h"
 #include "Mesh.h"
-#include "Transform.h"
-
-
 #include "SimpleShader.h"
 #include "Sky.h"
-#include "Lights.h"
-
+#include "Transform.h"
 
 #include <DirectXMath.h>
-#include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
 #include <memory> //for shared pointers
 #include <vector> //for vector
+#include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
 
 //handles updating game logic and stores objects that are drawn
 class Game 

@@ -368,6 +368,10 @@ void Mesh::Draw()
 //helper methods
 void Mesh::CreateBuffers(Vertex* in_verts, unsigned int numVerts, unsigned int* in_indices, Microsoft::WRL::ComPtr<ID3D11Device> device)
 {
+	for (int i = 0; i < numVerts; i++) {
+		m_verts.push_back(std::shared_ptr<Vertex>(in_verts));
+	}
+
 	//create the buffers and send to GPU
 	D3D11_BUFFER_DESC vbd = {};
 	vbd.Usage = D3D11_USAGE_IMMUTABLE;
