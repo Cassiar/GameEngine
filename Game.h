@@ -1,14 +1,18 @@
 #pragma once
 
-#include "DXCore.h"
-#include "Mesh.h"
-#include "Material.h"
-#include "Transform.h"
-#include "GameEntity.h"
 #include "Camera.h"
+#include "DXCore.h"
+#include "EntityManager.h"
+#include "GameEntity.h"
+#include "Material.h"
+#include "Mesh.h"
+#include "Transform.h"
+
+
 #include "SimpleShader.h"
-#include "Lights.h"
 #include "Sky.h"
+#include "Lights.h"
+
 
 #include <DirectXMath.h>
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
@@ -96,7 +100,7 @@ private:
 	//array to hold meshes
 	std::vector<std::shared_ptr<Mesh>> meshes;
 	//array to hold game entities
-	std::vector<std::shared_ptr<GameEntity>> gameEntities;
+	std::shared_ptr<EntityManager> m_EntityManager;
 
 	std::shared_ptr<Camera> camera;
 
