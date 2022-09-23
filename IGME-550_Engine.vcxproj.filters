@@ -78,6 +78,9 @@
     <ClCompile Include="Vendor\imgui-1.87\imgui_widgets.cpp">
       <Filter>Source Files\im_gui_src</Filter>
     </ClCompile>
+    <ClCompile Include="EntityManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Vertex.h">
@@ -142,6 +145,9 @@
     </ClInclude>
     <ClInclude Include="Vendor\imgui-1.87\imstb_truetype.h">
       <Filter>Header Files\im_gui_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityManager.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
