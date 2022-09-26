@@ -11,7 +11,7 @@ cbuffer ExternalData : register(b0) {
 	matrix lightProj;
 	matrix spotLightView;
 	matrix spotLightProj;
-	float3 lightPos;
+	//float3 lightPoses[MAX_LIGHTS_NUM];
 }
 
 // --------------------------------------------------------

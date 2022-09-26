@@ -363,6 +363,12 @@ void Game::CreateLights() {
 	temp.CastsShadows = true;
 
 	lights.push_back(temp);
+
+	for (int i = 0; i < lights.size(); i++)
+	{
+		lightPoses.push_back(lights[i].Position);
+	}
+
 }
 
 void Game::CreateShadowResources()
@@ -805,7 +811,7 @@ void Game::RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, flo
 
 	float yAngle = (spotFallOff / 2.0f) / range;
 	//use perspective for point light shadows
-	XMMATRIX shProj = XMMatrixPerspectiveFovLH(45.0f * toRadians, 1.0f, nearZ, farZ);// XMMatrixPerspectiveLH(spotFallOff, spotFallOff, nearZ, farZ);
+	XMMATRIX shProj = XMMatrixPerspectiveFovLH(90.0f * toRadians, 1.0f, nearZ, farZ);// XMMatrixPerspectiveLH(spotFallOff, spotFallOff, nearZ, farZ);
 	XMStoreFloat4x4(&spotShadowProjMat, shProj);
 
 	//setup pipline for shadow map
@@ -1190,9 +1196,12 @@ void Game::Draw(float deltaTime, float totalTime)
 		vs->SetMatrix4x4("spotLightView", spotShadowViewMat);
 		vs->SetMatrix4x4("spotLightProj", spotShadowProjMat);
 		for (int j = 0; j < lights.size(); j++) {
-			if (lights[j].Type == LIGHT_TYPE_POINT)
-				vs->SetFloat3("lightPos", lights[j].Position);
+			if (lights[j].Type == LIGHT_TYPE_POINT) {
+				lightPoses[j] = lights[j].Position;
+			}
 		}
+
+		//vs->SetData("lightPoses", &lightPoses[0], sizeof(XMFLOAT3) * (int)lightPoses.size());
 
 		std::shared_ptr<SimplePixelShader> ps = gameEntities[i]->GetMaterial()->GetPixelShader();
 		//send light data to shaders

@@ -52,9 +52,9 @@ struct Light {
 	float intensity			: INTENSITY; //All need this
 	float3 color			: COLOR; //all lights need a color
 	float spotFalloff		: SPOTFALLOFF; //spot lights need to have cone size
-	bool castsShadows		: CASTSHADOW;
 	float nearZ				: NEARZ; //near and far z values for shadow maps
-	float farZ				: FARZ; 
+	float farZ				: FARZ;
+	bool castsShadows : CASTSHADOW;
 };
 
 // Struct representing a single vertex worth of data

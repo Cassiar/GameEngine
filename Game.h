@@ -61,6 +61,8 @@ private:
 
 	//test light for lighting equations
 	std::vector<Light> lights;
+	//array to hold each light's position, used to simplify passing in point light info
+	std::vector<DirectX::XMFLOAT3> lightPoses;
 
 	// Note the usage of ComPtr below
 	//  - This is a smart pointer for objects that abide by the
