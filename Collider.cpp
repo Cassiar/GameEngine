@@ -2,7 +2,7 @@
 
 using namespace DirectX;
 
-Collider::Collider(std::shared_ptr<Mesh> colliderMesh, std::shared_ptr<Transform> transform)
+Collider::Collider(std::shared_ptr<Mesh> colliderMesh, Transform* transform)
 	: m_objectMesh(colliderMesh),
 	m_transform(transform),
 	m_pointsDirty(true),
@@ -11,45 +11,59 @@ Collider::Collider(std::shared_ptr<Mesh> colliderMesh, std::shared_ptr<Transform
 	CalcCenterPoint();
 }
 
+//TEMP unused
+Collider::~Collider()
+{
+}
+
 //TODO: OPTIMIZEEEEE This func could 100% be optimized better
 void Collider::CalcMinMaxPoints() 
 {
 	// Makes sure we don't call this when it's not needed
 	if (!m_pointsDirty) {
-		return;
+		//return;
 	}
 
 	std::vector<Vertex> verts = m_objectMesh->GetVerticies();
 
+	XMFLOAT3 tempPos = verts[0].Position;
+	XMFLOAT4X4 worldMat = m_transform->GetWorldMatrix();
+	XMStoreFloat3(&tempPos, XMVector4Transform(XMLoadFloat3(&tempPos), XMLoadFloat4x4(&worldMat)));
+	l_transformedPositions.push_back(tempPos);
+
 	//Inefficient could probs be better done through a compute shader
-	XMVECTOR currPos = XMVector4Transform(XMLoadFloat3(&verts[0].Position), XMLoadFloat4x4(&m_transform->GetWorldMatrix()));
-	XMFLOAT3 vecToPush;
-	XMStoreFloat3(&vecToPush, currPos);
-	l_transformedPositions.push_back(vecToPush);
-
-	XMVECTOR maxVec = currPos;
-	XMVECTOR minVec = currPos;
-
+	float xMax = verts[0].Position.x;
+	float xMin = verts[0].Position.x;
+						 
+	float yMax = verts[0].Position.y;
+	float yMin = verts[0].Position.y;
+						 
+	float zMax = verts[0].Position.z;
+	float zMin = verts[0].Position.z;
 	for (int i = 1; i < verts.size(); i++)
 	{
-		//See above suggestion
-		currPos = XMVector4Transform(XMLoadFloat3(&verts[0].Position), XMLoadFloat4x4(&m_transform->GetWorldMatrix()));
-		XMStoreFloat3(&vecToPush, currPos);
-		l_transformedPositions.push_back(vecToPush);
-		
-		maxVec = XMVectorGreater(currPos, maxVec);
-		minVec = XMVectorLess(currPos, minVec);
+		tempPos = verts[i].Position;
+		XMFLOAT3 currPos = verts[i].Position;
+		XMStoreFloat3(&currPos, XMVector4Transform(XMLoadFloat3(&currPos), XMLoadFloat4x4(&worldMat)));
+		l_transformedPositions.push_back(currPos);
+
+		xMax = currPos.x > xMax ? currPos.x : xMax;
+		xMin = currPos.x < xMin ? currPos.x : xMax;
+		yMax = currPos.y > yMax ? currPos.y : yMax;
+		yMin = currPos.y < yMin ? currPos.y : yMax;
+		zMax = currPos.z > zMax ? currPos.z : zMax;
+		zMin = currPos.z < zMin ? currPos.z : zMax;
 	}
 
-	XMStoreFloat3(&m_maxPoint, maxVec);
-	XMStoreFloat3(&m_minPoint, minVec);
+	XMStoreFloat3(&m_maxPoint, XMVectorSet(xMax, yMax, zMax, 0.0f));
+	XMStoreFloat3(&m_minPoint, XMVectorSet(xMin, yMin, zMin, 0.0f));
 
 	m_pointsDirty = false;
 }
 
 void Collider::CalcHalfDimensions() {
 	if (!m_halvesDirty) {
-		return;
+		//return;
 	}
 
 	CalcMinMaxPoints();
@@ -59,8 +73,6 @@ void Collider::CalcHalfDimensions() {
 	m_halfDepth =  abs(m_maxPoint.z - m_minPoint.z) / 2.0f;
 
 	m_preCheckRadiusSquared = pow(m_halfWidth, 2) + pow(m_halfHeight, 2) + pow(m_halfDepth, 2);
-
-	CalcCenterPoint();
 
 	m_halvesDirty = false;
 }
@@ -72,6 +84,10 @@ void Collider::CalcCenterPoint() {
 }
 
 bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
+	//Should be subject to change not a great position to mark this
+	m_pointsDirty = m_transform->IsWorldDirty();
+	m_halvesDirty = m_pointsDirty;
+
 	//Shouldn't be computationally expensive to do this if we maintain the proper dirty booleans
 	CalcCenterPoint();
 	other->CalcCenterPoint();
@@ -85,26 +101,36 @@ bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
 }
 
 bool Collider::CheckGJKCollision(const std::shared_ptr<Collider> other) {
-	std::vector<XMVECTOR> supports;
+	CalcCenterPoint();
+
+	std::vector<XMVECTOR*> supports;
 	XMVECTOR currSupport = CalcSupport(XMLoadFloat3(&m_maxPoint)) - other->CalcSupport(-XMLoadFloat3(&m_maxPoint));
-	supports.push_back(currSupport);
+	supports.push_back(&currSupport);
 
-	XMVECTOR currDir = -currSupport;
+	XMVECTOR negated = XMVectorNegate(currSupport);
+	XMVECTOR* currDir = &negated;
 
+	float fADotDir = 0.0f;
+
+	int i = 0;
 	// (fADotDir < 0)
-	while (true) {
-		XMVECTOR pointA = CalcSupport(currDir) - other->CalcSupport(-currDir);
-		XMVECTOR aDotDir = XMVector3Dot(pointA, currDir);
-		float fADotDir;
+	while(fADotDir >= 0) {
+		i++;
+		XMVECTOR pointA = CalcSupport(*currDir) - other->CalcSupport(-(*currDir));
+		XMVECTOR aDotDir = XMVector3Dot(pointA, *currDir);
+		
 		XMStoreFloat(&fADotDir, aDotDir);
 
 		if (fADotDir < 0) {
 			return false;
 		}
 
-		supports.push_back(pointA);
+		supports.push_back(&pointA);
+		
+		XMFLOAT3 directionPrint;
+		XMStoreFloat3(&directionPrint, *currDir);
 
-		if (DoSimplex(supports, currDir)) {
+		if (DoSimplex(supports, *currDir)) {
 			return true;
 		}
 	}
@@ -118,7 +144,7 @@ XMVECTOR Collider::CalcSupport(const XMVECTOR& direction) {
 
 	int posIndex = 0;
 
-	for (int i = 1; i < l_transformedPositions.size(); i++) {
+	for (int i = 1; i < 30 && i < l_transformedPositions.size(); i++) {
 		XMVECTOR currDot = XMVector3Dot(XMLoadFloat3(&l_transformedPositions[i]), direction);
 
 		if (XMVector3Greater(currDot, max)) {
@@ -132,15 +158,15 @@ XMVECTOR Collider::CalcSupport(const XMVECTOR& direction) {
 
 //Implementation based on https://www.youtube.com/watch?v=Qupqu1xe7Io
 
-bool Collider::DoSimplex(std::vector<XMVECTOR> supports, DirectX::XMVECTOR& direction) {
+bool Collider::DoSimplex(std::vector<XMVECTOR*>& supports, DirectX::XMVECTOR& direction) {
 	XMVECTOR zeroVec = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	XMVECTOR ao = -supports[1];
-	XMVECTOR ab = supports[0] - supports[1];
+	XMVECTOR ao = -*supports[1];
+	XMVECTOR ab = *supports[0] - *supports[1];
 
 	XMVECTOR ac;
 	XMVECTOR abc;
 	if (supports.size() > 2) {
-		ac = supports[0] - supports[2];
+		ac = *supports[0] - *supports[2];
 		abc = XMVector3Cross(ab, ac);
 	}
 
@@ -187,9 +213,9 @@ bool Collider::DoSimplex(std::vector<XMVECTOR> supports, DirectX::XMVECTOR& dire
 				}
 				else {
 					direction = -abc;
-					XMVECTOR temp = supports[1];
+					XMVECTOR temp = *supports[1];
 					supports[1] = supports[2];
-					supports[2] = temp;
+					supports[2] = &temp;
 				}
 			}
 		}
@@ -197,9 +223,9 @@ bool Collider::DoSimplex(std::vector<XMVECTOR> supports, DirectX::XMVECTOR& dire
 		break;
 
 	case 4:
-		XMVECTOR ad = supports[3] - supports[0];
-		XMVECTOR bd = supports[3] - supports[1];
-		XMVECTOR bc = supports[2] - supports[1];
+		XMVECTOR ad = *supports[3] - *supports[0];
+		XMVECTOR bd = *supports[3] - *supports[1];
+		XMVECTOR bc = *supports[2] - *supports[1];
 
 		XMVECTOR abd = XMVector3Cross(ab, ad);
 		XMVECTOR acd = XMVector3Cross(ac, ad);
@@ -264,7 +290,7 @@ bool Collider::DoSimplex(std::vector<XMVECTOR> supports, DirectX::XMVECTOR& dire
 		}
 		else if (dotEval(bcd)) {
 			supports.erase(supports.begin() + 0);
-			XMVECTOR bo = -supports[0];
+			XMVECTOR bo = -*supports[0];
 
 			// Plane BCD x Vector BD
 			if (dotEval(XMVector3Cross(bcd, bd))) {

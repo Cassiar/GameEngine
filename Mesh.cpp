@@ -12,11 +12,6 @@ Mesh::Mesh(Vertex* verts, unsigned int numVerts, unsigned int* indices, unsigned
 {
     this->numIndices = numIndices;
     this->context = context;
-
-	for (int i = 0; i < numVerts; i++)
-	{
-		m_verts.push_back(*verts);
-	}
 	
 	CalculateTangents(verts, numVerts, indices, numIndices);
 	CreateBuffers(verts, numVerts, indices, device);
@@ -374,7 +369,7 @@ void Mesh::Draw()
 void Mesh::CreateBuffers(Vertex* in_verts, unsigned int numVerts, unsigned int* in_indices, Microsoft::WRL::ComPtr<ID3D11Device> device)
 {
 	for (int i = 0; i < numVerts; i++) {
-		m_verts.push_back(std::shared_ptr<Vertex>(in_verts));
+		m_verts.push_back(in_verts[i]);
 	}
 
 	//create the buffers and send to GPU

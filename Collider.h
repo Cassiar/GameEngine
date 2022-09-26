@@ -9,7 +9,7 @@ class Collider
 private:
 	std::shared_ptr<Mesh> m_objectMesh;
 	std::vector<DirectX::XMFLOAT3> l_transformedPositions;
-	std::shared_ptr<Transform> m_transform;
+	Transform* m_transform;
 
 	DirectX::XMFLOAT3 m_maxPoint;
 	DirectX::XMFLOAT3 m_minPoint;
@@ -30,10 +30,10 @@ private:
 
 	bool CheckGJKCollision(const std::shared_ptr<Collider> other);
 	DirectX::XMVECTOR CalcSupport(const DirectX::XMVECTOR& direction);
-	bool DoSimplex(std::vector<DirectX::XMVECTOR> supports, DirectX::XMVECTOR& direction);
+	bool DoSimplex(std::vector<DirectX::XMVECTOR*>& supports, DirectX::XMVECTOR& direction);
 
 public:
-	Collider(std::shared_ptr<Mesh> colliderMesh, std::shared_ptr<Transform> transform);
+	Collider(std::shared_ptr<Mesh> colliderMesh, Transform* transform);
 	~Collider();
 
 	std::shared_ptr<Mesh> GetCollisionMesh() { return m_objectMesh; }

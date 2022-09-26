@@ -8,6 +8,20 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 	material = in_material;
 	camera = in_camera;
 	transform = Transform();
+
+	m_rigidBody = std::make_shared<RigidBody>(&transform);
+	m_collider = std::make_shared<Collider>(in_mesh, &transform);
+}
+
+GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<RigidBody> rigidBody, std::shared_ptr<Collider> collider)
+{
+	mesh = in_mesh;
+	material = in_material;
+	camera = in_camera;
+	transform = Transform();
+
+	m_rigidBody = rigidBody;
+	m_collider = collider;
 }
 
 GameEntity::~GameEntity()
@@ -59,4 +73,29 @@ void GameEntity::Draw()
 	material->GetPixelShader()->SetShader();
 
 	mesh->Draw();
+}
+
+void GameEntity::Update(float dt, std::vector<std::shared_ptr<GameEntity>> collisionEntities)
+{
+	if (m_rigidBody)
+	{
+		m_rigidBody->UpdateTransform(dt);
+	}
+
+	// Implement a singleton collision manager allowing for ease of collision checks
+	if (m_collider)
+	{
+		int i = 0;
+		for (auto& entity : collisionEntities)
+		{
+			if (m_collider->CheckForCollision(entity->GetCollider()) && i <= 6) {
+				material->SetColorTint(DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f));
+			}
+			else
+			{
+				material->SetColorTint(DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+			}
+			i++;
+		}
+	}
 }

@@ -30,6 +30,6 @@ public:
 	int NumEntities() {	return l_entities.size(); }
 
 	void const DrawEntities(bool prepareMat = true);
-	void UpdateEntities();
+	void UpdateEntities(float dt);
 };
 

@@ -279,7 +279,6 @@ void Game::CreateBasicGeometry()
 
 	std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
 
-
 	//create some entities
 	//cube direectly in front of camera
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[0], materials[0], camera));
@@ -1158,6 +1157,8 @@ void Game::Update(float deltaTime, float totalTime)
 	m_EntityManager->GetEntity(2)->GetTransform()->Rotate(XMFLOAT3(0, 0, deltaTime * 0.5f));
 	m_EntityManager->GetEntity(3)->GetTransform()->Rotate(XMFLOAT3(0, deltaTime * 0.5f, 0));
 	m_EntityManager->GetEntity(4)->GetTransform()->Rotate(XMFLOAT3(deltaTime * 0.5f, 0, 0));
+
+	m_EntityManager->UpdateEntities(deltaTime);
 
 	CreateGui(deltaTime);
 

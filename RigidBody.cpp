@@ -5,7 +5,8 @@ using namespace DirectX;
 RigidBody::RigidBody(Transform* parentTransform)
 	: m_transform(parentTransform),
 	m_velocity(XMFLOAT3(0.0f, 0.0f, 0.0f)),
-	m_acceleration(XMFLOAT3(0.0f, 0.0f, 0.0f))
+	m_acceleration(XMFLOAT3(0.0f, 0.0f, 0.0f)),
+	m_hasGravity(false)
 {
 }
 

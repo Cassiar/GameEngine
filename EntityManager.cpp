@@ -61,6 +61,10 @@ void const EntityManager::DrawEntities(bool prepareMat)
     }
 }
 
-void EntityManager::UpdateEntities()
+void EntityManager::UpdateEntities(float dt)
 {
+    for (auto& entity : l_entities)
+    {
+        entity->Update(dt, l_entities);
+    }
 }
