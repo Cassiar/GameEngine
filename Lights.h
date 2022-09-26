@@ -6,6 +6,8 @@
 #define LIGHT_TYPE_POINT 1
 #define LIGHT_TYPE_SPOT 2
 
+#define MAX_POINT_SHADOWS_NUM 2
+
 //define struct to hold needed data for our lights
 struct Light {
 	int Type; //which kind of light, use those above

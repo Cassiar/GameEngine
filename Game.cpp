@@ -452,31 +452,36 @@ void Game::CreateShadowResources()
 	cubeDesc.Usage = D3D11_USAGE_DEFAULT; // Standard usage
 
 	// Create the actual texture resource
-	Microsoft::WRL::ComPtr<ID3D11Texture2D> cubeMapTexture = 0;
-	device->CreateTexture2D(&cubeDesc, 0, cubeMapTexture.GetAddressOf());
+	std::vector<Microsoft::WRL::ComPtr<ID3D11Texture2D>> cubeMapTextures;
+	cubeMapTextures.resize(MAX_POINT_SHADOWS_NUM);
 
+	shadowBoxStencils.resize(MAX_POINT_SHADOWS_NUM);
+	shadowBoxSRVs.resize(MAX_POINT_SHADOWS_NUM);
+	//run twice to set up two point maps
+	for (int i = 0; i < MAX_POINT_SHADOWS_NUM; i++) {
+		device->CreateTexture2D(&cubeDesc, 0, cubeMapTextures[i].GetAddressOf());
 
-	for (int i = 0; i < 6; i++) {
-		//create depth/stencil
-		D3D11_DEPTH_STENCIL_VIEW_DESC shadowBoxStencilDesc = {};
-		shadowBoxStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
-		shadowBoxStencilDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
-		shadowBoxStencilDesc.Texture2DArray.MipSlice = 0;
-		shadowBoxStencilDesc.Texture2DArray.ArraySize = 1;
-		shadowBoxStencilDesc.Texture2DArray.FirstArraySlice = i;
+		for (int j = 0; j < 6; j++) {
+			//create depth/stencil
+			D3D11_DEPTH_STENCIL_VIEW_DESC shadowBoxStencilDesc = {};
+			shadowBoxStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
+			shadowBoxStencilDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+			shadowBoxStencilDesc.Texture2DArray.MipSlice = 0;
+			shadowBoxStencilDesc.Texture2DArray.ArraySize = 1;
+			shadowBoxStencilDesc.Texture2DArray.FirstArraySlice = j;
 
-		shadowBoxStencils.push_back(nullptr);
-		device->CreateDepthStencilView(cubeMapTexture.Get(), &shadowBoxStencilDesc, shadowBoxStencils[shadowBoxStencils.size() - 1].GetAddressOf());
+			shadowBoxStencils[i].push_back(nullptr);
+			device->CreateDepthStencilView(cubeMapTextures[i].Get(), &shadowBoxStencilDesc, shadowBoxStencils[i][j].GetAddressOf());
+		}
+
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE; // Treat this as a cube!
+		srvDesc.TextureCube.MipLevels = 1; // Only need access to 1 mip
+		srvDesc.TextureCube.MostDetailedMip = 0; // Index of the first mip we want to see
+		device->CreateShaderResourceView(cubeMapTextures[i].Get(), &srvDesc, shadowBoxSRVs[i].GetAddressOf());
+
 	}
-
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE; // Treat this as a cube!
-	srvDesc.TextureCube.MipLevels = 1; // Only need access to 1 mip
-	srvDesc.TextureCube.MostDetailedMip = 0; // Index of the first mip we want to see
-	device->CreateShaderResourceView(cubeMapTexture.Get(), &srvDesc, shadowBoxSRV.GetAddressOf());
-
-
 }
 
 void Game::RenderDirectionalShadowMap()
@@ -543,7 +548,7 @@ void Game::RenderDirectionalShadowMap()
 	context->RSSetState(0); //reset
 }
 
-void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ, float farZ)
+void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, int index, float range, float nearZ, float farZ)
 {
 
 	//unbind shadow resource
@@ -551,9 +556,22 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 	context->PSSetShaderResources(6, 1, pSRV);
 
 	//setup pipline for shadow map
-	context->OMSetRenderTargets(0, 0, shadowBoxStencils[0].Get());
-	context->ClearDepthStencilView(shadowBoxStencils[0].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][0].Get());
+	context->ClearDepthStencilView(shadowBoxStencils[index][0].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	context->RSSetState(shadowRasterizer.Get());
+
+	//find which entities are in range to be rendered to map
+	renderableEntities.clear(); //clear previous culling
+	//loop and draw all objects in range of shadow
+	// '&' is important because it prevents making copies
+	for (auto& entities : gameEntities) {
+		DirectX::XMFLOAT3 ePos = entities.get()->GetTransform()->GetPosition();
+		//get square dist cause faster
+		float squareDist = pow(pos.x - ePos.x, 2) + pow(pos.y - ePos.y, 2) + pow(pos.z - ePos.z, 2);
+		if (squareDist < pow(farZ, 2)) {
+			renderableEntities.push_back(entities);
+		}
+	}
 
 	//Create viewport that matches shadow map resolution
 	D3D11_VIEWPORT vp = {};
@@ -594,7 +612,7 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (auto& entity : renderableEntities) {
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -609,8 +627,8 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 	//left side
 #pragma region Left
 
-	context->OMSetRenderTargets(0, 0, shadowBoxStencils[1].Get());
-	context->ClearDepthStencilView(shadowBoxStencils[1].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][1].Get());
+	context->ClearDepthStencilView(shadowBoxStencils[index][1].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	shView = XMMatrixLookToLH(
 		XMVectorSet(pos.x, pos.y, pos.z, 0),//start at origin to match point like
@@ -630,7 +648,7 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (auto& entity : renderableEntities) {
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -644,8 +662,8 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 #pragma region Up
 
-	context->OMSetRenderTargets(0, 0, shadowBoxStencils[2].Get());
-	context->ClearDepthStencilView(shadowBoxStencils[2].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][2].Get());
+	context->ClearDepthStencilView(shadowBoxStencils[index][2].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	shView = XMMatrixLookToLH(
 		XMVectorSet(pos.x, pos.y, pos.z, 0),//start at origin to match point like
@@ -665,7 +683,7 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (auto& entity : renderableEntities) {
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -679,8 +697,8 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 #pragma region Down
 
-	context->OMSetRenderTargets(0, 0, shadowBoxStencils[3].Get());
-	context->ClearDepthStencilView(shadowBoxStencils[3].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][3].Get());
+	context->ClearDepthStencilView(shadowBoxStencils[index][3].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	shView = XMMatrixLookToLH(
 		XMVectorSet(pos.x, pos.y, pos.z, 0),//start at origin to match point like
@@ -700,7 +718,7 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (auto& entity : renderableEntities) {
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -714,8 +732,8 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 #pragma region Front
 
-	context->OMSetRenderTargets(0, 0, shadowBoxStencils[4].Get());
-	context->ClearDepthStencilView(shadowBoxStencils[4].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][4].Get());
+	context->ClearDepthStencilView(shadowBoxStencils[index][4].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	shView = XMMatrixLookToLH(
 		XMVectorSet(pos.x, pos.y, pos.z, 0),//start at origin to match point like
@@ -735,7 +753,7 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (auto& entity : renderableEntities) {
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -749,8 +767,8 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 #pragma region Back
 
-	context->OMSetRenderTargets(0, 0, shadowBoxStencils[5].Get());
-	context->ClearDepthStencilView(shadowBoxStencils[5].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][5].Get());
+	context->ClearDepthStencilView(shadowBoxStencils[index][5].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	shView = XMMatrixLookToLH(
 		XMVectorSet(pos.x, pos.y, pos.z, 0),//start at origin to match point like
@@ -770,7 +788,7 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (auto& entity : renderableEntities) {
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -1172,14 +1190,17 @@ void Game::Draw(float deltaTime, float totalTime)
 		0);
 	//stuff above needed every frame.
 
+	//make sure we only render two point maps at max
+	int numPointMaps = 0;
 	//do shadow rendering stuff
 	for (int i = 0; i < lights.size(); i++) {
 		if (lights[i].CastsShadows) {
 			if (lights[i].Type == LIGHT_TYPE_DIRECTIONAL) {
 				RenderDirectionalShadowMap();
 			}
-			else if (lights[i].Type == LIGHT_TYPE_POINT) {
-				RenderPointShadowMap(lights[i].Position, lights[i].Range, lights[i].NearZ, lights[i].FarZ);
+			else if (lights[i].Type == LIGHT_TYPE_POINT || numPointMaps > MAX_POINT_SHADOWS_NUM) {
+				RenderPointShadowMap(lights[i].Position, numPointMaps, lights[i].Range, lights[i].NearZ, lights[i].FarZ);
+				numPointMaps++;
 			}
 			else if (lights[i].Type == LIGHT_TYPE_SPOT) {
 				RenderSpotShadowMap(lights[i].Position, lights[i].Direction, lights[i].Range, lights[i].SpotFalloff, lights[i].NearZ, lights[i].FarZ);
@@ -1208,7 +1229,7 @@ void Game::Draw(float deltaTime, float totalTime)
 		ps->SetInt("numLights", static_cast<int>(lights.size()));
 		ps->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
 		ps->SetShaderResourceView("ShadowMap", shadowSRV);
-		ps->SetShaderResourceView("ShadowBox", shadowBoxSRV);
+		ps->SetShaderResourceView("ShadowBox", shadowBoxSRVs[0]);
 		ps->SetShaderResourceView("ShadowSpotMap", shadowSpotSRV);
 
 		ps->SetFloat3("ambientTerm", ambientTerm);
@@ -1327,4 +1348,31 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Game::CreateCubemap(
 		textures[i]->Release();
 	// Send back the SRV, which is what we need for our shaders
 	return cubeSRV;
+}
+
+///Helper function to reduce amount of typing in shadow map functions.
+void PassShadowObjs() {
+	/*
+	//turn on our special shadow shader
+	shadowVertexShader->SetShader();
+	//the view and proj will be the same for all objects
+	shadowVertexShader->SetMatrix4x4("view", shadowBoxViewMat);
+	shadowVertexShader->SetMatrix4x4("proj", shadowBoxProjMat);
+	shadowVertexShader->SetFloat3("lightPos", pos);
+	//custom ps that outputs linear depth
+	//shadowPixelShader->SetShader();
+	context->PSSetShader(0, 0, 0);
+
+	//loop and draw all objects in range of shadow
+	// '&' is important because it prevents making copies
+	for (auto& entity : renderableEntities) {
+		//set this game entity's world mat, send to gpu
+		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
+		//copy data over
+		shadowVertexShader->CopyAllBufferData();
+
+		//draw. Don't need material
+		entity->GetMesh()->Draw();
+	}
+	*/
 }

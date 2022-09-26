@@ -15,6 +15,7 @@ static const float PI = 3.14159265359f;
 
 
 #define MAX_LIGHTS_NUM 10
+#define MAX_POINT_SHADOWS_NUM 2
 
 //struct shared between vertex and pixel shader
 //which passes info from vertex to pixel shader.
