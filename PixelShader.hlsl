@@ -18,7 +18,7 @@ Texture2D NormalTexture : register(t3);
 Texture2D MetalnessTexture : register(t4);
 Texture2D ShadowMap : register(t5);
 TextureCube ShadowBox : register(t6);
-Texture2D ShadowSpotMap : register(t7);
+Texture2D ShadowSpotMap[MAX_POINT_SHADOWS_NUM] : register(t7);
 
 SamplerState BasicSampler : register(s0);
 SamplerComparisonState ShadowSampler : register(s1);
