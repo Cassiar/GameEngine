@@ -113,7 +113,7 @@ void Game::Init()
 	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for scifi panel
 	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for cobblestone wall
 	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for bronze
-	catapultMaterial = std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, catapultPixelShader);
+	//catapultMaterial = std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, catapultPixelShader);
 
 	//add textures to each material
 	for (unsigned int i = 0; i < materials.size(); i++) {
@@ -125,10 +125,10 @@ void Game::Init()
 		materials[i]->AddTextureSRV("MetalnessTexture", metalnessMaps[i]);
 	}
 
-	catapultMaterial->AddSampler("BasicSampler", basicSampler);
-	catapultMaterial->AddTextureSRV("AlbedoTexture", catapultMaps[0]);
-	catapultMaterial->AddTextureSRV("RoughnessTexture", catapultMaps[1]);
-	catapultMaterial->AddTextureSRV("NormalTexture", catapultMaps[2]);
+	//catapultMaterial->AddSampler("BasicSampler", basicSampler);
+	//catapultMaterial->AddTextureSRV("AlbedoTexture", catapultMaps[0]);
+	//catapultMaterial->AddTextureSRV("RoughnessTexture", catapultMaps[1]);
+	//catapultMaterial->AddTextureSRV("NormalTexture", catapultMaps[2]);
 
 
 	//load create the shapes and skybox
@@ -214,17 +214,17 @@ void Game::LoadTextures() {
 
 
 	//catapult materials
-	catapultMaps.push_back(nullptr);
-	catapultMaps.push_back(nullptr);
-	catapultMaps.push_back(nullptr);
+	//catapultMaps.push_back(nullptr);
+	//catapultMaps.push_back(nullptr);
+	//catapultMaps.push_back(nullptr);
 
-	CreateWICTextureFromFile(device.Get(), context.Get(),
+	/*CreateWICTextureFromFile(device.Get(), context.Get(),
 		GetFullPathTo_Wide(L"../../Assets/Textures/Catapult_Diffuse.tif").c_str(), nullptr, catapultMaps[0].GetAddressOf());
 	CreateWICTextureFromFile(device.Get(), context.Get(),
 		GetFullPathTo_Wide(L"../../Assets/Textures/Catapult_Specular.tif").c_str(), nullptr, catapultMaps[1].GetAddressOf());
 	CreateWICTextureFromFile(device.Get(), context.Get(),
 		GetFullPathTo_Wide(L"../../Assets/Textures/Catapult_Bump.tif").c_str(), nullptr, catapultMaps[2].GetAddressOf());
-
+		*/
 
 	//load cube map
 	skybox = CreateCubemap(
@@ -256,7 +256,7 @@ void Game::LoadShaders()
 	skyPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"SkyPixelShader.cso").c_str());
 	shadowPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"ShadowPixelShader.cso").c_str());
 
-	catapultPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"CatapultPixelShader.cso").c_str());
+	//catapultPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"CatapultPixelShader.cso").c_str());
 	a5PixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"A5CustomPS.cso").c_str());
 }
 
@@ -273,9 +273,8 @@ void Game::CreateBasicGeometry()
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/helix.obj").c_str(), device, context));
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/sphere.obj").c_str(), device, context));
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/quad.obj").c_str(), device, context));
-	//meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Toon/tree obj.obj").c_str(), device, context));
 
-	std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
+	//std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
 
 
 	//create some entities
@@ -309,12 +308,12 @@ void Game::CreateBasicGeometry()
 	gameEntities[6]->GetTransform()->Scale(20);//scale up a bunch to act as floor
 
 	//catapult
-	if (catapult->GetVertexBuffer()) {
-		meshes.push_back(catapult);
-		gameEntities.push_back(std::make_shared<GameEntity>(meshes[5], catapultMaterial, camera));
-		gameEntities[7]->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, -5.0f, -2.5f));
-		gameEntities[7]->GetTransform()->SetScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
-	}
+	//if (catapult->GetVertexBuffer()) {
+	//	meshes.push_back(catapult);
+	//	gameEntities.push_back(std::make_shared<GameEntity>(meshes[5], catapultMaterial, camera));
+	//	gameEntities[7]->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, -5.0f, -2.5f));
+	//	gameEntities[7]->GetTransform()->SetScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
+	//}
 
 	//create sky obj
 	sky = std::make_shared<Sky>(meshes[0], basicSampler, skybox, device, context, skyVertexShader, skyPixelShader);
@@ -553,7 +552,7 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, int index, float range, f
 
 	//unbind shadow resource
 	ID3D11ShaderResourceView* const pSRV[1] = { NULL };
-	context->PSSetShaderResources(6, 1, pSRV);
+	context->PSSetShaderResources(7, 1, pSRV); //shadow map starts at 7th
 
 	//setup pipline for shadow map
 	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][0].Get());
@@ -813,7 +812,7 @@ void Game::RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, flo
 
 	//unbind shadow resource
 	ID3D11ShaderResourceView* const pSRV[1] = { NULL };
-	context->PSSetShaderResources(7, 1, pSRV); //spot shadow map is 7th
+	context->PSSetShaderResources(6, 1, pSRV); //spot shadow map is 6th
 
 	//create "camera" mats
 	XMMATRIX shView = XMMatrixLookToLH(
@@ -1198,7 +1197,7 @@ void Game::Draw(float deltaTime, float totalTime)
 			if (lights[i].Type == LIGHT_TYPE_DIRECTIONAL) {
 				RenderDirectionalShadowMap();
 			}
-			else if (lights[i].Type == LIGHT_TYPE_POINT || numPointMaps > MAX_POINT_SHADOWS_NUM) {
+			else if (lights[i].Type == LIGHT_TYPE_POINT || numPointMaps >= MAX_POINT_SHADOWS_NUM) {
 				RenderPointShadowMap(lights[i].Position, numPointMaps, lights[i].Range, lights[i].NearZ, lights[i].FarZ);
 				numPointMaps++;
 			}
@@ -1213,14 +1212,15 @@ void Game::Draw(float deltaTime, float totalTime)
 		std::shared_ptr<SimpleVertexShader> vs = gameEntities[i]->GetMaterial()->GetVertexShader();
 		//send shadow info to vertex shader
 		vs->SetMatrix4x4("lightView", shadowViewMat);
+		//vs->SetData("lightView", &sh)
 		vs->SetMatrix4x4("lightProj", shadowProjMat);
 		vs->SetMatrix4x4("spotLightView", spotShadowViewMat);
 		vs->SetMatrix4x4("spotLightProj", spotShadowProjMat);
-		for (int j = 0; j < lights.size(); j++) {
+		/*for (int j = 0; j < lights.size(); j++) {
 			if (lights[j].Type == LIGHT_TYPE_POINT) {
 				lightPoses[j] = lights[j].Position;
 			}
-		}
+		}*/
 
 		//vs->SetData("lightPoses", &lightPoses[0], sizeof(XMFLOAT3) * (int)lightPoses.size());
 
@@ -1229,7 +1229,8 @@ void Game::Draw(float deltaTime, float totalTime)
 		ps->SetInt("numLights", static_cast<int>(lights.size()));
 		ps->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
 		ps->SetShaderResourceView("ShadowMap", shadowSRV);
-		ps->SetShaderResourceView("ShadowBox", shadowBoxSRVs[0]);
+		//ps->SetShaderResourceView("ShadowBox", shadowBoxSRVs[0]);
+		ps->SetShaderResourceView("ShadowBox", &shadowBoxSRVs[0]);// , sizeof(shadowBoxSRVs)* (int)shadowBoxSRVs.size());
 		ps->SetShaderResourceView("ShadowSpotMap", shadowSpotSRV);
 
 		ps->SetFloat3("ambientTerm", ambientTerm);

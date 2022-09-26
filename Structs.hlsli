@@ -55,7 +55,7 @@ struct Light {
 	float spotFalloff		: SPOTFALLOFF; //spot lights need to have cone size
 	float nearZ				: NEARZ; //near and far z values for shadow maps
 	float farZ				: FARZ;
-	bool castsShadows : CASTSHADOW;
+	bool castsShadows		: CASTSHADOW;
 };
 
 // Struct representing a single vertex worth of data

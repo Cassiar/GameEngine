@@ -17,8 +17,8 @@ Texture2D AmbientTexture : register(t2);
 Texture2D NormalTexture : register(t3);
 Texture2D MetalnessTexture : register(t4);
 Texture2D ShadowMap : register(t5);
-TextureCube ShadowBox : register(t6);
-Texture2D ShadowSpotMap[MAX_POINT_SHADOWS_NUM] : register(t7);
+Texture2D ShadowSpotMap : register(t6);
+TextureCube ShadowBox[MAX_POINT_SHADOWS_NUM] : register(t7);
 
 SamplerState BasicSampler : register(s0);
 SamplerComparisonState ShadowSampler : register(s1);
@@ -71,6 +71,8 @@ float4 main(VertexToPixel input) : SV_TARGET
 
 	float3 final = ambientTerm * AmbientTexture.Sample(BasicSampler, input.uvCoord).rgb;
 
+	float numPointShadows = 0;
+
 	for (int i = 0; i < numLights && i < MAX_LIGHTS_NUM; i++) {
 		float3 lightAmount = 0;
 		if (lights[i].type == LIGHT_TYPE_DIRECTIONAL) {
@@ -96,7 +98,8 @@ float4 main(VertexToPixel input) : SV_TARGET
 				//use comparison sampler to check if pixel is in shadow
 				shadowAmount = ShadowMap.SampleCmpLevelZero(ShadowSampler, shadowMapUV, depthFromLight);
 			}
-			else if (lights[i].type == LIGHT_TYPE_POINT) {
+			//make sure we don't try to render more than max amount of point shadows
+			else if (lights[i].type == LIGHT_TYPE_POINT && numPointShadows >= MAX_POINT_SHADOWS_NUM) {
 				float3 dirToLight = lights[i].position - input.worldPos.xyz;
 
 				//may all the gods bless this stackoverflow post https://stackoverflow.com/questions/10786951/omnidirectional-shadow-mapping-with-depth-cubemap
@@ -116,7 +119,8 @@ float4 main(VertexToPixel input) : SV_TARGET
 
 				lightDirection.xyz = input.worldPos.xyz - float3(lights[i].position.xy, lights[i].position.z);
 				
-				shadowAmount = ShadowBox.SampleCmpLevelZero(ShadowSampler, -normalize(dirToLight), distance);
+				shadowAmount = ShadowBox[i].SampleCmpLevelZero(ShadowSampler, -normalize(dirToLight), distance);
+				numPointShadows++; //count up number of render point shadows
 			}
 			else if (lights[i].type == LIGHT_TYPE_SPOT) {
 				// calculate shadow stuff
