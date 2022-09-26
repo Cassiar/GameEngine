@@ -6,8 +6,9 @@
 #include <Windows.h>
 #include <d3d11.h>
 #include <DirectXMath.h>
+#include <memory>
+#include <vector>
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
-
 
 #include "Vertex.h"
 
@@ -20,7 +21,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context;
 	unsigned int numIndices;
 
-	std::vector<std::shared_ptr<Vertex>> m_verts;
+	std::vector<Vertex> m_verts;
 
 	void CreateBuffers(Vertex* in_verts, unsigned int numVerts, unsigned int * in_indices, Microsoft::WRL::ComPtr<ID3D11Device> device);
 	void CalculateTangents(Vertex* verts, int numVerts, unsigned int* indices, int numIndices);
@@ -33,7 +34,7 @@ public:
 	~Mesh();
 	Microsoft::WRL::ComPtr<ID3D11Buffer> GetVertexBuffer();
 	Microsoft::WRL::ComPtr<ID3D11Buffer> GetIndexBuffer();
-	std::vector<std::shared_ptr<Vertex>> GetVerticies() { return m_verts; }
+	std::vector<Vertex> GetVerticies() { return m_verts; }
 	unsigned int GetIndexCount();
 	void Draw();
 };
