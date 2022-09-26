@@ -27,14 +27,3 @@ void RigidBody::UpdateTransform(float dt)
 
 	m_transform->MoveRelative(dt * m_velocity.x, dt * m_velocity.y, dt * m_velocity.z);
 }
-
-bool CollisionPreCheck() {
-
-}
-
-bool CheckForCollision(std::shared_ptr<RigidBody> other) 
-{
-	std::shared_ptr<Mesh> otherMesh = other->GetCollisionMesh();
-
-
-}
