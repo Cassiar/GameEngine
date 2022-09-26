@@ -80,17 +80,19 @@ bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
 	if (m_preCheckRadiusSquared + other->m_preCheckRadiusSquared < centerSquareDist) {
 		return false;
 	}
+
+	return CheckGJKCollision(other);
 }
 
 bool Collider::CheckGJKCollision(const std::shared_ptr<Collider> other) {
-	XMVECTOR currSupport = CalcSupport(XMLoadFloat3(&m_maxPoint)) - other->CalcSupport(-XMLoadFloat3(&m_maxPoint));
-
 	std::vector<XMVECTOR> supports;
+	XMVECTOR currSupport = CalcSupport(XMLoadFloat3(&m_maxPoint)) - other->CalcSupport(-XMLoadFloat3(&m_maxPoint));
 	supports.push_back(currSupport);
 
 	XMVECTOR currDir = -currSupport;
 
-	for (int i = 0; i < l_transformedPositions.size(); i++) {
+	// (fADotDir < 0)
+	while (true) {
 		XMVECTOR pointA = CalcSupport(currDir) - other->CalcSupport(-currDir);
 		XMVECTOR aDotDir = XMVector3Dot(pointA, currDir);
 		float fADotDir;
@@ -195,6 +197,109 @@ bool Collider::DoSimplex(std::vector<XMVECTOR> supports, DirectX::XMVECTOR& dire
 		break;
 
 	case 4:
+		XMVECTOR ad = supports[3] - supports[0];
+		XMVECTOR bd = supports[3] - supports[1];
+		XMVECTOR bc = supports[2] - supports[1];
+
+		XMVECTOR abd = XMVector3Cross(ab, ad);
+		XMVECTOR acd = XMVector3Cross(ac, ad);
+		XMVECTOR bcd = XMVector3Cross(bc, bd);
+
+		if (dotEval(abd)) {
+			supports.erase(supports.begin() + 2);
+
+			// Plane ABD x Vector AD
+			if (dotEval(XMVector3Cross(abd, ad))) {
+
+				if (dotEval(ad)) {
+					direction = XMVector3Cross(XMVector3Cross(ad, ao), ad);
+					supports.erase(supports.begin() + 1);
+				}
+				else {
+					abDotCase();
+				}
+			}
+			else {
+				if (dotEval(XMVector3Cross(ab, abd))) {
+					abDotCase();
+				}
+				else {
+					direction = abd;
+				}
+			}
+		}
+		else if (dotEval(acd)) {
+			supports.erase(supports.begin() + 1);
+
+			// Plane ACD x Vector AD
+			if (dotEval(XMVector3Cross(acd, ad))) {
+				if (dotEval(ad)) {
+					direction = XMVector3Cross(XMVector3Cross(ad, ao), ad);
+					supports.erase(supports.begin() + 1);
+				}
+				else {
+					if (dotEval(ac)) {
+						direction = XMVector3Cross(XMVector3Cross(ac, ao), ac);
+					}
+					else {
+						direction = ao;
+						supports.erase(supports.begin() + 1);
+					}
+				}
+			}
+			else {
+				if (dotEval(XMVector3Cross(ac, acd))) {
+					if (dotEval(ac)) {
+						direction = XMVector3Cross(XMVector3Cross(ac, ao), ac);
+					}
+					else {
+						direction = ao;
+						supports.erase(supports.begin() + 1);
+					}
+				}
+				else {
+					direction = acd;
+				}
+			}
+		}
+		else if (dotEval(bcd)) {
+			supports.erase(supports.begin() + 0);
+			XMVECTOR bo = -supports[0];
+
+			// Plane BCD x Vector BD
+			if (dotEval(XMVector3Cross(bcd, bd))) {
+				if (dotEval(bd)) {
+					direction = XMVector3Cross(XMVector3Cross(bd, bo), bd);
+					supports.erase(supports.begin() + 1);
+				}
+				else {
+					if (dotEval(bd)) {
+						direction = XMVector3Cross(XMVector3Cross(bd, bo), bd);
+					}
+					else {
+						direction = bo;
+						supports.erase(supports.begin() + 1);
+					}
+				}
+			}
+			else {
+				if (dotEval(XMVector3Cross(bd, bcd))) {
+					if (dotEval(bc)) {
+						direction = XMVector3Cross(XMVector3Cross(bc, bo), bc);
+					}
+					else {
+						direction = bo;
+						supports.erase(supports.begin() + 1);
+					}
+				}
+				else {
+					direction = bcd;
+				}
+			}
+		}
+		else {
+			return true;
+		}
 
 		break;
 	}
