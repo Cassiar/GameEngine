@@ -26,37 +26,49 @@ void Collider::CalcMinMaxPoints()
 
 	std::vector<Vertex> verts = m_objectMesh->GetVerticies();
 
-	XMFLOAT3 tempPos = verts[0].Position;
+	XMFLOAT4 tempPos = XMFLOAT4(verts[0].Position.x + m_transform->GetPosition().x, verts[0].Position.y + m_transform->GetPosition().y, verts[0].Position.z + m_transform->GetPosition().z, 1.0f);
 	XMFLOAT4X4 worldMat = m_transform->GetWorldMatrix();
-	XMStoreFloat3(&tempPos, XMVector4Transform(XMLoadFloat3(&tempPos), XMLoadFloat4x4(&worldMat)));
+	XMStoreFloat4(&tempPos, XMVector4Transform(XMLoadFloat4(&tempPos), XMLoadFloat4x4(&worldMat)));
+	l_transformedPositions.clear();
 	l_transformedPositions.push_back(tempPos);
 
 	//Inefficient could probs be better done through a compute shader
-	float xMax = verts[0].Position.x;
-	float xMin = verts[0].Position.x;
-						 
-	float yMax = verts[0].Position.y;
-	float yMin = verts[0].Position.y;
-						 
-	float zMax = verts[0].Position.z;
-	float zMin = verts[0].Position.z;
+	float xMax = tempPos.x;
+	float xMin = tempPos.x;
+				 
+	float yMax = tempPos.y;
+	float yMin = tempPos.y;
+				 
+	float zMax = tempPos.z;
+	float zMin = tempPos.z;
 	for (int i = 1; i < verts.size(); i++)
 	{
-		tempPos = verts[i].Position;
-		XMFLOAT3 currPos = verts[i].Position;
-		XMStoreFloat3(&currPos, XMVector4Transform(XMLoadFloat3(&currPos), XMLoadFloat4x4(&worldMat)));
+		XMFLOAT4 currPos = XMFLOAT4(verts[i].Position.x + m_transform->GetPosition().x, verts[i].Position.y + m_transform->GetPosition().y, verts[i].Position.z + m_transform->GetPosition().z, 1.0f);
+		XMStoreFloat4(&currPos, XMVector4Transform(XMLoadFloat4(&currPos), XMMatrixTranspose(XMLoadFloat4x4(&worldMat))));
 		l_transformedPositions.push_back(currPos);
 
 		xMax = currPos.x > xMax ? currPos.x : xMax;
 		xMin = currPos.x < xMin ? currPos.x : xMax;
+
 		yMax = currPos.y > yMax ? currPos.y : yMax;
 		yMin = currPos.y < yMin ? currPos.y : yMax;
+
 		zMax = currPos.z > zMax ? currPos.z : zMax;
 		zMin = currPos.z < zMin ? currPos.z : zMax;
 	}
 
-	XMStoreFloat3(&m_maxPoint, XMVectorSet(xMax, yMax, zMax, 0.0f));
-	XMStoreFloat3(&m_minPoint, XMVectorSet(xMin, yMin, zMin, 0.0f));
+	XMStoreFloat3(&m_maxPoint, XMVectorSet(xMax, yMax, zMax, 1.0f));
+	XMStoreFloat3(&m_minPoint, XMVectorSet(xMin, yMin, zMin, 1.0f));
+
+	l_transformedCubeVerts.clear();
+	l_transformedCubeVerts.push_back(m_maxPoint);
+	l_transformedCubeVerts.push_back(m_minPoint);
+	l_transformedCubeVerts.push_back(XMFLOAT3(xMax, yMax, zMin));
+	l_transformedCubeVerts.push_back(XMFLOAT3(xMin, yMax, zMax));
+	l_transformedCubeVerts.push_back(XMFLOAT3(xMax, yMin, zMax));
+	l_transformedCubeVerts.push_back(XMFLOAT3(xMax, yMin, zMin));
+	l_transformedCubeVerts.push_back(XMFLOAT3(xMin, yMax, zMin));
+	l_transformedCubeVerts.push_back(XMFLOAT3(xMin, yMin, zMax));
 
 	m_pointsDirty = false;
 }
@@ -80,7 +92,7 @@ void Collider::CalcHalfDimensions() {
 void Collider::CalcCenterPoint() {
 	CalcHalfDimensions();
 
-	XMStoreFloat3(&m_centerPoint, XMVectorSet(m_maxPoint.x - m_halfWidth, m_maxPoint.y - m_halfHeight, m_maxPoint.z - m_halfDepth, 0.0f));
+	XMStoreFloat3(&m_centerPoint, XMVectorSet(m_maxPoint.x - m_halfWidth, m_maxPoint.y - m_halfHeight, m_maxPoint.z - m_halfDepth, 1.0f));
 }
 
 bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
@@ -97,40 +109,40 @@ bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
 		return false;
 	}
 
-	return CheckGJKCollision(other);
+	return true; //CheckGJKCollision(other);
 }
 
+#pragma region GJK collision
+
 bool Collider::CheckGJKCollision(const std::shared_ptr<Collider> other) {
-	CalcCenterPoint();
+	//CalcCenterPoint();
+	//other->CalcCenterPoint();
 
 	std::vector<XMVECTOR*> supports;
-	XMVECTOR currSupport = CalcSupport(XMLoadFloat3(&m_maxPoint)) - other->CalcSupport(-XMLoadFloat3(&m_maxPoint));
+	XMVECTOR currSupport = CalcSupport(XMVector3Normalize(XMLoadFloat3(&m_maxPoint))) - other->CalcSupport(-XMVector3Normalize(XMLoadFloat3(&m_maxPoint)));
 	supports.push_back(&currSupport);
 
 	XMVECTOR negated = XMVectorNegate(currSupport);
-	XMVECTOR* currDir = &negated;
+	XMVECTOR currDir = negated;
 
 	float fADotDir = 0.0f;
 
-	int i = 0;
-	// (fADotDir < 0)
-	while(fADotDir >= 0) {
-		i++;
-		XMVECTOR pointA = CalcSupport(*currDir) - other->CalcSupport(-(*currDir));
-		XMVECTOR aDotDir = XMVector3Dot(pointA, *currDir);
-		
+	while (true) {
+		XMVECTOR pointA = CalcSupport(currDir) - other->CalcSupport(-(currDir));
+		XMVECTOR aDotDir = XMVector3Dot(pointA, currDir);
+
 		XMStoreFloat(&fADotDir, aDotDir);
 
-		if (fADotDir < 0) {
+		if (fADotDir <= 0) {
 			return false;
 		}
 
 		supports.push_back(&pointA);
-		
-		XMFLOAT3 directionPrint;
-		XMStoreFloat3(&directionPrint, *currDir);
 
-		if (DoSimplex(supports, *currDir)) {
+		XMFLOAT3 directionPrint;
+		XMStoreFloat3(&directionPrint, currDir);
+
+		if (DoSimplex(supports, currDir)) {
 			return true;
 		}
 	}
@@ -140,12 +152,12 @@ bool Collider::CheckGJKCollision(const std::shared_ptr<Collider> other) {
 
 //Finds the point furthest along the direction vector provided
 XMVECTOR Collider::CalcSupport(const XMVECTOR& direction) {
-	XMVECTOR max = XMVector3Dot(XMLoadFloat3(&l_transformedPositions[0]), direction);
+	XMVECTOR max = XMVector4Dot(XMLoadFloat4(&l_transformedPositions[0]), direction);
 
 	int posIndex = 0;
 
-	for (int i = 1; i < 30 && i < l_transformedPositions.size(); i++) {
-		XMVECTOR currDot = XMVector3Dot(XMLoadFloat3(&l_transformedPositions[i]), direction);
+	for (int i = 1; i < l_transformedPositions.size(); i++) {
+		XMVECTOR currDot = XMVector4Dot(XMLoadFloat4(&l_transformedPositions[i]), direction);
 
 		if (XMVector3Greater(currDot, max)) {
 			max = currDot;
@@ -153,28 +165,23 @@ XMVECTOR Collider::CalcSupport(const XMVECTOR& direction) {
 		}
 	}
 
-	return XMLoadFloat3(&l_transformedPositions[posIndex]);
+	return XMLoadFloat4(&l_transformedPositions[posIndex]);
 }
 
 //Implementation based on https://www.youtube.com/watch?v=Qupqu1xe7Io
 
 bool Collider::DoSimplex(std::vector<XMVECTOR*>& supports, DirectX::XMVECTOR& direction) {
+	XMVECTOR ao = -*supports[0];
 	XMVECTOR zeroVec = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	XMVECTOR ao = -*supports[1];
-	XMVECTOR ab = *supports[0] - *supports[1];
 
-	XMVECTOR ac;
-	XMVECTOR abc;
-	if (supports.size() > 2) {
-		ac = *supports[0] - *supports[2];
-		abc = XMVector3Cross(ab, ac);
-	}
 
 	auto dotEval = [&ao, &zeroVec](XMVECTOR vecToDot) {
 		return XMVector3Greater(XMVector3Dot(vecToDot, ao), zeroVec);
 	};
 
-	auto abDotCase = [&dotEval, &ao, &ab, &supports, &direction]() {
+	auto lineCase = [&dotEval, &ao, &supports, &direction]() {
+		XMVECTOR ab = *supports[1] - *supports[0];
+
 		if (dotEval(ab)) {
 			direction = XMVector3Cross(XMVector3Cross(ab, ao), ab);
 		}
@@ -182,16 +189,15 @@ bool Collider::DoSimplex(std::vector<XMVECTOR*>& supports, DirectX::XMVECTOR& di
 			direction = ao;
 			supports.erase(supports.begin() + 1);
 		}
+
+		return false;
 	};
 
-	
+	auto triCase = [&dotEval, &lineCase, &ao, &supports, &direction]() {
+		XMVECTOR ab = *supports[1] - *supports[0];
+		XMVECTOR ac = *supports[2] - *supports[0];
+		XMVECTOR abc = XMVector3Cross(ab, ac);
 
-	switch (supports.size()) {
-	case 2:
-		abDotCase();
-		break;
-
-	case 3:
 		// Plane ABC x Vector AC
 		if (dotEval(XMVector3Cross(abc, ac))) {
 
@@ -200,12 +206,12 @@ bool Collider::DoSimplex(std::vector<XMVECTOR*>& supports, DirectX::XMVECTOR& di
 				supports.erase(supports.begin() + 1);
 			}
 			else {
-				abDotCase();
+				return lineCase();
 			}
 		}
 		else {
 			if (dotEval(XMVector3Cross(ab, abc))) {
-				abDotCase();
+				return lineCase();
 			}
 			else {
 				if (dotEval(abc)) {
@@ -220,115 +226,54 @@ bool Collider::DoSimplex(std::vector<XMVECTOR*>& supports, DirectX::XMVECTOR& di
 			}
 		}
 
-		break;
+		return false;
+	};
+
+	auto quadCase = [&dotEval, &triCase, &ao, &supports, &direction]() {
+		XMVECTOR ab = *supports[1] - *supports[0];
+		XMVECTOR ac = *supports[2] - *supports[0];
+		XMVECTOR ad = *supports[3] - *supports[0];
+
+		XMVECTOR abc = XMVector3Cross(ab, ac);
+		XMVECTOR acd = XMVector3Cross(ac, ad);
+		XMVECTOR adb = XMVector3Cross(ad, ab);
+
+		if (dotEval(abc)) {
+			supports.erase(supports.begin() + 3);
+			return triCase();
+		}
+
+		if (dotEval(acd)) {
+			supports.erase(supports.begin() + 1);
+			return triCase();
+		}
+
+		if (dotEval(adb)) {
+			supports.erase(supports.begin() + 2);
+			XMVECTOR* temp = supports[1];
+			supports[1] = supports[2];
+			supports[2] = temp;
+			return triCase();
+		}
+
+		return true;
+	};
+
+	switch (supports.size()) {
+	case 2:
+		return lineCase();
+
+	case 3:
+		return triCase();
 
 	case 4:
-		XMVECTOR ad = *supports[3] - *supports[0];
-		XMVECTOR bd = *supports[3] - *supports[1];
-		XMVECTOR bc = *supports[2] - *supports[1];
+		return quadCase();
 
-		XMVECTOR abd = XMVector3Cross(ab, ad);
-		XMVECTOR acd = XMVector3Cross(ac, ad);
-		XMVECTOR bcd = XMVector3Cross(bc, bd);
-
-		if (dotEval(abd)) {
-			supports.erase(supports.begin() + 2);
-
-			// Plane ABD x Vector AD
-			if (dotEval(XMVector3Cross(abd, ad))) {
-
-				if (dotEval(ad)) {
-					direction = XMVector3Cross(XMVector3Cross(ad, ao), ad);
-					supports.erase(supports.begin() + 1);
-				}
-				else {
-					abDotCase();
-				}
-			}
-			else {
-				if (dotEval(XMVector3Cross(ab, abd))) {
-					abDotCase();
-				}
-				else {
-					direction = abd;
-				}
-			}
-		}
-		else if (dotEval(acd)) {
-			supports.erase(supports.begin() + 1);
-
-			// Plane ACD x Vector AD
-			if (dotEval(XMVector3Cross(acd, ad))) {
-				if (dotEval(ad)) {
-					direction = XMVector3Cross(XMVector3Cross(ad, ao), ad);
-					supports.erase(supports.begin() + 1);
-				}
-				else {
-					if (dotEval(ac)) {
-						direction = XMVector3Cross(XMVector3Cross(ac, ao), ac);
-					}
-					else {
-						direction = ao;
-						supports.erase(supports.begin() + 1);
-					}
-				}
-			}
-			else {
-				if (dotEval(XMVector3Cross(ac, acd))) {
-					if (dotEval(ac)) {
-						direction = XMVector3Cross(XMVector3Cross(ac, ao), ac);
-					}
-					else {
-						direction = ao;
-						supports.erase(supports.begin() + 1);
-					}
-				}
-				else {
-					direction = acd;
-				}
-			}
-		}
-		else if (dotEval(bcd)) {
-			supports.erase(supports.begin() + 0);
-			XMVECTOR bo = -*supports[0];
-
-			// Plane BCD x Vector BD
-			if (dotEval(XMVector3Cross(bcd, bd))) {
-				if (dotEval(bd)) {
-					direction = XMVector3Cross(XMVector3Cross(bd, bo), bd);
-					supports.erase(supports.begin() + 1);
-				}
-				else {
-					if (dotEval(bd)) {
-						direction = XMVector3Cross(XMVector3Cross(bd, bo), bd);
-					}
-					else {
-						direction = bo;
-						supports.erase(supports.begin() + 1);
-					}
-				}
-			}
-			else {
-				if (dotEval(XMVector3Cross(bd, bcd))) {
-					if (dotEval(bc)) {
-						direction = XMVector3Cross(XMVector3Cross(bc, bo), bc);
-					}
-					else {
-						direction = bo;
-						supports.erase(supports.begin() + 1);
-					}
-				}
-				else {
-					direction = bcd;
-				}
-			}
-		}
-		else {
-			return true;
-		}
-
+	default:
 		break;
 	}
 
 	return false;
 }
+
+#pragma endregion

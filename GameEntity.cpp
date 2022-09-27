@@ -85,17 +85,15 @@ void GameEntity::Update(float dt, std::vector<std::shared_ptr<GameEntity>> colli
 	// Implement a singleton collision manager allowing for ease of collision checks
 	if (m_collider)
 	{
-		int i = 0;
 		for (auto& entity : collisionEntities)
 		{
-			if (m_collider->CheckForCollision(entity->GetCollider()) && i <= 6) {
+			if (m_collider->CheckForCollision(entity->GetCollider())) {
 				material->SetColorTint(DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f));
 			}
 			else
 			{
 				material->SetColorTint(DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
 			}
-			i++;
 		}
 	}
 }

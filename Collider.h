@@ -8,7 +8,8 @@ class Collider
 {
 private:
 	std::shared_ptr<Mesh> m_objectMesh;
-	std::vector<DirectX::XMFLOAT3> l_transformedPositions;
+	std::vector<DirectX::XMFLOAT4> l_transformedPositions;
+	std::vector<DirectX::XMFLOAT3> l_transformedCubeVerts;
 	Transform* m_transform;
 
 	DirectX::XMFLOAT3 m_maxPoint;
