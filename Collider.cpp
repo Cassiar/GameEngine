@@ -5,6 +5,17 @@ using namespace DirectX;
 Collider::Collider(std::shared_ptr<Mesh> colliderMesh, Transform* transform)
 	: m_objectMesh(colliderMesh),
 	m_transform(transform),
+	m_debugTransform(nullptr),
+	m_pointsDirty(true),
+	m_halvesDirty(true)
+{
+	CalcCenterPoint();
+}
+
+Collider::Collider(std::shared_ptr<Mesh> colliderMesh, Transform* transform, Transform* debugTransform)
+	: m_objectMesh(colliderMesh),
+	m_transform(transform),
+	m_debugTransform(debugTransform),
 	m_pointsDirty(true),
 	m_halvesDirty(true)
 {
@@ -44,7 +55,7 @@ void Collider::CalcMinMaxPoints()
 	for (int i = 1; i < verts.size(); i++)
 	{
 		XMFLOAT4 currPos = XMFLOAT4(verts[i].Position.x + m_transform->GetPosition().x, verts[i].Position.y + m_transform->GetPosition().y, verts[i].Position.z + m_transform->GetPosition().z, 1.0f);
-		XMStoreFloat4(&currPos, XMVector4Transform(XMLoadFloat4(&currPos), XMMatrixTranspose(XMLoadFloat4x4(&worldMat))));
+		XMStoreFloat4(&currPos, XMVector4Transform(XMLoadFloat4(&currPos), XMLoadFloat4x4(&worldMat)));
 		l_transformedPositions.push_back(currPos);
 
 		xMax = currPos.x > xMax ? currPos.x : xMax;
@@ -93,6 +104,11 @@ void Collider::CalcCenterPoint() {
 	CalcHalfDimensions();
 
 	XMStoreFloat3(&m_centerPoint, XMVectorSet(m_maxPoint.x - m_halfWidth, m_maxPoint.y - m_halfHeight, m_maxPoint.z - m_halfDepth, 1.0f));
+	if (m_debugTransform)
+	{
+		m_debugTransform->SetPosition(m_centerPoint);
+		m_debugTransform->SetScale(m_halfWidth, m_halfHeight, m_halfDepth);
+	}
 }
 
 bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {

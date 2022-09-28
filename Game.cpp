@@ -279,24 +279,35 @@ void Game::CreateBasicGeometry()
 
 	std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
 
+
+	std::shared_ptr<GameEntity> debugSphere = std::make_shared<GameEntity>(meshes[3], materials[3], camera);
+	std::shared_ptr<GameEntity> debugSphere1 = std::make_shared<GameEntity>(meshes[3], materials[3], camera);
+	std::shared_ptr<GameEntity> debugSphere2 = std::make_shared<GameEntity>(meshes[3], materials[3], camera);
+	std::shared_ptr<GameEntity> debugSphere3 = std::make_shared<GameEntity>(meshes[3], materials[3], camera);
+	std::shared_ptr<GameEntity> debugSphere4 = std::make_shared<GameEntity>(meshes[3], materials[3], camera);
+	std::shared_ptr<GameEntity> debugSphere5 = std::make_shared<GameEntity>(meshes[3], materials[3], camera);
+	std::shared_ptr<GameEntity> debugSphere6 = std::make_shared<GameEntity>(meshes[3], materials[3], camera);
+
+
+
 	//create some entities
 	//cube direectly in front of camera
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[0], materials[0], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[0], materials[0], camera, debugSphere));
 	//sphere to left of cube
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[3], materials[3], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[3], materials[3], camera, debugSphere1));
 	//helix to right
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[3], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[3], camera, debugSphere2));
 	//helix below cube
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[2], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[2], camera, debugSphere3));
 	//cylinder one behind cube
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[1], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[1], camera, debugSphere4));
 	//cylinder above cube
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[3], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[3], camera, debugSphere5));
 
 	m_EntityManager->GetEntity(2)->GetTransform()->AddChild(m_EntityManager->GetEntity(5)->GetTransform());
 
 	//big plane to act as floor
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[4], materials[2], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[4], materials[2], camera, debugSphere6));
 
 	//move objects so there isn't overlap
 	m_EntityManager->GetEntity(0)->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));

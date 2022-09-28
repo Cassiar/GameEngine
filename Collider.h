@@ -11,6 +11,7 @@ private:
 	std::vector<DirectX::XMFLOAT4> l_transformedPositions;
 	std::vector<DirectX::XMFLOAT3> l_transformedCubeVerts;
 	Transform* m_transform;
+	Transform* m_debugTransform;
 
 	DirectX::XMFLOAT3 m_maxPoint;
 	DirectX::XMFLOAT3 m_minPoint;
@@ -35,6 +36,7 @@ private:
 
 public:
 	Collider(std::shared_ptr<Mesh> colliderMesh, Transform* transform);
+	Collider(std::shared_ptr<Mesh> colliderMesh, Transform* transform, Transform* debugTransform);
 	~Collider();
 
 	std::shared_ptr<Mesh> GetCollisionMesh() { return m_objectMesh; }
