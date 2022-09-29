@@ -75,7 +75,7 @@ void GameEntity::Draw()
 	mesh->Draw();
 }
 
-void GameEntity::Update(float dt, std::vector<std::shared_ptr<GameEntity>> collisionEntities)
+void GameEntity::Update(float dt, std::vector<std::shared_ptr<GameEntity>>& collisionEntities)
 {
 	if (m_rigidBody)
 	{
@@ -87,12 +87,15 @@ void GameEntity::Update(float dt, std::vector<std::shared_ptr<GameEntity>> colli
 	{
 		for (auto& entity : collisionEntities)
 		{
-			if (m_collider->CheckForCollision(entity->GetCollider())) {
+			if (entity.get() != this && m_collider->CheckForCollision(entity->GetCollider())) {
 				material->SetColorTint(DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f));
+				//this->GetTransform()->SetScale(2.0f, 2.0f, 2.0f);
+				break;
 			}
 			else
 			{
 				material->SetColorTint(DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+				//this->GetTransform()->SetScale(1.0f, 1.0f, 1.0f);
 			}
 		}
 	}
