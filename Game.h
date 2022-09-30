@@ -54,13 +54,18 @@ private:
 	void CreateGui(float deltaTime);
 
 	void RenderDirectionalShadowMap();
-	void RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ, float farZ);
+	void RenderPointShadowMap(DirectX::XMFLOAT3 pos, int index, float range, float nearZ, float farZ);
 	void RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, float range, float spotFallOff, float nearZ, float farZ);
+	
+	//helper function to reduce repitition in shadow map funcs
+	void PassShadowObjs();
 
 	DirectX::XMFLOAT3 ambientTerm;
 
 	//test light for lighting equations
 	std::vector<Light> lights;
+	//array to hold each light's position, used to simplify passing in point light info
+	std::vector<DirectX::XMFLOAT3> lightPoses;
 
 	// Note the usage of ComPtr below
 	//  - This is a smart pointer for objects that abide by the
@@ -97,6 +102,7 @@ private:
 	std::vector<std::shared_ptr<Mesh>> meshes;
 	//array to hold game entities
 	std::vector<std::shared_ptr<GameEntity>> gameEntities;
+	std::vector<std::shared_ptr<GameEntity>> renderableEntities;
 
 	std::shared_ptr<Camera> camera;
 
@@ -122,12 +128,12 @@ private:
 	//shadow mapping stuff
 	int shadowResolution; // size of texture to send to must be power of 2
 	float shadowProjSize; //size of world that it can see
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shadowBoxSRV;
+	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> shadowBoxSRVs;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shadowSRV;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shadowSpotSRV;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> shadowStencil;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> shadowSpotStencil;
-	std::vector<Microsoft::WRL::ComPtr<ID3D11DepthStencilView>> shadowBoxStencils;
+	std::vector<std::vector<Microsoft::WRL::ComPtr<ID3D11DepthStencilView>>> shadowBoxStencils;
 
 	//need custom samplers and rasterizers
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> shadowSampler;

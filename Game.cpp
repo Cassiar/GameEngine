@@ -113,7 +113,7 @@ void Game::Init()
 	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for scifi panel
 	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for cobblestone wall
 	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for bronze
-	catapultMaterial = std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, catapultPixelShader);
+	//catapultMaterial = std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, catapultPixelShader);
 
 	//add textures to each material
 	for (unsigned int i = 0; i < materials.size(); i++) {
@@ -125,10 +125,10 @@ void Game::Init()
 		materials[i]->AddTextureSRV("MetalnessTexture", metalnessMaps[i]);
 	}
 
-	catapultMaterial->AddSampler("BasicSampler", basicSampler);
-	catapultMaterial->AddTextureSRV("AlbedoTexture", catapultMaps[0]);
-	catapultMaterial->AddTextureSRV("RoughnessTexture", catapultMaps[1]);
-	catapultMaterial->AddTextureSRV("NormalTexture", catapultMaps[2]);
+	//catapultMaterial->AddSampler("BasicSampler", basicSampler);
+	//catapultMaterial->AddTextureSRV("AlbedoTexture", catapultMaps[0]);
+	//catapultMaterial->AddTextureSRV("RoughnessTexture", catapultMaps[1]);
+	//catapultMaterial->AddTextureSRV("NormalTexture", catapultMaps[2]);
 
 
 	//load create the shapes and skybox
@@ -214,17 +214,17 @@ void Game::LoadTextures() {
 
 
 	//catapult materials
-	catapultMaps.push_back(nullptr);
-	catapultMaps.push_back(nullptr);
-	catapultMaps.push_back(nullptr);
+	//catapultMaps.push_back(nullptr);
+	//catapultMaps.push_back(nullptr);
+	//catapultMaps.push_back(nullptr);
 
-	CreateWICTextureFromFile(device.Get(), context.Get(),
+	/*CreateWICTextureFromFile(device.Get(), context.Get(),
 		GetFullPathTo_Wide(L"../../Assets/Textures/Catapult_Diffuse.tif").c_str(), nullptr, catapultMaps[0].GetAddressOf());
 	CreateWICTextureFromFile(device.Get(), context.Get(),
 		GetFullPathTo_Wide(L"../../Assets/Textures/Catapult_Specular.tif").c_str(), nullptr, catapultMaps[1].GetAddressOf());
 	CreateWICTextureFromFile(device.Get(), context.Get(),
 		GetFullPathTo_Wide(L"../../Assets/Textures/Catapult_Bump.tif").c_str(), nullptr, catapultMaps[2].GetAddressOf());
-
+		*/
 
 	//load cube map
 	skybox = CreateCubemap(
@@ -256,7 +256,7 @@ void Game::LoadShaders()
 	skyPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"SkyPixelShader.cso").c_str());
 	shadowPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"ShadowPixelShader.cso").c_str());
 
-	catapultPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"CatapultPixelShader.cso").c_str());
+	//catapultPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"CatapultPixelShader.cso").c_str());
 	a5PixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"A5CustomPS.cso").c_str());
 }
 
@@ -273,9 +273,8 @@ void Game::CreateBasicGeometry()
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/helix.obj").c_str(), device, context));
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/sphere.obj").c_str(), device, context));
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/quad.obj").c_str(), device, context));
-	//meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Toon/tree obj.obj").c_str(), device, context));
 
-	std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
+	//std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
 
 
 	//create some entities
@@ -309,12 +308,12 @@ void Game::CreateBasicGeometry()
 	gameEntities[6]->GetTransform()->Scale(20);//scale up a bunch to act as floor
 
 	//catapult
-	if (catapult->GetVertexBuffer()) {
-		meshes.push_back(catapult);
-		gameEntities.push_back(std::make_shared<GameEntity>(meshes[5], catapultMaterial, camera));
-		gameEntities[7]->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, -5.0f, -2.5f));
-		gameEntities[7]->GetTransform()->SetScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
-	}
+	//if (catapult->GetVertexBuffer()) {
+	//	meshes.push_back(catapult);
+	//	gameEntities.push_back(std::make_shared<GameEntity>(meshes[5], catapultMaterial, camera));
+	//	gameEntities[7]->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, -5.0f, -2.5f));
+	//	gameEntities[7]->GetTransform()->SetScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
+	//}
 
 	//create sky obj
 	sky = std::make_shared<Sky>(meshes[0], basicSampler, skybox, device, context, skyVertexShader, skyPixelShader);
@@ -363,6 +362,12 @@ void Game::CreateLights() {
 	temp.CastsShadows = true;
 
 	lights.push_back(temp);
+
+	for (int i = 0; i < lights.size(); i++)
+	{
+		lightPoses.push_back(lights[i].Position);
+	}
+
 }
 
 void Game::CreateShadowResources()
@@ -446,31 +451,36 @@ void Game::CreateShadowResources()
 	cubeDesc.Usage = D3D11_USAGE_DEFAULT; // Standard usage
 
 	// Create the actual texture resource
-	Microsoft::WRL::ComPtr<ID3D11Texture2D> cubeMapTexture = 0;
-	device->CreateTexture2D(&cubeDesc, 0, cubeMapTexture.GetAddressOf());
+	std::vector<Microsoft::WRL::ComPtr<ID3D11Texture2D>> cubeMapTextures;
+	cubeMapTextures.resize(MAX_POINT_SHADOWS_NUM);
 
+	shadowBoxStencils.resize(MAX_POINT_SHADOWS_NUM);
+	shadowBoxSRVs.resize(MAX_POINT_SHADOWS_NUM);
+	//run twice to set up two point maps
+	for (int i = 0; i < MAX_POINT_SHADOWS_NUM; i++) {
+		device->CreateTexture2D(&cubeDesc, 0, cubeMapTextures[i].GetAddressOf());
 
-	for (int i = 0; i < 6; i++) {
-		//create depth/stencil
-		D3D11_DEPTH_STENCIL_VIEW_DESC shadowBoxStencilDesc = {};
-		shadowBoxStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
-		shadowBoxStencilDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
-		shadowBoxStencilDesc.Texture2DArray.MipSlice = 0;
-		shadowBoxStencilDesc.Texture2DArray.ArraySize = 1;
-		shadowBoxStencilDesc.Texture2DArray.FirstArraySlice = i;
+		for (int j = 0; j < 6; j++) {
+			//create depth/stencil
+			D3D11_DEPTH_STENCIL_VIEW_DESC shadowBoxStencilDesc = {};
+			shadowBoxStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
+			shadowBoxStencilDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+			shadowBoxStencilDesc.Texture2DArray.MipSlice = 0;
+			shadowBoxStencilDesc.Texture2DArray.ArraySize = 1;
+			shadowBoxStencilDesc.Texture2DArray.FirstArraySlice = j;
 
-		shadowBoxStencils.push_back(nullptr);
-		device->CreateDepthStencilView(cubeMapTexture.Get(), &shadowBoxStencilDesc, shadowBoxStencils[shadowBoxStencils.size() - 1].GetAddressOf());
+			shadowBoxStencils[i].push_back(nullptr);
+			device->CreateDepthStencilView(cubeMapTextures[i].Get(), &shadowBoxStencilDesc, shadowBoxStencils[i][j].GetAddressOf());
+		}
+
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE; // Treat this as a cube!
+		srvDesc.TextureCube.MipLevels = 1; // Only need access to 1 mip
+		srvDesc.TextureCube.MostDetailedMip = 0; // Index of the first mip we want to see
+		device->CreateShaderResourceView(cubeMapTextures[i].Get(), &srvDesc, shadowBoxSRVs[i].GetAddressOf());
+
 	}
-
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE; // Treat this as a cube!
-	srvDesc.TextureCube.MipLevels = 1; // Only need access to 1 mip
-	srvDesc.TextureCube.MostDetailedMip = 0; // Index of the first mip we want to see
-	device->CreateShaderResourceView(cubeMapTexture.Get(), &srvDesc, shadowBoxSRV.GetAddressOf());
-
-
 }
 
 void Game::RenderDirectionalShadowMap()
@@ -537,17 +547,29 @@ void Game::RenderDirectionalShadowMap()
 	context->RSSetState(0); //reset
 }
 
-void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ, float farZ)
+void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, int index, float range, float nearZ, float farZ)
 {
-
 	//unbind shadow resource
 	ID3D11ShaderResourceView* const pSRV[1] = { NULL };
-	context->PSSetShaderResources(6, 1, pSRV);
+	context->PSSetShaderResources(7 + index, 1, pSRV); //shadow map starts at 7th
 
 	//setup pipline for shadow map
-	context->OMSetRenderTargets(0, 0, shadowBoxStencils[0].Get());
-	context->ClearDepthStencilView(shadowBoxStencils[0].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][0].Get());
+	context->ClearDepthStencilView(shadowBoxStencils[index][0].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	context->RSSetState(shadowRasterizer.Get());
+
+	//find which entities are in range to be rendered to map
+	renderableEntities.clear(); //clear previous culling
+	//loop and draw all objects in range of shadow
+	// '&' is important because it prevents making copies
+	for (auto& entities : gameEntities) {
+		DirectX::XMFLOAT3 ePos = entities.get()->GetTransform()->GetPosition();
+		//get square dist cause faster
+		float squareDist = pow(pos.x - ePos.x, 2) + pow(pos.y - ePos.y, 2) + pow(pos.z - ePos.z, 2);
+		if (squareDist < pow(farZ, 2)) {
+			renderableEntities.push_back(entities);
+		}
+	}
 
 	//Create viewport that matches shadow map resolution
 	D3D11_VIEWPORT vp = {};
@@ -588,7 +610,7 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (auto& entity : renderableEntities) {
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -603,8 +625,8 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 	//left side
 #pragma region Left
 
-	context->OMSetRenderTargets(0, 0, shadowBoxStencils[1].Get());
-	context->ClearDepthStencilView(shadowBoxStencils[1].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][1].Get());
+	context->ClearDepthStencilView(shadowBoxStencils[index][1].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	shView = XMMatrixLookToLH(
 		XMVectorSet(pos.x, pos.y, pos.z, 0),//start at origin to match point like
@@ -624,7 +646,7 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (auto& entity : renderableEntities) {
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -638,8 +660,8 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 #pragma region Up
 
-	context->OMSetRenderTargets(0, 0, shadowBoxStencils[2].Get());
-	context->ClearDepthStencilView(shadowBoxStencils[2].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][2].Get());
+	context->ClearDepthStencilView(shadowBoxStencils[index][2].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	shView = XMMatrixLookToLH(
 		XMVectorSet(pos.x, pos.y, pos.z, 0),//start at origin to match point like
@@ -659,7 +681,7 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (auto& entity : renderableEntities) {
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -673,8 +695,8 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 #pragma region Down
 
-	context->OMSetRenderTargets(0, 0, shadowBoxStencils[3].Get());
-	context->ClearDepthStencilView(shadowBoxStencils[3].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][3].Get());
+	context->ClearDepthStencilView(shadowBoxStencils[index][3].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	shView = XMMatrixLookToLH(
 		XMVectorSet(pos.x, pos.y, pos.z, 0),//start at origin to match point like
@@ -694,7 +716,7 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (auto& entity : renderableEntities) {
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -708,8 +730,8 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 #pragma region Front
 
-	context->OMSetRenderTargets(0, 0, shadowBoxStencils[4].Get());
-	context->ClearDepthStencilView(shadowBoxStencils[4].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][4].Get());
+	context->ClearDepthStencilView(shadowBoxStencils[index][4].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	shView = XMMatrixLookToLH(
 		XMVectorSet(pos.x, pos.y, pos.z, 0),//start at origin to match point like
@@ -729,7 +751,7 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (auto& entity : renderableEntities) {
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -743,8 +765,8 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 #pragma region Back
 
-	context->OMSetRenderTargets(0, 0, shadowBoxStencils[5].Get());
-	context->ClearDepthStencilView(shadowBoxStencils[5].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][5].Get());
+	context->ClearDepthStencilView(shadowBoxStencils[index][5].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	shView = XMMatrixLookToLH(
 		XMVectorSet(pos.x, pos.y, pos.z, 0),//start at origin to match point like
@@ -764,7 +786,7 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (auto& entity : renderableEntities) {
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -775,6 +797,10 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 	}
 
 #pragma endregion
+
+	//clear render target
+	ID3D11RenderTargetView* nullView = NULL;
+	context->OMSetRenderTargets(1, &nullView, NULL);
 
 	//reset all render states
 	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
@@ -789,7 +815,7 @@ void Game::RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, flo
 
 	//unbind shadow resource
 	ID3D11ShaderResourceView* const pSRV[1] = { NULL };
-	context->PSSetShaderResources(7, 1, pSRV); //spot shadow map is 7th
+	context->PSSetShaderResources(6, 1, pSRV); //spot shadow map is 6th
 
 	//create "camera" mats
 	XMMATRIX shView = XMMatrixLookToLH(
@@ -805,7 +831,7 @@ void Game::RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, flo
 
 	float yAngle = (spotFallOff / 2.0f) / range;
 	//use perspective for point light shadows
-	XMMATRIX shProj = XMMatrixPerspectiveFovLH(45.0f * toRadians, 1.0f, nearZ, farZ);// XMMatrixPerspectiveLH(spotFallOff, spotFallOff, nearZ, farZ);
+	XMMATRIX shProj = XMMatrixPerspectiveFovLH(90.0f * toRadians, 1.0f, nearZ, farZ);// XMMatrixPerspectiveLH(spotFallOff, spotFallOff, nearZ, farZ);
 	XMStoreFloat4x4(&spotShadowProjMat, shProj);
 
 	//setup pipline for shadow map
@@ -1166,14 +1192,19 @@ void Game::Draw(float deltaTime, float totalTime)
 		0);
 	//stuff above needed every frame.
 
+	//make sure we only render two point maps at max
+	int numPointMaps = 0;
 	//do shadow rendering stuff
 	for (int i = 0; i < lights.size(); i++) {
+		//lights[i].ShadowNumber = -1; //set to -1 so ps knows that it's doesn't use point shadow map
 		if (lights[i].CastsShadows) {
 			if (lights[i].Type == LIGHT_TYPE_DIRECTIONAL) {
 				RenderDirectionalShadowMap();
 			}
-			else if (lights[i].Type == LIGHT_TYPE_POINT) {
-				RenderPointShadowMap(lights[i].Position, lights[i].Range, lights[i].NearZ, lights[i].FarZ);
+			else if (lights[i].Type == LIGHT_TYPE_POINT && numPointMaps < MAX_POINT_SHADOWS_NUM) {
+				RenderPointShadowMap(lights[i].Position, numPointMaps, lights[i].Range, lights[i].NearZ, lights[i].FarZ);
+				//lights[i].ShadowNumber = numPointMaps;
+				numPointMaps++;
 			}
 			else if (lights[i].Type == LIGHT_TYPE_SPOT) {
 				RenderSpotShadowMap(lights[i].Position, lights[i].Direction, lights[i].Range, lights[i].SpotFalloff, lights[i].NearZ, lights[i].FarZ);
@@ -1186,20 +1217,28 @@ void Game::Draw(float deltaTime, float totalTime)
 		std::shared_ptr<SimpleVertexShader> vs = gameEntities[i]->GetMaterial()->GetVertexShader();
 		//send shadow info to vertex shader
 		vs->SetMatrix4x4("lightView", shadowViewMat);
+		//vs->SetData("lightView", &sh)
 		vs->SetMatrix4x4("lightProj", shadowProjMat);
 		vs->SetMatrix4x4("spotLightView", spotShadowViewMat);
 		vs->SetMatrix4x4("spotLightProj", spotShadowProjMat);
-		for (int j = 0; j < lights.size(); j++) {
-			if (lights[j].Type == LIGHT_TYPE_POINT)
-				vs->SetFloat3("lightPos", lights[j].Position);
-		}
+		/*for (int j = 0; j < lights.size(); j++) {
+			if (lights[j].Type == LIGHT_TYPE_POINT) {
+				lightPoses[j] = lights[j].Position;
+			}
+		}*/
+
+		//vs->SetData("lightPoses", &lightPoses[0], sizeof(XMFLOAT3) * (int)lightPoses.size());
 
 		std::shared_ptr<SimplePixelShader> ps = gameEntities[i]->GetMaterial()->GetPixelShader();
 		//send light data to shaders
 		ps->SetInt("numLights", static_cast<int>(lights.size()));
 		ps->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
 		ps->SetShaderResourceView("ShadowMap", shadowSRV);
-		ps->SetShaderResourceView("ShadowBox", shadowBoxSRV);
+		ps->SetShaderResourceView("ShadowBox1", shadowBoxSRVs[0]);
+		ps->SetShaderResourceView("ShadowBox2", shadowBoxSRVs[1]);
+		//ps->SetShaderResourceView("ShadowBox", &shadowBoxSRVs[0]);// , sizeof(shadowBoxSRVs)* (int)shadowBoxSRVs.size());
+		//context->PSSetShaderResources(7, 1, &shadowBoxSRVs[0]);
+		//context->PSSetShaderResources(8, 1, &shadowBoxSRVs[1]);
 		ps->SetShaderResourceView("ShadowSpotMap", shadowSpotSRV);
 
 		ps->SetFloat3("ambientTerm", ambientTerm);
@@ -1318,4 +1357,31 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Game::CreateCubemap(
 		textures[i]->Release();
 	// Send back the SRV, which is what we need for our shaders
 	return cubeSRV;
+}
+
+///Helper function to reduce amount of typing in shadow map functions.
+void PassShadowObjs() {
+	/*
+	//turn on our special shadow shader
+	shadowVertexShader->SetShader();
+	//the view and proj will be the same for all objects
+	shadowVertexShader->SetMatrix4x4("view", shadowBoxViewMat);
+	shadowVertexShader->SetMatrix4x4("proj", shadowBoxProjMat);
+	shadowVertexShader->SetFloat3("lightPos", pos);
+	//custom ps that outputs linear depth
+	//shadowPixelShader->SetShader();
+	context->PSSetShader(0, 0, 0);
+
+	//loop and draw all objects in range of shadow
+	// '&' is important because it prevents making copies
+	for (auto& entity : renderableEntities) {
+		//set this game entity's world mat, send to gpu
+		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
+		//copy data over
+		shadowVertexShader->CopyAllBufferData();
+
+		//draw. Don't need material
+		entity->GetMesh()->Draw();
+	}
+	*/
 }

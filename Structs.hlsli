@@ -15,6 +15,7 @@ static const float PI = 3.14159265359f;
 
 
 #define MAX_LIGHTS_NUM 10
+#define MAX_POINT_SHADOWS_NUM 2
 
 //struct shared between vertex and pixel shader
 //which passes info from vertex to pixel shader.
@@ -52,9 +53,10 @@ struct Light {
 	float intensity			: INTENSITY; //All need this
 	float3 color			: COLOR; //all lights need a color
 	float spotFalloff		: SPOTFALLOFF; //spot lights need to have cone size
-	bool castsShadows		: CASTSHADOW;
 	float nearZ				: NEARZ; //near and far z values for shadow maps
-	float farZ				: FARZ; 
+	float farZ				: FARZ;
+	//int shadowNumber		: SHADOWNUMBER; //which point shadow map to use
+	bool castsShadows		: CASTSHADOW;
 };
 
 // Struct representing a single vertex worth of data
