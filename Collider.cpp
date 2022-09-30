@@ -38,7 +38,7 @@ void Collider::CalcMinMaxPoints()
 
 	std::vector<Vertex> verts = m_objectMesh->GetVerticies();
 
-	XMFLOAT4 tempPos = XMFLOAT4(verts[0].Position.x + m_transform->GetPosition().x, verts[0].Position.y + m_transform->GetPosition().y, verts[0].Position.z + m_transform->GetPosition().z, 1.0f);
+	XMFLOAT4 currPos = XMFLOAT4(verts[0].Position.x + m_transform->GetPosition().x, verts[0].Position.y + m_transform->GetPosition().y, verts[0].Position.z + m_transform->GetPosition().z, 1.0f);
 	XMFLOAT4X4 projMat;
 	XMFLOAT4X4 viewMat;
 	XMFLOAT4X4 worldMat = m_transform->GetWorldMatrix();
@@ -49,21 +49,23 @@ void Collider::CalcMinMaxPoints()
 		//XMStoreFloat4(&tempPos, XMVector4Transform(XMLoadFloat4(&tempPos), XMLoadFloat4x4(&projMat) * XMLoadFloat4x4(&viewMat) * XMLoadFloat4x4(&worldMat)));
 	}
 	
+	XMStoreFloat4(&currPos, XMVector4Transform(XMLoadFloat4(&currPos), XMLoadFloat4x4(&worldMat)));
+
 	l_transformedPositions.clear();
-	l_transformedPositions.push_back(tempPos);
+	l_transformedPositions.push_back(currPos);
 
 	//Inefficient could probs be better done through a compute shader
-	float xMax = tempPos.x;
-	float xMin = tempPos.x;
+	float xMax = currPos.x;
+	float xMin = currPos.x;
 				 
-	float yMax = tempPos.y;
-	float yMin = tempPos.y;
+	float yMax = currPos.y;
+	float yMin = currPos.y;
 				 
-	float zMax = tempPos.z;
-	float zMin = tempPos.z;
+	float zMax = currPos.z;
+	float zMin = currPos.z;
 	for (int i = 1; i < verts.size(); i++)
 	{
-		XMFLOAT4 currPos = XMFLOAT4(verts[i].Position.x, verts[i].Position.y, verts[i].Position.z, 1.0f);
+		currPos = XMFLOAT4(verts[i].Position.x, verts[i].Position.y, verts[i].Position.z, 1.0f);
 		XMStoreFloat4(&currPos, XMVector4Transform(XMLoadFloat4(&currPos), XMLoadFloat4x4(&worldMat)));
 		l_transformedPositions.push_back(currPos);
 

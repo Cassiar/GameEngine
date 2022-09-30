@@ -23,6 +23,7 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 
 	m_rigidBody = std::make_shared<RigidBody>(&transform);
 	m_collider = std::make_shared<Collider>(in_mesh, &transform, sphere->GetTransform(), in_camera);
+	sphere->mesh = in_mesh;
 	m_sphere = sphere;
 }
 
@@ -89,6 +90,7 @@ void GameEntity::Draw()
 	mesh->Draw();
 
 	if (m_sphere) {
+		//m_sphere->GetTransform()->SetScale(1.5f, 1.5f, 1.5f);
 		m_sphere->Draw();
 	}
 }
