@@ -11,7 +11,7 @@ private:
 	DirectX::XMFLOAT3 m_velocity;
 	DirectX::XMFLOAT3 m_acceleration;
 
-	std::shared_ptr<Transform> m_transform;
+	Transform* m_transform;
 
 	bool m_hasGravity;
 

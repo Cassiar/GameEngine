@@ -36,7 +36,7 @@ public:
 	//will hold draw code
 	void Draw();
 	//Updates entity and checks for collisions
-	void Update(float dt, std::vector<std::shared_ptr<GameEntity>> collisionEntities);
+	void Update(float dt, std::vector<std::shared_ptr<GameEntity>>& collisionEntities);
 private:
 
 	std::shared_ptr<Mesh> mesh;

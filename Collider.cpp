@@ -63,11 +63,8 @@ void Collider::CalcMinMaxPoints()
 	float zMin = tempPos.z;
 	for (int i = 1; i < verts.size(); i++)
 	{
-		XMFLOAT4 currPos = XMFLOAT4(verts[i].Position.x + m_transform->GetPosition().x, verts[i].Position.y + m_transform->GetPosition().y, verts[i].Position.z + m_transform->GetPosition().z, 1.0f);
-		if (m_camera)
-		{
-			//XMStoreFloat4(&currPos, XMVector4Transform(XMLoadFloat4(&currPos), XMLoadFloat4x4(&worldMat)));
-		}
+		XMFLOAT4 currPos = XMFLOAT4(verts[i].Position.x, verts[i].Position.y, verts[i].Position.z, 1.0f);
+		XMStoreFloat4(&currPos, XMVector4Transform(XMLoadFloat4(&currPos), XMLoadFloat4x4(&worldMat)));
 		l_transformedPositions.push_back(currPos);
 
 		xMax = currPos.x > xMax ? currPos.x : xMax;
@@ -132,7 +129,7 @@ bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
 	other->CalcCenterPoint();
 
 	float centerSquareDist = pow(m_centerPoint.x - other->m_centerPoint.x, 2) + pow(m_centerPoint.y - other->m_centerPoint.y, 2) + pow(m_centerPoint.z - other->m_centerPoint.z, 2);
-	if (m_preCheckRadiusSquared + other->m_preCheckRadiusSquared < centerSquareDist) {
+	if (m_preCheckRadiusSquared + other->m_preCheckRadiusSquared <= centerSquareDist) {
 		return false;
 	}
 
