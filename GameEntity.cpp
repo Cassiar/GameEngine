@@ -108,14 +108,14 @@ void GameEntity::Update(float dt, std::vector<std::shared_ptr<GameEntity>>& coll
 		for (auto& entity : collisionEntities)
 		{
 			if (entity.get() != this && m_collider->CheckForCollision(entity->GetCollider())) {
-				material->SetColorTint(DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f));
-				//this->GetTransform()->SetScale(2.0f, 2.0f, 2.0f);
+				//material->SetColorTint(DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f));
+				this->GetTransform()->SetScale(1.25, 1.25, 1.25);
 				break;
 			}
 			else
 			{
-				material->SetColorTint(DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
-				//this->GetTransform()->SetScale(1.0f, 1.0f, 1.0f);
+				//material->SetColorTint(DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+				this->GetTransform()->SetScale(1.0f, 1.0f, 1.0f);
 			}
 		}
 	}

@@ -32,7 +32,7 @@ private:
 
 	bool CheckGJKCollision(const std::shared_ptr<Collider> other);
 	DirectX::XMVECTOR CalcSupport(const DirectX::XMVECTOR& direction);
-	bool DoSimplex(std::vector<DirectX::XMVECTOR*>& supports, DirectX::XMVECTOR& direction);
+	bool DoSimplex(std::vector<DirectX::XMVECTOR>& supports, DirectX::XMVECTOR& direction);
 
 	Transform* m_sphere;
 	std::shared_ptr<Camera> m_camera;

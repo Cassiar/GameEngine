@@ -38,7 +38,7 @@ void Collider::CalcMinMaxPoints()
 
 	std::vector<Vertex> verts = m_objectMesh->GetVerticies();
 
-	XMFLOAT4 currPos = XMFLOAT4(verts[0].Position.x + m_transform->GetPosition().x, verts[0].Position.y + m_transform->GetPosition().y, verts[0].Position.z + m_transform->GetPosition().z, 1.0f);
+	XMFLOAT4 currPos = XMFLOAT4(verts[0].Position.x, verts[0].Position.y, verts[0].Position.z, 1.0f);
 	XMFLOAT4X4 projMat;
 	XMFLOAT4X4 viewMat;
 	XMFLOAT4X4 worldMat = m_transform->GetWorldMatrix();
@@ -135,18 +135,15 @@ bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
 		return false;
 	}
 
-	return true; //CheckGJKCollision(other);
+	return true;//CheckGJKCollision(other);
 }
 
 #pragma region GJK collision
 
 bool Collider::CheckGJKCollision(const std::shared_ptr<Collider> other) {
-	//CalcCenterPoint();
-	//other->CalcCenterPoint();
-
-	std::vector<XMVECTOR*> supports;
+	std::vector<XMVECTOR> supports;
 	XMVECTOR currSupport = CalcSupport(XMVector3Normalize(XMLoadFloat3(&m_maxPoint))) - other->CalcSupport(-XMVector3Normalize(XMLoadFloat3(&m_maxPoint)));
-	supports.push_back(&currSupport);
+	supports.push_back(currSupport);
 
 	XMVECTOR negated = XMVectorNegate(currSupport);
 	XMVECTOR currDir = negated;
@@ -163,7 +160,7 @@ bool Collider::CheckGJKCollision(const std::shared_ptr<Collider> other) {
 			return false;
 		}
 
-		supports.push_back(&pointA);
+		supports.push_back(pointA);
 
 		XMFLOAT3 directionPrint;
 		XMStoreFloat3(&directionPrint, currDir);
@@ -196,8 +193,8 @@ XMVECTOR Collider::CalcSupport(const XMVECTOR& direction) {
 
 //Implementation based on https://www.youtube.com/watch?v=Qupqu1xe7Io
 
-bool Collider::DoSimplex(std::vector<XMVECTOR*>& supports, DirectX::XMVECTOR& direction) {
-	XMVECTOR ao = -*supports[0];
+bool Collider::DoSimplex(std::vector<XMVECTOR>& supports, DirectX::XMVECTOR& direction) {
+	XMVECTOR ao = -supports[0];
 	XMVECTOR zeroVec = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 
 
@@ -206,7 +203,7 @@ bool Collider::DoSimplex(std::vector<XMVECTOR*>& supports, DirectX::XMVECTOR& di
 	};
 
 	auto lineCase = [&dotEval, &ao, &supports, &direction]() {
-		XMVECTOR ab = *supports[1] - *supports[0];
+		XMVECTOR ab = supports[1] - supports[0];
 
 		if (dotEval(ab)) {
 			direction = XMVector3Cross(XMVector3Cross(ab, ao), ab);
@@ -220,8 +217,8 @@ bool Collider::DoSimplex(std::vector<XMVECTOR*>& supports, DirectX::XMVECTOR& di
 	};
 
 	auto triCase = [&dotEval, &lineCase, &ao, &supports, &direction]() {
-		XMVECTOR ab = *supports[1] - *supports[0];
-		XMVECTOR ac = *supports[2] - *supports[0];
+		XMVECTOR ab = supports[1] - supports[0];
+		XMVECTOR ac = supports[2] - supports[0];
 		XMVECTOR abc = XMVector3Cross(ab, ac);
 
 		// Plane ABC x Vector AC
@@ -245,9 +242,9 @@ bool Collider::DoSimplex(std::vector<XMVECTOR*>& supports, DirectX::XMVECTOR& di
 				}
 				else {
 					direction = -abc;
-					XMVECTOR temp = *supports[1];
+					XMVECTOR temp = supports[1];
 					supports[1] = supports[2];
-					supports[2] = &temp;
+					supports[2] = temp;
 				}
 			}
 		}
@@ -256,9 +253,9 @@ bool Collider::DoSimplex(std::vector<XMVECTOR*>& supports, DirectX::XMVECTOR& di
 	};
 
 	auto quadCase = [&dotEval, &triCase, &ao, &supports, &direction]() {
-		XMVECTOR ab = *supports[1] - *supports[0];
-		XMVECTOR ac = *supports[2] - *supports[0];
-		XMVECTOR ad = *supports[3] - *supports[0];
+		XMVECTOR ab = supports[1] - supports[0];
+		XMVECTOR ac = supports[2] - supports[0];
+		XMVECTOR ad = supports[3] - supports[0];
 
 		XMVECTOR abc = XMVector3Cross(ab, ac);
 		XMVECTOR acd = XMVector3Cross(ac, ad);
@@ -276,7 +273,7 @@ bool Collider::DoSimplex(std::vector<XMVECTOR*>& supports, DirectX::XMVECTOR& di
 
 		if (dotEval(adb)) {
 			supports.erase(supports.begin() + 2);
-			XMVECTOR* temp = supports[1];
+			XMVECTOR temp = supports[1];
 			supports[1] = supports[2];
 			supports[2] = temp;
 			return triCase();
