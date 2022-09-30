@@ -11,6 +11,19 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 
 	m_rigidBody = std::make_shared<RigidBody>(&transform);
 	m_collider = std::make_shared<Collider>(in_mesh, &transform);
+	m_sphere = nullptr;
+}
+
+GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<GameEntity> sphere)
+{
+	mesh = in_mesh;
+	material = in_material;
+	camera = in_camera;
+	transform = Transform();
+
+	m_rigidBody = std::make_shared<RigidBody>(&transform);
+	m_collider = std::make_shared<Collider>(in_mesh, &transform, sphere->GetTransform(), in_camera);
+	m_sphere = sphere;
 }
 
 GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<RigidBody> rigidBody, std::shared_ptr<Collider> collider)
@@ -22,6 +35,7 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 
 	m_rigidBody = rigidBody;
 	m_collider = collider;
+	m_sphere = nullptr;
 }
 
 GameEntity::~GameEntity()
@@ -73,6 +87,10 @@ void GameEntity::Draw()
 	material->GetPixelShader()->SetShader();
 
 	mesh->Draw();
+
+	if (m_sphere) {
+		m_sphere->Draw();
+	}
 }
 
 void GameEntity::Update(float dt, std::vector<std::shared_ptr<GameEntity>> collisionEntities)
@@ -88,11 +106,11 @@ void GameEntity::Update(float dt, std::vector<std::shared_ptr<GameEntity>> colli
 		for (auto& entity : collisionEntities)
 		{
 			if (m_collider->CheckForCollision(entity->GetCollider())) {
-				material->SetColorTint(DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f));
+				transform.SetScale(2.0f, 2.0f, 2.0f);
 			}
 			else
 			{
-				material->SetColorTint(DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+				transform.SetScale(1.0f, 1.0f, 1.0f);
 			}
 		}
 	}

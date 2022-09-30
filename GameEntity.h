@@ -18,6 +18,7 @@ class GameEntity
 {
 public:
 	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera);
+	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<GameEntity> sphere);
 	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<RigidBody> rigidBody, std::shared_ptr<Collider> collider);
 	~GameEntity();
 
@@ -45,4 +46,6 @@ private:
 
 	std::shared_ptr<RigidBody> m_rigidBody;
 	std::shared_ptr<Collider> m_collider;
+
+	std::shared_ptr<GameEntity> m_sphere;
 };
