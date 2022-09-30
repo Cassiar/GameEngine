@@ -18,7 +18,10 @@ Texture2D NormalTexture : register(t3);
 Texture2D MetalnessTexture : register(t4);
 Texture2D ShadowMap : register(t5);
 Texture2D ShadowSpotMap : register(t6);
-TextureCube ShadowBox[MAX_POINT_SHADOWS_NUM] : register(t7);
+//TextureCubeArray ShadowBoxes : register(t7);
+//TextureCube ShadowBox[MAX_POINT_SHADOWS_NUM] : register(t7);
+TextureCube ShadowBox1 : register(t7);
+TextureCube ShadowBox2 : register(t8);
 
 SamplerState BasicSampler : register(s0);
 SamplerComparisonState ShadowSampler : register(s1);
@@ -84,6 +87,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 		else if (lights[i].type == LIGHT_TYPE_SPOT) {
 			lightAmount += Spot(lights[i], input.normal, cameraPos, input.worldPos.xyz, specExponent, specColor, surfaceColor, roughnessMap, metalnessMap);
 		}
+
 		if (lights[i].castsShadows) {
 			float shadowAmount = 1.0f; //value of one doesn't change light, value of 0 means no light
 			if (lights[i].type == LIGHT_TYPE_DIRECTIONAL) {
@@ -99,11 +103,12 @@ float4 main(VertexToPixel input) : SV_TARGET
 				shadowAmount = ShadowMap.SampleCmpLevelZero(ShadowSampler, shadowMapUV, depthFromLight);
 			}
 			//make sure we don't try to render more than max amount of point shadows
-			else if (lights[i].type == LIGHT_TYPE_POINT && numPointShadows >= MAX_POINT_SHADOWS_NUM) {
+			else if (lights[i].type == LIGHT_TYPE_POINT) {
 				float3 dirToLight = lights[i].position - input.worldPos.xyz;
 
 				//may all the gods bless this stackoverflow post https://stackoverflow.com/questions/10786951/omnidirectional-shadow-mapping-with-depth-cubemap
 
+				//recalculate position in spac when shadow map was rendered
 				float3 absDirToLight = abs(dirToLight);
 				float localZcomp = max(absDirToLight.x, max(absDirToLight.y, absDirToLight.z));
 				float near = lights[i].nearZ;
@@ -116,11 +121,18 @@ float4 main(VertexToPixel input) : SV_TARGET
 				float3 worldPos = input.worldPos.xyz;
 				worldPos.z = input.worldPos.z / input.worldPos.w;
 
-
+				//int index = lights[i].shadowNumber;
 				lightDirection.xyz = input.worldPos.xyz - float3(lights[i].position.xy, lights[i].position.z);
-				
-				shadowAmount = ShadowBox[i].SampleCmpLevelZero(ShadowSampler, -normalize(dirToLight), distance);
-				numPointShadows++; //count up number of render point shadows
+				if (numPointShadows == 0) {
+					shadowAmount = ShadowBox1.SampleCmpLevelZero(ShadowSampler, -normalize(dirToLight), distance);
+				} else if (numPointShadows == 1) {
+					shadowAmount = ShadowBox2.SampleCmpLevelZero(ShadowSampler, -normalize(dirToLight), distance);
+				}
+				//shadowAmount = ShadowBoxes[index].SampleCmpLevelZero(ShadowSampler, -normalize(dirToLight), distance);
+				/*if(lights[i].shadowNumber >= 0 && lights[i].shadowNumber < MAX_POINT_SHADOWS_NUM) {
+					shadowAmount = ShadowBox[numPointShadows].SampleCmpLevelZero(ShadowSampler, -normalize(dirToLight), distance);
+				}*/
+				numPointShadows++; //count up number of rendered point shadows
 			}
 			else if (lights[i].type == LIGHT_TYPE_SPOT) {
 				// calculate shadow stuff
@@ -146,6 +158,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 				//use comparison sampler to check if pixel is in shadow
 				shadowAmount = ShadowSpotMap.SampleCmpLevelZero(ShadowSampler, shadowMapUV, depthFromLight);
 			}
+			
 			lightAmount *= shadowAmount;
 		}
 		final += lightAmount;

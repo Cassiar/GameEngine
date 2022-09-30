@@ -549,10 +549,9 @@ void Game::RenderDirectionalShadowMap()
 
 void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, int index, float range, float nearZ, float farZ)
 {
-
 	//unbind shadow resource
 	ID3D11ShaderResourceView* const pSRV[1] = { NULL };
-	context->PSSetShaderResources(7, 1, pSRV); //shadow map starts at 7th
+	context->PSSetShaderResources(7 + index, 1, pSRV); //shadow map starts at 7th
 
 	//setup pipline for shadow map
 	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][0].Get());
@@ -798,6 +797,10 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, int index, float range, f
 	}
 
 #pragma endregion
+
+	//clear render target
+	ID3D11RenderTargetView* nullView = NULL;
+	context->OMSetRenderTargets(1, &nullView, NULL);
 
 	//reset all render states
 	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
@@ -1193,12 +1196,14 @@ void Game::Draw(float deltaTime, float totalTime)
 	int numPointMaps = 0;
 	//do shadow rendering stuff
 	for (int i = 0; i < lights.size(); i++) {
+		//lights[i].ShadowNumber = -1; //set to -1 so ps knows that it's doesn't use point shadow map
 		if (lights[i].CastsShadows) {
 			if (lights[i].Type == LIGHT_TYPE_DIRECTIONAL) {
 				RenderDirectionalShadowMap();
 			}
-			else if (lights[i].Type == LIGHT_TYPE_POINT || numPointMaps >= MAX_POINT_SHADOWS_NUM) {
+			else if (lights[i].Type == LIGHT_TYPE_POINT && numPointMaps < MAX_POINT_SHADOWS_NUM) {
 				RenderPointShadowMap(lights[i].Position, numPointMaps, lights[i].Range, lights[i].NearZ, lights[i].FarZ);
+				//lights[i].ShadowNumber = numPointMaps;
 				numPointMaps++;
 			}
 			else if (lights[i].Type == LIGHT_TYPE_SPOT) {
@@ -1229,8 +1234,11 @@ void Game::Draw(float deltaTime, float totalTime)
 		ps->SetInt("numLights", static_cast<int>(lights.size()));
 		ps->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
 		ps->SetShaderResourceView("ShadowMap", shadowSRV);
-		//ps->SetShaderResourceView("ShadowBox", shadowBoxSRVs[0]);
-		ps->SetShaderResourceView("ShadowBox", &shadowBoxSRVs[0]);// , sizeof(shadowBoxSRVs)* (int)shadowBoxSRVs.size());
+		ps->SetShaderResourceView("ShadowBox1", shadowBoxSRVs[0]);
+		ps->SetShaderResourceView("ShadowBox2", shadowBoxSRVs[1]);
+		//ps->SetShaderResourceView("ShadowBox", &shadowBoxSRVs[0]);// , sizeof(shadowBoxSRVs)* (int)shadowBoxSRVs.size());
+		//context->PSSetShaderResources(7, 1, &shadowBoxSRVs[0]);
+		//context->PSSetShaderResources(8, 1, &shadowBoxSRVs[1]);
 		ps->SetShaderResourceView("ShadowSpotMap", shadowSpotSRV);
 
 		ps->SetFloat3("ambientTerm", ambientTerm);

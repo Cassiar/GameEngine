@@ -19,5 +19,6 @@ struct Light {
 	float SpotFalloff; //spot lights need to have cone size
 	float NearZ; //near and far z planes for shadows
 	float FarZ;
+	//int ShadowNumber; //which point shadow it is
 	bool CastsShadows;
 };
