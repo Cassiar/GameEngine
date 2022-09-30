@@ -138,6 +138,12 @@ bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
 	return true;//CheckGJKCollision(other);
 }
 
+#pragma region SAT collision
+
+
+#pragma endregion
+
+
 #pragma region GJK collision
 
 bool Collider::CheckGJKCollision(const std::shared_ptr<Collider> other) {
