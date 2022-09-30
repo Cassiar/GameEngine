@@ -1,6 +1,7 @@
 #pragma once
 #include "Transform.h"
 #include "Mesh.h"
+#include "Camera.h"
 
 #include <memory>
 
@@ -33,8 +34,12 @@ private:
 	DirectX::XMVECTOR CalcSupport(const DirectX::XMVECTOR& direction);
 	bool DoSimplex(std::vector<DirectX::XMVECTOR*>& supports, DirectX::XMVECTOR& direction);
 
+	Transform* m_sphere;
+	std::shared_ptr<Camera> m_camera;
+
 public:
 	Collider(std::shared_ptr<Mesh> colliderMesh, Transform* transform);
+	Collider(std::shared_ptr<Mesh> colliderMesh, Transform* transform, Transform* sphere, std::shared_ptr<Camera> cam);
 	~Collider();
 
 	std::shared_ptr<Mesh> GetCollisionMesh() { return m_objectMesh; }

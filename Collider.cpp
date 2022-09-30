@@ -6,7 +6,19 @@ Collider::Collider(std::shared_ptr<Mesh> colliderMesh, Transform* transform)
 	: m_objectMesh(colliderMesh),
 	m_transform(transform),
 	m_pointsDirty(true),
-	m_halvesDirty(true)
+	m_halvesDirty(true),
+	m_sphere(nullptr)
+{
+	CalcCenterPoint();
+}
+
+Collider::Collider(std::shared_ptr<Mesh> colliderMesh, Transform* transform, Transform* sphere, std::shared_ptr<Camera> cam)
+	: m_objectMesh(colliderMesh),
+	m_transform(transform),
+	m_pointsDirty(true),
+	m_halvesDirty(true),
+	m_sphere(sphere),
+	m_camera(cam)
 {
 	CalcCenterPoint();
 }
@@ -26,35 +38,45 @@ void Collider::CalcMinMaxPoints()
 
 	std::vector<Vertex> verts = m_objectMesh->GetVerticies();
 
-	XMFLOAT4 tempPos = XMFLOAT4(verts[0].Position.x + m_transform->GetPosition().x, verts[0].Position.y + m_transform->GetPosition().y, verts[0].Position.z + m_transform->GetPosition().z, 1.0f);
+	XMFLOAT4 currPos = XMFLOAT4(verts[0].Position.x + m_transform->GetPosition().x, verts[0].Position.y + m_transform->GetPosition().y, verts[0].Position.z + m_transform->GetPosition().z, 1.0f);
+	XMFLOAT4X4 projMat;
+	XMFLOAT4X4 viewMat;
 	XMFLOAT4X4 worldMat = m_transform->GetWorldMatrix();
-	XMStoreFloat4(&tempPos, XMVector4Transform(XMLoadFloat4(&tempPos), XMLoadFloat4x4(&worldMat)));
+	if (m_camera)
+	{
+		viewMat = m_camera->GetViewMatrix();
+		projMat = m_camera->GetProjectionMatrix();
+		//XMStoreFloat4(&tempPos, XMVector4Transform(XMLoadFloat4(&tempPos), XMLoadFloat4x4(&projMat) * XMLoadFloat4x4(&viewMat) * XMLoadFloat4x4(&worldMat)));
+	}
+	
+	XMStoreFloat4(&currPos, XMVector4Transform(XMLoadFloat4(&currPos), XMLoadFloat4x4(&worldMat)));
+
 	l_transformedPositions.clear();
-	l_transformedPositions.push_back(tempPos);
+	l_transformedPositions.push_back(currPos);
 
 	//Inefficient could probs be better done through a compute shader
-	float xMax = tempPos.x;
-	float xMin = tempPos.x;
+	float xMax = currPos.x;
+	float xMin = currPos.x;
 				 
-	float yMax = tempPos.y;
-	float yMin = tempPos.y;
+	float yMax = currPos.y;
+	float yMin = currPos.y;
 				 
-	float zMax = tempPos.z;
-	float zMin = tempPos.z;
+	float zMax = currPos.z;
+	float zMin = currPos.z;
 	for (int i = 1; i < verts.size(); i++)
 	{
-		XMFLOAT4 currPos = XMFLOAT4(verts[i].Position.x + m_transform->GetPosition().x, verts[i].Position.y + m_transform->GetPosition().y, verts[i].Position.z + m_transform->GetPosition().z, 1.0f);
-		XMStoreFloat4(&currPos, XMVector4Transform(XMLoadFloat4(&currPos), XMMatrixTranspose(XMLoadFloat4x4(&worldMat))));
+		currPos = XMFLOAT4(verts[i].Position.x, verts[i].Position.y, verts[i].Position.z, 1.0f);
+		XMStoreFloat4(&currPos, XMVector4Transform(XMLoadFloat4(&currPos), XMLoadFloat4x4(&worldMat)));
 		l_transformedPositions.push_back(currPos);
 
 		xMax = currPos.x > xMax ? currPos.x : xMax;
-		xMin = currPos.x < xMin ? currPos.x : xMax;
+		xMin = currPos.x < xMin ? currPos.x : xMin;
 
 		yMax = currPos.y > yMax ? currPos.y : yMax;
-		yMin = currPos.y < yMin ? currPos.y : yMax;
+		yMin = currPos.y < yMin ? currPos.y : yMin;
 
 		zMax = currPos.z > zMax ? currPos.z : zMax;
-		zMin = currPos.z < zMin ? currPos.z : zMax;
+		zMin = currPos.z < zMin ? currPos.z : zMin;
 	}
 
 	XMStoreFloat3(&m_maxPoint, XMVectorSet(xMax, yMax, zMax, 1.0f));
@@ -84,7 +106,7 @@ void Collider::CalcHalfDimensions() {
 	m_halfHeight = abs(m_maxPoint.y - m_minPoint.y) / 2.0f;
 	m_halfDepth =  abs(m_maxPoint.z - m_minPoint.z) / 2.0f;
 
-	m_preCheckRadiusSquared = pow(m_halfWidth, 2) + pow(m_halfHeight, 2) + pow(m_halfDepth, 2);
+	m_preCheckRadiusSquared = pow(m_maxPoint.x - m_centerPoint.x, 2) + pow(m_maxPoint.y - m_centerPoint.y, 2) + pow(m_maxPoint.z - m_centerPoint.z, 2);
 
 	m_halvesDirty = false;
 }
@@ -93,6 +115,10 @@ void Collider::CalcCenterPoint() {
 	CalcHalfDimensions();
 
 	XMStoreFloat3(&m_centerPoint, XMVectorSet(m_maxPoint.x - m_halfWidth, m_maxPoint.y - m_halfHeight, m_maxPoint.z - m_halfDepth, 1.0f));
+	if (m_sphere)
+	{
+		m_sphere->SetPosition(m_centerPoint);
+	}
 }
 
 bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
@@ -104,8 +130,8 @@ bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
 	CalcCenterPoint();
 	other->CalcCenterPoint();
 
-	float centerSquareDist = pow(m_centerPoint.x - other->m_centerPoint.x, 2.0f) + pow(m_centerPoint.y - other->m_centerPoint.y, 2) + pow(m_centerPoint.z - other->m_centerPoint.z, 2);
-	if (m_preCheckRadiusSquared + other->m_preCheckRadiusSquared < centerSquareDist) {
+	float centerSquareDist = pow(m_centerPoint.x - other->m_centerPoint.x, 2) + pow(m_centerPoint.y - other->m_centerPoint.y, 2) + pow(m_centerPoint.z - other->m_centerPoint.z, 2);
+	if (m_preCheckRadiusSquared + other->m_preCheckRadiusSquared <= centerSquareDist) {
 		return false;
 	}
 

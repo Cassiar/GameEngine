@@ -281,22 +281,22 @@ void Game::CreateBasicGeometry()
 
 	//create some entities
 	//cube direectly in front of camera
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[0], materials[0], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[0], materials[0], camera, std::make_shared<GameEntity>(meshes[3], materials[3], camera)));
 	//sphere to left of cube
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[3], materials[3], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[3], materials[3], camera, std::make_shared<GameEntity>(meshes[3], materials[3], camera)));
 	//helix to right
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[3], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[3], camera, std::make_shared<GameEntity>(meshes[3], materials[3], camera)));
 	//helix below cube
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[2], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[2], camera, std::make_shared<GameEntity>(meshes[3], materials[3], camera)));
 	//cylinder one behind cube
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[1], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[1], camera, std::make_shared<GameEntity>(meshes[3], materials[3], camera)));
 	//cylinder above cube
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[3], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[3], camera, std::make_shared<GameEntity>(meshes[3], materials[3], camera)));
 
 	m_EntityManager->GetEntity(2)->GetTransform()->AddChild(m_EntityManager->GetEntity(5)->GetTransform());
 
 	//big plane to act as floor
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[4], materials[2], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[4], materials[2], camera, std::make_shared<GameEntity>(meshes[3], materials[3], camera)));
 
 	//move objects so there isn't overlap
 	m_EntityManager->GetEntity(0)->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));
