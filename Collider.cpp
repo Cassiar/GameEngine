@@ -138,6 +138,12 @@ bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
 #pragma region SAT collision
 
 bool Collider::CheckSATCollision(const std::shared_ptr<Collider> other) {
+	XMVECTOR thisUp = XMLoadFloat3( &(m_transform.GetParent()->GetUp()));
+	XMVECTOR thisForward = XMLoadFloat3( &(m_transform.GetParent()->GetUp()));
+	XMVECTOR thisRight = XMLoadFloat3( &(m_transform.GetParent()->GetUp()));
+
+	
+
 	return false;
 }
 
