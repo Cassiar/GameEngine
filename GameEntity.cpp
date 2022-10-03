@@ -22,7 +22,7 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 	transform = Transform();
 
 	m_rigidBody = std::make_shared<RigidBody>(&transform);
-	m_collider = std::make_shared<Collider>(in_mesh, &transform, sphere->GetTransform(), in_camera);
+	m_collider = std::make_shared<Collider>(in_mesh, &transform, sphere->GetTransform());
 	sphere->mesh = in_mesh;
 	m_sphere = sphere;
 }

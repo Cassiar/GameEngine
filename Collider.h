@@ -11,7 +11,7 @@ private:
 	std::shared_ptr<Mesh> m_objectMesh;
 	std::vector<DirectX::XMFLOAT4> l_transformedPositions;
 	std::vector<DirectX::XMFLOAT3> l_transformedCubeVerts;
-	Transform* m_transform;
+	Transform m_transform;
 
 	DirectX::XMFLOAT3 m_maxPoint;
 	DirectX::XMFLOAT3 m_minPoint;
@@ -30,16 +30,17 @@ private:
 	void CalcHalfDimensions();
 	void CalcCenterPoint();
 
+	bool CheckSATCollision(const std::shared_ptr<Collider> other);
+
 	bool CheckGJKCollision(const std::shared_ptr<Collider> other);
 	DirectX::XMVECTOR CalcSupport(const DirectX::XMVECTOR& direction);
 	bool DoSimplex(std::vector<DirectX::XMVECTOR>& supports, DirectX::XMVECTOR& direction);
 
 	Transform* m_sphere;
-	std::shared_ptr<Camera> m_camera;
 
 public:
-	Collider(std::shared_ptr<Mesh> colliderMesh, Transform* transform);
-	Collider(std::shared_ptr<Mesh> colliderMesh, Transform* transform, Transform* sphere, std::shared_ptr<Camera> cam);
+	Collider(std::shared_ptr<Mesh> colliderMesh, Transform* parentTransform);
+	Collider(std::shared_ptr<Mesh> colliderMesh, Transform* parentTransform, Transform* sphere);
 	~Collider();
 
 	std::shared_ptr<Mesh> GetCollisionMesh() { return m_objectMesh; }

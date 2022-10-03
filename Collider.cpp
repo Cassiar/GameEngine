@@ -2,24 +2,27 @@
 
 using namespace DirectX;
 
-Collider::Collider(std::shared_ptr<Mesh> colliderMesh, Transform* transform)
+Collider::Collider(std::shared_ptr<Mesh> colliderMesh, Transform* parentTransform)
 	: m_objectMesh(colliderMesh),
-	m_transform(transform),
 	m_pointsDirty(true),
 	m_halvesDirty(true),
 	m_sphere(nullptr)
 {
+	m_transform = Transform();
+	parentTransform->AddChild(&m_transform);
+
 	CalcCenterPoint();
 }
 
-Collider::Collider(std::shared_ptr<Mesh> colliderMesh, Transform* transform, Transform* sphere, std::shared_ptr<Camera> cam)
+Collider::Collider(std::shared_ptr<Mesh> colliderMesh, Transform* parentTransform, Transform* sphere)
 	: m_objectMesh(colliderMesh),
-	m_transform(transform),
 	m_pointsDirty(true),
 	m_halvesDirty(true),
-	m_sphere(sphere),
-	m_camera(cam)
+	m_sphere(sphere)
 {
+	m_transform = Transform();
+	parentTransform->AddChild(&m_transform);
+
 	CalcCenterPoint();
 }
 
@@ -39,15 +42,7 @@ void Collider::CalcMinMaxPoints()
 	std::vector<Vertex> verts = m_objectMesh->GetVerticies();
 
 	XMFLOAT4 currPos = XMFLOAT4(verts[0].Position.x, verts[0].Position.y, verts[0].Position.z, 1.0f);
-	XMFLOAT4X4 projMat;
-	XMFLOAT4X4 viewMat;
-	XMFLOAT4X4 worldMat = m_transform->GetWorldMatrix();
-	if (m_camera)
-	{
-		viewMat = m_camera->GetViewMatrix();
-		projMat = m_camera->GetProjectionMatrix();
-		//XMStoreFloat4(&tempPos, XMVector4Transform(XMLoadFloat4(&tempPos), XMLoadFloat4x4(&projMat) * XMLoadFloat4x4(&viewMat) * XMLoadFloat4x4(&worldMat)));
-	}
+	XMFLOAT4X4 worldMat = m_transform.GetParent()->GetWorldMatrix();
 	
 	XMStoreFloat4(&currPos, XMVector4Transform(XMLoadFloat4(&currPos), XMLoadFloat4x4(&worldMat)));
 
@@ -97,7 +92,7 @@ void Collider::CalcMinMaxPoints()
 
 void Collider::CalcHalfDimensions() {
 	if (!m_halvesDirty) {
-		//return;
+		return;
 	}
 
 	CalcMinMaxPoints();
@@ -114,7 +109,9 @@ void Collider::CalcHalfDimensions() {
 void Collider::CalcCenterPoint() {
 	CalcHalfDimensions();
 
-	XMStoreFloat3(&m_centerPoint, XMVectorSet(m_maxPoint.x - m_halfWidth, m_maxPoint.y - m_halfHeight, m_maxPoint.z - m_halfDepth, 1.0f));
+	XMFLOAT3 parentPos = m_transform.GetParent()->GetPosition();
+	XMFLOAT3 thisPos = m_transform.GetPosition();
+	m_centerPoint = XMFLOAT3(parentPos.x + thisPos.x, parentPos.y + thisPos.y, parentPos.z + thisPos.z);
 	if (m_sphere)
 	{
 		m_sphere->SetPosition(m_centerPoint);
@@ -123,7 +120,7 @@ void Collider::CalcCenterPoint() {
 
 bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
 	//Should be subject to change not a great position to mark this
-	m_pointsDirty = m_transform->IsWorldDirty();
+	m_pointsDirty = m_transform.IsWorldDirty();
 	m_halvesDirty = m_pointsDirty;
 
 	//Shouldn't be computationally expensive to do this if we maintain the proper dirty booleans
@@ -135,11 +132,14 @@ bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
 		return false;
 	}
 
-	return true;//CheckGJKCollision(other);
+	return CheckGJKCollision(other);
 }
 
 #pragma region SAT collision
 
+bool Collider::CheckSATCollision(const std::shared_ptr<Collider> other) {
+	return false;
+}
 
 #pragma endregion
 
@@ -181,12 +181,12 @@ bool Collider::CheckGJKCollision(const std::shared_ptr<Collider> other) {
 
 //Finds the point furthest along the direction vector provided
 XMVECTOR Collider::CalcSupport(const XMVECTOR& direction) {
-	XMVECTOR max = XMVector4Dot(XMLoadFloat4(&l_transformedPositions[0]), direction);
+	XMVECTOR max = XMVector3Dot(XMLoadFloat3(&l_transformedCubeVerts[0]), direction);
 
 	int posIndex = 0;
 
-	for (int i = 1; i < l_transformedPositions.size(); i++) {
-		XMVECTOR currDot = XMVector4Dot(XMLoadFloat4(&l_transformedPositions[i]), direction);
+	for (int i = 1; i < l_transformedCubeVerts.size(); i++) {
+		XMVECTOR currDot = XMVector3Dot(XMLoadFloat3(&l_transformedCubeVerts[i]), direction);
 
 		if (XMVector3Greater(currDot, max)) {
 			max = currDot;
@@ -194,7 +194,7 @@ XMVECTOR Collider::CalcSupport(const XMVECTOR& direction) {
 		}
 	}
 
-	return XMLoadFloat4(&l_transformedPositions[posIndex]);
+	return XMLoadFloat3(&l_transformedCubeVerts[posIndex]);
 }
 
 //Implementation based on https://www.youtube.com/watch?v=Qupqu1xe7Io
@@ -204,11 +204,11 @@ bool Collider::DoSimplex(std::vector<XMVECTOR>& supports, DirectX::XMVECTOR& dir
 	XMVECTOR zeroVec = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 
 
-	auto dotEval = [&ao, &zeroVec](XMVECTOR vecToDot) {
+	static auto dotEval = [&ao, &zeroVec](XMVECTOR vecToDot) {
 		return XMVector3Greater(XMVector3Dot(vecToDot, ao), zeroVec);
 	};
 
-	auto lineCase = [&dotEval, &ao, &supports, &direction]() {
+	static auto lineCase = [&ao, &supports, &direction]() {
 		XMVECTOR ab = supports[1] - supports[0];
 
 		if (dotEval(ab)) {
@@ -222,7 +222,7 @@ bool Collider::DoSimplex(std::vector<XMVECTOR>& supports, DirectX::XMVECTOR& dir
 		return false;
 	};
 
-	auto triCase = [&dotEval, &lineCase, &ao, &supports, &direction]() {
+	static auto triCase = [&ao, &supports, &direction]() {
 		XMVECTOR ab = supports[1] - supports[0];
 		XMVECTOR ac = supports[2] - supports[0];
 		XMVECTOR abc = XMVector3Cross(ab, ac);
@@ -258,7 +258,7 @@ bool Collider::DoSimplex(std::vector<XMVECTOR>& supports, DirectX::XMVECTOR& dir
 		return false;
 	};
 
-	auto quadCase = [&dotEval, &triCase, &ao, &supports, &direction]() {
+	static auto quadCase = [&ao, &supports, &direction]() {
 		XMVECTOR ab = supports[1] - supports[0];
 		XMVECTOR ac = supports[2] - supports[0];
 		XMVECTOR ad = supports[3] - supports[0];
