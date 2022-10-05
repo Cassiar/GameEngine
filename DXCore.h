@@ -67,6 +67,11 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> backBufferRTV;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView;
 
+	//intermediate buffers to hold objects before post proccesses are applied
+	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> middleBufferRTV;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> middleDepthStencilView;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> middleBufferSRV;
+
 	// Helper function for allocating a console window
 	void CreateConsoleWindow(int bufferLines, int bufferColumns, int windowLines, int windowColumns);
 

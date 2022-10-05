@@ -51,9 +51,10 @@ private:
 	void CreateBasicGeometry();
 	void CreateLights();
 	void CreateShadowResources();
+	void CreateExtraRenderTargets();
 	void CreateGui(float deltaTime);
 
-	void RenderDirectionalShadowMap();
+	void RenderDirectionalShadowMap(DirectX::XMFLOAT3 dir);
 	void RenderPointShadowMap(DirectX::XMFLOAT3 pos, int index, float range, float nearZ, float farZ);
 	void RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, float range, float spotFallOff, float nearZ, float farZ);
 	
@@ -89,6 +90,9 @@ private:
 	std::shared_ptr<SimplePixelShader> skyPixelShader;
 	std::shared_ptr<SimpleVertexShader> shadowVertexShader;
 	std::shared_ptr<SimplePixelShader> shadowPixelShader;
+
+	std::shared_ptr<SimpleVertexShader> ppLightRaysVertexShader;
+	std::shared_ptr<SimplePixelShader> ppLightRaysPixelShader;
 
 	std::shared_ptr<SimplePixelShader> a5PixelShader;
 	std::shared_ptr<SimplePixelShader> watercolorPixelShader;

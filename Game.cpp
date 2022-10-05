@@ -256,6 +256,10 @@ void Game::LoadShaders()
 	skyPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"SkyPixelShader.cso").c_str());
 	shadowPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"ShadowPixelShader.cso").c_str());
 
+	//post process shaders
+	ppLightRaysVertexShader = std::make_shared<SimpleVertexShader>(device, context, GetFullPathTo_Wide(L"PostProcessLightRaysVertexShader.cso").c_str());
+	ppLightRaysPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"PostProcessLightRaysPixelShader.cso").c_str());
+
 	//catapultPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"CatapultPixelShader.cso").c_str());
 	a5PixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"A5CustomPS.cso").c_str());
 }
@@ -319,13 +323,61 @@ void Game::CreateBasicGeometry()
 	sky = std::make_shared<Sky>(meshes[0], basicSampler, skybox, device, context, skyVertexShader, skyPixelShader);
 }
 
+void Game::CreateExtraRenderTargets()
+{
+	ID3D11Texture2D* backBufferTexture = 0;
+	swapChain->GetBuffer(
+		0,
+		__uuidof(ID3D11Texture2D),
+		(void**)&backBufferTexture);
+
+	// Now that we have the texture, create a render target view
+	// for the back buffer so we can render into it.  Then release
+	// our local reference to the texture, since we have the view.
+	if (backBufferTexture != 0)
+	{
+		device->CreateRenderTargetView(
+			backBufferTexture,
+			0,
+			backBufferRTV.GetAddressOf());
+		backBufferTexture->Release();
+	}
+
+	// Set up the description of the texture to use for the depth buffer
+	D3D11_TEXTURE2D_DESC depthStencilDesc = {};
+	depthStencilDesc.Width = width;
+	depthStencilDesc.Height = height;
+	depthStencilDesc.MipLevels = 1;
+	depthStencilDesc.ArraySize = 1;
+	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
+	depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depthStencilDesc.CPUAccessFlags = 0;
+	depthStencilDesc.MiscFlags = 0;
+	depthStencilDesc.SampleDesc.Count = 1;
+	depthStencilDesc.SampleDesc.Quality = 0;
+
+	// Create the depth buffer and its view, then 
+	// release our reference to the texture
+	ID3D11Texture2D* depthBufferTexture = 0;
+	device->CreateTexture2D(&depthStencilDesc, 0, &depthBufferTexture);
+	if (depthBufferTexture != 0)
+	{
+		device->CreateDepthStencilView(
+			depthBufferTexture,
+			0,
+			depthStencilView.GetAddressOf());
+		depthBufferTexture->Release();
+	}
+}
 
 void Game::CreateLights() {
 	XMFLOAT3 white = { 1,1,1 };
 	//create direction light
 	Light temp = {};
 	temp.Type = LIGHT_TYPE_DIRECTIONAL;
-	temp.Direction = XMFLOAT3(1, -2, 0); // point directly 'right'
+	temp.Position = XMFLOAT3(-20, 40, 0);//give direction lights position for shadows and light rays
+	temp.Direction = XMFLOAT3(1, -2, 0); // point right and down
 	temp.Color = white;//XMFLOAT3(0, 0, 1);//bright blue 
 	temp.Intensity = 0.005f; //each for testing right now
 	temp.CastsShadows = false;
@@ -483,12 +535,12 @@ void Game::CreateShadowResources()
 	}
 }
 
-void Game::RenderDirectionalShadowMap()
+void Game::RenderDirectionalShadowMap(XMFLOAT3 dir)
 {
-
+	//move 20 units back along view direction
 	//create "camera" mats
 	XMMATRIX shView = XMMatrixLookAtLH(
-		XMVectorSet(-20, 40, 0, 0),//move 20 units left to 'match' lig
+		XMVectorSet(dir.x * -20, dir.y * -20, dir.z * -20, 0),
 		XMVectorSet(0, 0, 0, 0),
 		XMVectorSet(0, 1, 0, 0));
 	XMStoreFloat4x4(&shadowViewMat, shView);
@@ -540,7 +592,8 @@ void Game::RenderDirectionalShadowMap()
 
 
 	//reset all render states
-	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	//context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	context->OMSetRenderTargets(1, middleBufferRTV.GetAddressOf(), middleDepthStencilView.Get());
 	vp.Width = (float)this->width;
 	vp.Height = (float)this->height;
 	context->RSSetViewports(1, &vp);
@@ -803,7 +856,8 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, int index, float range, f
 	context->OMSetRenderTargets(1, &nullView, NULL);
 
 	//reset all render states
-	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	//context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	context->OMSetRenderTargets(1, middleBufferRTV.GetAddressOf(), middleDepthStencilView.Get());
 	vp.Width = (float)this->width;
 	vp.Height = (float)this->height;
 	context->RSSetViewports(1, &vp);
@@ -872,7 +926,8 @@ void Game::RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, flo
 
 
 	//reset all render states
-	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	//context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	context->OMSetRenderTargets(1, middleBufferRTV.GetAddressOf(), middleDepthStencilView.Get());
 	vp.Width = (float)this->width;
 	vp.Height = (float)this->height;
 	context->RSSetViewports(1, &vp);
@@ -1180,7 +1235,17 @@ void Game::Draw(float deltaTime, float totalTime)
 {
 	// Background color (Cornflower Blue in this case) for clearing
 	const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
+	
+	//clear render target
+	ID3D11RenderTargetView* pNullRTV = NULL;
+	context->OMSetRenderTargets(1, &pNullRTV, NULL);
 
+	//unbind slot 0 which is where we send the middle process tex
+	ID3D11ShaderResourceView* const pSRV[1] = { NULL };
+	context->PSSetShaderResources(0, 1, pSRV);
+
+	//draw to secondary render target so we can do post process effects
+	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
 	// Clear the render target and depth buffer (erases what's on the screen)
 	//  - Do this ONCE PER FRAME
 	//  - At the beginning of Draw (before drawing *anything*)
@@ -1190,7 +1255,19 @@ void Game::Draw(float deltaTime, float totalTime)
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 		1.0f,
 		0);
+
+	//draw to secondary render target so we can do post process effects
+	context->OMSetRenderTargets(1, middleBufferRTV.GetAddressOf(), middleDepthStencilView.Get());
+
+	context->ClearRenderTargetView(middleBufferRTV.Get(), color);
+	context->ClearDepthStencilView(
+		middleDepthStencilView.Get(),
+		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
+		1.0f,
+		0);
+
 	//stuff above needed every frame.
+
 
 	//make sure we only render two point maps at max
 	int numPointMaps = 0;
@@ -1199,7 +1276,7 @@ void Game::Draw(float deltaTime, float totalTime)
 		//lights[i].ShadowNumber = -1; //set to -1 so ps knows that it's doesn't use point shadow map
 		if (lights[i].CastsShadows) {
 			if (lights[i].Type == LIGHT_TYPE_DIRECTIONAL) {
-				RenderDirectionalShadowMap();
+				RenderDirectionalShadowMap(lights[i].Direction);
 			}
 			else if (lights[i].Type == LIGHT_TYPE_POINT && numPointMaps < MAX_POINT_SHADOWS_NUM) {
 				RenderPointShadowMap(lights[i].Position, numPointMaps, lights[i].Range, lights[i].NearZ, lights[i].FarZ);
@@ -1213,6 +1290,11 @@ void Game::Draw(float deltaTime, float totalTime)
 	}
 
 	//draw game entities
+	//draw to secondary render target so we can do post process effects
+	context->OMSetRenderTargets(1, middleBufferRTV.GetAddressOf(), middleDepthStencilView.Get());
+	
+
+
 	for (int i = 0; i < gameEntities.size(); i++) {
 		std::shared_ptr<SimpleVertexShader> vs = gameEntities[i]->GetMaterial()->GetVertexShader();
 		//send shadow info to vertex shader
@@ -1251,6 +1333,50 @@ void Game::Draw(float deltaTime, float totalTime)
 	//draw sky, after everthying else to reduce overdraw
 	sky->Draw(camera);
 
+	//unbind slot 0 which is where we send the middle process tex
+	context->PSSetShaderResources(0, 1, pSRV);
+
+	//switch render target back to main to draw post process effects
+	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	
+	//matrix world;
+	//matrix worldInvTranspose
+	//matrix proj;
+	//matrix view;
+	//float4 lightPos;
+	ppLightRaysVertexShader->SetShader();
+	ppLightRaysPixelShader->SetShader();
+
+	Transform lightWorldMat = Transform();
+	lightWorldMat.MoveAbsolute(lights[0].Direction.x * -20, lights[0].Direction.y * -20, lights[0].Direction.z * -20);
+	
+	ppLightRaysVertexShader->SetMatrix4x4("world", lightWorldMat.GetWorldMatrix());
+	//ppLightRaysVertexShader->SetMatrix4x4("worldInverseTranspose", );
+	ppLightRaysVertexShader->SetMatrix4x4("view", camera->GetViewMatrix());
+	ppLightRaysVertexShader->SetMatrix4x4("proj", camera->GetProjectionMatrix());
+	ppLightRaysVertexShader->SetFloat3("lightPos", lights[0].Position);
+
+
+	//float density;
+	//float weight;
+	//float decay;
+	//float exposure;
+	ppLightRaysPixelShader->SetFloat("density", 1.0f);
+	ppLightRaysPixelShader->SetFloat("weight", 0.5f);
+	ppLightRaysPixelShader->SetFloat("decay", 0.5f);
+	ppLightRaysPixelShader->SetFloat("exposure", 1.0f);
+
+	ppLightRaysPixelShader->SetShaderResourceView("ScreenTexture", middleBufferSRV.Get());
+	ppLightRaysPixelShader->SetSamplerState("BasicSampler", basicSampler);
+
+	ppLightRaysVertexShader->CopyAllBufferData();
+	ppLightRaysPixelShader->CopyAllBufferData();	
+
+
+	
+	context->Draw(3, 0);
+
+
 	{
 		// Render dear imgui into screen
 		ImGui::Render();
@@ -1266,7 +1392,8 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	// Due to the usage of a more sophisticated swap chain,
 	// the render target must be re-bound after every call to Present()
-	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	//context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	//context->OMSetRenderTargets(1, middleBufferRTV.GetAddressOf(), middleDepthStencilView.Get());
 }
 
 
