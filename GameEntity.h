@@ -18,7 +18,7 @@ class GameEntity
 {
 public:
 	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera);
-	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<GameEntity> sphere);
+	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<GameEntity> sphere, Microsoft::WRL::ComPtr<ID3D11Device> device);
 	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<RigidBody> rigidBody, std::shared_ptr<Collider> collider);
 	~GameEntity();
 
@@ -32,6 +32,9 @@ public:
 	std::shared_ptr<Material> GetMaterial();
 	//change the material
 	void SetMaterial(std::shared_ptr<Material> in_material);
+
+	void SetDebugRast(Microsoft::WRL::ComPtr<ID3D11RasterizerState> custRast) { m_debugRastState = custRast; }
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> GetRastState() { return m_debugRastState; }
 
 	//will hold draw code
 	void Draw();
@@ -48,4 +51,5 @@ private:
 	std::shared_ptr<Collider> m_collider;
 
 	std::shared_ptr<GameEntity> m_sphere;
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> m_debugRastState;
 };

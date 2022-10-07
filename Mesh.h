@@ -37,4 +37,5 @@ public:
 	std::vector<Vertex> GetVerticies() { return m_verts; }
 	unsigned int GetIndexCount();
 	void Draw();
+	void Draw(Microsoft::WRL::ComPtr<ID3D11RasterizerState> customRast);
 };

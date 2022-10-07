@@ -14,7 +14,7 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 	m_sphere = nullptr;
 }
 
-GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<GameEntity> sphere)
+GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<GameEntity> sphere, Microsoft::WRL::ComPtr<ID3D11Device> device)
 {
 	mesh = in_mesh;
 	material = in_material;
@@ -24,6 +24,16 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 	m_rigidBody = std::make_shared<RigidBody>(&transform);
 	m_collider = std::make_shared<Collider>(in_mesh, &transform, sphere->GetTransform());
 	sphere->mesh = in_mesh;
+
+	//create rasterizer state
+	D3D11_RASTERIZER_DESC shadowRastDesc = {};
+	shadowRastDesc.FillMode = D3D11_FILL_WIREFRAME;
+	shadowRastDesc.CullMode = D3D11_CULL_NONE;
+	shadowRastDesc.DepthClipEnable = true;
+
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> rast;// = sphere->GetRastState();
+	device->CreateRasterizerState(&shadowRastDesc, rast.GetAddressOf());
+	sphere->SetDebugRast(rast);
 	m_sphere = sphere;
 }
 
@@ -87,7 +97,14 @@ void GameEntity::Draw()
 	material->GetVertexShader()->SetShader();
 	material->GetPixelShader()->SetShader();
 
-	mesh->Draw();
+	if (m_debugRastState)
+	{
+		mesh->Draw(m_debugRastState);
+	}
+	else
+	{
+		mesh->Draw();
+	}
 
 	if (m_sphere) {
 		//m_sphere->GetTransform()->SetScale(1.5f, 1.5f, 1.5f);
