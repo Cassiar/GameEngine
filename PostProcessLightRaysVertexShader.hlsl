@@ -19,9 +19,10 @@ VertexToPixel_PPLightRays main(uint id : SV_VERTEXID)
 
 	//convert light world pos to screen pos
 	matrix wvp = mul(mul(proj, view), world);
-	//output.lightScreenPos = mul(wvp, float4(lightPos, 1.0f));
-
-	output.lightScreenPos = mul(mul(proj, view), float4(lightPos, 1.0f));
+	output.lightScreenPos = mul(wvp, float4(lightPos, 1.0f));
+	//output.lightScreenPos = mul(wvp, float4(1.0f, 1.0f, 1.0f, 1.0f));
+	//output.lightScreenPos = mul(mul(proj, view), float4(lightPos, 1.0f));
+	
 	//============================
 	// Below code Author: Chris Cascioli
 	//============================

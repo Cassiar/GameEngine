@@ -147,5 +147,8 @@ private:
 
 	DirectX::XMFLOAT4X4 spotShadowViewMat;
 	DirectX::XMFLOAT4X4 spotShadowProjMat;
+
+	//testing stuff for post process
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> ppLightRaysSampler;
 };
 

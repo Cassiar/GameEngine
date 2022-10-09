@@ -103,6 +103,17 @@ void Game::Init()
 	//create sampler
 	device->CreateSamplerState(&samplerDesc, basicSampler.GetAddressOf());
 
+	//create sampler state for post process
+	D3D11_SAMPLER_DESC ppSamplerDesc = {};
+	ppSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSamplerDesc.Filter = D3D11_FILTER_ANISOTROPIC; // allowing anisotropic filtering
+	ppSamplerDesc.MaxAnisotropy = 4;
+	ppSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX; //allways use mipmapping
+
+	device->CreateSamplerState(&ppSamplerDesc, ppLightRaysSampler.GetAddressOf());
+
 	// Helper methods for loading shaders, creating some basic
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
@@ -300,6 +311,9 @@ void Game::CreateBasicGeometry()
 	//big plane to act as floor
 	gameEntities.push_back(std::make_shared<GameEntity>(meshes[4], materials[2], camera));
 
+	//sphere to match direction light position
+	gameEntities.push_back(std::make_shared<GameEntity>(meshes[3], materials[0], camera));
+
 	//move objects so there isn't overlap
 	gameEntities[0]->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));
 	gameEntities[1]->GetTransform()->MoveAbsolute(XMFLOAT3(5.0f, 10.0f, 5.0f));
@@ -376,8 +390,8 @@ void Game::CreateLights() {
 	//create direction light
 	Light temp = {};
 	temp.Type = LIGHT_TYPE_DIRECTIONAL;
-	temp.Position = XMFLOAT3(-20, 40, 0);//give direction lights position for shadows and light rays
-	temp.Direction = XMFLOAT3(1, -2, 0); // point right and down
+	temp.Position = XMFLOAT3(-20, 0, 0);//give direction lights position for shadows and light rays
+	temp.Direction = XMFLOAT3(1, 0, 0); // point right 
 	temp.Color = white;//XMFLOAT3(0, 0, 1);//bright blue 
 	temp.Intensity = 0.005f; //each for testing right now
 	temp.CastsShadows = false;
@@ -1223,6 +1237,8 @@ void Game::Update(float deltaTime, float totalTime)
 	gameEntities[3]->GetTransform()->Rotate(XMFLOAT3(0, deltaTime * 0.5f, 0));
 	gameEntities[4]->GetTransform()->Rotate(XMFLOAT3(deltaTime * 0.5f, 0, 0));
 
+	gameEntities[7]->GetTransform()->SetPosition(lights[0].Position);
+
 	CreateGui(deltaTime);
 
 	camera->Update(deltaTime);
@@ -1349,12 +1365,14 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	Transform lightWorldMat = Transform();
 	lightWorldMat.MoveAbsolute(lights[0].Direction.x * -20, lights[0].Direction.y * -20, lights[0].Direction.z * -20);
-	
+	//add rotation to mat
+	lightWorldMat.SetRotation(lights[0].Direction);
+
 	ppLightRaysVertexShader->SetMatrix4x4("world", lightWorldMat.GetWorldMatrix());
 	//ppLightRaysVertexShader->SetMatrix4x4("worldInverseTranspose", );
 	ppLightRaysVertexShader->SetMatrix4x4("view", camera->GetViewMatrix());
 	ppLightRaysVertexShader->SetMatrix4x4("proj", camera->GetProjectionMatrix());
-	ppLightRaysVertexShader->SetFloat3("lightPos", lights[0].Position);
+	ppLightRaysVertexShader->SetFloat3("lightPos", lights[0].Direction);
 
 
 	//float density;
@@ -1362,12 +1380,12 @@ void Game::Draw(float deltaTime, float totalTime)
 	//float decay;
 	//float exposure;
 	ppLightRaysPixelShader->SetFloat("density", 1.0f);
-	ppLightRaysPixelShader->SetFloat("weight", 0.5f);
-	ppLightRaysPixelShader->SetFloat("decay", 0.5f);
-	ppLightRaysPixelShader->SetFloat("exposure", 1.0f);
+	ppLightRaysPixelShader->SetFloat("weight", 0.2f);
+	ppLightRaysPixelShader->SetFloat("decay", 0.98f);
+	ppLightRaysPixelShader->SetFloat("exposure", 0.2f);
 
 	ppLightRaysPixelShader->SetShaderResourceView("ScreenTexture", middleBufferSRV.Get());
-	ppLightRaysPixelShader->SetSamplerState("BasicSampler", basicSampler);
+	ppLightRaysPixelShader->SetSamplerState("BasicSampler", ppLightRaysSampler);
 
 	ppLightRaysVertexShader->CopyAllBufferData();
 	ppLightRaysPixelShader->CopyAllBufferData();	
