@@ -172,6 +172,9 @@
     <FxCompile Include="PostProcessLightRaysVertexShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="ToonPixelShader.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Structs.hlsli" />

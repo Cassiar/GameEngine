@@ -86,8 +86,13 @@ private:
 	//simple shader stuff
 	std::shared_ptr<SimpleVertexShader> vertexShader;
 	std::shared_ptr<SimplePixelShader> pixelShader;
+
+
+	std::shared_ptr<SimplePixelShader> toonPixelShader;
+
 	std::shared_ptr<SimpleVertexShader> skyVertexShader;
 	std::shared_ptr<SimplePixelShader> skyPixelShader;
+	
 	std::shared_ptr<SimpleVertexShader> shadowVertexShader;
 	std::shared_ptr<SimplePixelShader> shadowPixelShader;
 
@@ -100,10 +105,11 @@ private:
 	//array to hold materials
 	std::vector<std::shared_ptr<Material>> materials;
 
-	std::shared_ptr<Material> watercolorMaterial;
+	std::vector<std::shared_ptr<Material>> toonMaterials;
 
 	//array to hold meshes
 	std::vector<std::shared_ptr<Mesh>> meshes;
+	std::vector<std::shared_ptr<Mesh>> toonMeshes;
 	//array to hold game entities
 	std::vector<std::shared_ptr<GameEntity>> gameEntities;
 	std::vector<std::shared_ptr<GameEntity>> renderableEntities;
@@ -120,6 +126,13 @@ private:
 	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> aoMaps;
 	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> normalMaps;
 	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> metalnessMaps;
+
+	//toon maps
+	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> toonAlbedoMaps;
+	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> toonRoughnessMaps;
+	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> toonAoMaps;
+	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> toonMetalnessMaps;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> rampTexture;
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> basicSampler;
 
 	//index 0 is diffuse, 1 is specular, 2 is bump

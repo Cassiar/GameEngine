@@ -31,7 +31,7 @@ float4 main(VertexToPixel_PPLightRays input) : SV_TARGET
 	
 	// Store initial sample.    
 	float3 color = ScreenTexture.Sample(BasicSampler, input.texCoord);
-	//return float4(color.rgb,1);
+	return float4(color.rgb,1);
 	
 	// Set up illumination decay factor.    
 	float illuminationDecay = 1.0f;   

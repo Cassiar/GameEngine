@@ -38,7 +38,10 @@ void GameEntity::Draw()
 {
 	std::shared_ptr<SimpleVertexShader> vs = material->GetVertexShader();
 	std::shared_ptr<SimplePixelShader> ps = material->GetPixelShader();
-	
+
+	material->GetVertexShader()->SetShader();
+	material->GetPixelShader()->SetShader();
+
 	//set the values for the vertex shader
 	//string names MUST match those in VertexShader.hlsl
 	vs->SetMatrix4x4("world", transform.GetWorldMatrix());
@@ -55,8 +58,6 @@ void GameEntity::Draw()
 	vs->CopyAllBufferData();
 	ps->CopyAllBufferData();
 
-	material->GetVertexShader()->SetShader();
-	material->GetPixelShader()->SetShader();
 
 	mesh->Draw();
 }

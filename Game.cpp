@@ -124,6 +124,7 @@ void Game::Init()
 	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for scifi panel
 	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for cobblestone wall
 	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for bronze
+	//materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, toonPixelShader)); //toon shader material for testing
 	//catapultMaterial = std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, catapultPixelShader);
 
 	//add textures to each material
@@ -135,6 +136,17 @@ void Game::Init()
 		materials[i]->AddTextureSRV("NormalTexture", normalMaps[i]);
 		materials[i]->AddTextureSRV("MetalnessTexture", metalnessMaps[i]);
 	}
+
+	//toon shader. for testing uses scifi panel
+	toonMaterials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, toonPixelShader));
+
+	toonMaterials[0]->AddSampler("BasicSampler", basicSampler);
+	toonMaterials[0]->AddTextureSRV("AbledoTexture", toonAlbedoMaps[0]);
+	toonMaterials[0]->AddTextureSRV("RoughnessTexture", toonRoughnessMaps[0]);
+	toonMaterials[0]->AddTextureSRV("AmbientTexture", toonAoMaps[0]);
+	toonMaterials[0]->AddTextureSRV("RampTexture", rampTexture);
+	toonMaterials[0]->AddTextureSRV("MetalnessTexture", toonMetalnessMaps[0]);
+
 
 	//catapultMaterial->AddSampler("BasicSampler", basicSampler);
 	//catapultMaterial->AddTextureSRV("AlbedoTexture", catapultMaps[0]);
@@ -223,19 +235,23 @@ void Game::LoadTextures() {
 	CreateWICTextureFromFile(device.Get(), context.Get(),
 		GetFullPathTo_Wide(L"../../Assets/Textures/Bronze_Metallic.tif").c_str(), nullptr, metalnessMaps[metalnessMaps.size() - 1].GetAddressOf());
 
-
-	//catapult materials
-	//catapultMaps.push_back(nullptr);
-	//catapultMaps.push_back(nullptr);
-	//catapultMaps.push_back(nullptr);
-
-	/*CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Catapult_Diffuse.tif").c_str(), nullptr, catapultMaps[0].GetAddressOf());
 	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Catapult_Specular.tif").c_str(), nullptr, catapultMaps[1].GetAddressOf());
+		GetFullPathTo_Wide(L"../../Assets/Textures/Ramp_Texture.png").c_str(), nullptr, rampTexture.GetAddressOf());
+
+	//toon materials, currently using defaults for many of them
+	//while we figure out if we need them for toon shading
+	toonAlbedoMaps.push_back(nullptr);
+	toonRoughnessMaps.push_back(nullptr);
+	toonAoMaps.push_back(nullptr);
+	toonMetalnessMaps.push_back(nullptr);
 	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Catapult_Bump.tif").c_str(), nullptr, catapultMaps[2].GetAddressOf());
-		*/
+		GetFullPathTo_Wide(L"../../Assets/Textures/PirateShip_Albedo.png").c_str(), nullptr, toonAlbedoMaps[toonAlbedoMaps.size() - 1].GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonRoughnessMaps[toonRoughnessMaps.size() - 1].GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/allMetal.png").c_str(), nullptr, toonAoMaps[toonAoMaps.size() - 1].GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonMetalnessMaps[toonMetalnessMaps.size() - 1].GetAddressOf());
 
 	//load cube map
 	skybox = CreateCubemap(
@@ -266,6 +282,7 @@ void Game::LoadShaders()
 	pixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"PixelShader.cso").c_str());
 	skyPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"SkyPixelShader.cso").c_str());
 	shadowPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"ShadowPixelShader.cso").c_str());
+	toonPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"ToonPixelShader.cso").c_str());
 
 	//post process shaders
 	ppLightRaysVertexShader = std::make_shared<SimpleVertexShader>(device, context, GetFullPathTo_Wide(L"PostProcessLightRaysVertexShader.cso").c_str());
@@ -289,6 +306,9 @@ void Game::CreateBasicGeometry()
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/sphere.obj").c_str(), device, context));
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/quad.obj").c_str(), device, context));
 
+	//toon meshes
+	toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/PirateShip.obj").c_str(), device, context));
+
 	//std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
 
 
@@ -304,7 +324,7 @@ void Game::CreateBasicGeometry()
 	//cylinder one behind cube
 	gameEntities.push_back(std::make_shared<GameEntity>(meshes[1], materials[1], camera));
 	//cylinder above cube
-	gameEntities.push_back(std::make_shared<GameEntity>(meshes[1], materials[3], camera));
+	gameEntities.push_back(std::make_shared<GameEntity>(meshes[1], materials[1], camera));
 
 	gameEntities[2]->GetTransform()->AddChild(gameEntities[5]->GetTransform());
 
@@ -313,6 +333,9 @@ void Game::CreateBasicGeometry()
 
 	//sphere to match direction light position
 	gameEntities.push_back(std::make_shared<GameEntity>(meshes[3], materials[0], camera));
+
+	//toon pirate ship
+	gameEntities.push_back(std::make_shared<GameEntity>(toonMeshes[0], toonMaterials[0], camera));
 
 	//move objects so there isn't overlap
 	gameEntities[0]->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));
@@ -1239,6 +1262,9 @@ void Game::Update(float deltaTime, float totalTime)
 
 	gameEntities[7]->GetTransform()->SetPosition(lights[0].Position);
 
+	//rotate pirate ship around
+	gameEntities[8]->GetTransform()->Rotate(XMFLOAT3(0, deltaTime * 0.5f, 0));
+
 	CreateGui(deltaTime);
 
 	camera->Update(deltaTime);
@@ -1311,7 +1337,14 @@ void Game::Draw(float deltaTime, float totalTime)
 	
 
 
-	for (int i = 0; i < gameEntities.size(); i++) {
+	for (int i = 0; i < gameEntities.size(); i++) {	
+		
+		//unbind slot 0 which is where we send the middle process tex
+		//unbind all slots
+		//for (int j = 0; j < 9; j++) {
+			//context->PSSetShaderResources(j, 1, pSRV);
+		//}
+		
 		std::shared_ptr<SimpleVertexShader> vs = gameEntities[i]->GetMaterial()->GetVertexShader();
 		//send shadow info to vertex shader
 		vs->SetMatrix4x4("lightView", shadowViewMat);
