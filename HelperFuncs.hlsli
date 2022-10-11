@@ -172,7 +172,7 @@ float3 DirectionalToon(Light light, float3 normal, float3 cameraPos, float3 worl
 	float3 diffuse = Diffuse(normal, -lightDir);
 
 	//use diffuse to calculate position in range band
-	float3 rampAmt = ramp.Sample(samplerState, diffuse.xy).rgb;
+	float3 rampAmt = ramp.Sample(samplerState, diffuse.x).rgb;
 
 	float3 spec = 0;
 	if (specExponent > 0.05) {

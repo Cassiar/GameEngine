@@ -29,6 +29,7 @@ TextureCube ShadowBox2 : register(t8);
 
 SamplerState BasicSampler : register(s0);
 SamplerComparisonState ShadowSampler : register(s1);
+SamplerState RampSampler : register(s2); //clamps the uvs instead of wrap
 
 // --------------------------------------------------------
 // The entry point (main method) for our pixel shader
@@ -83,7 +84,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	for (int i = 0; i < numLights && i < MAX_LIGHTS_NUM; i++) {
 		float3 lightAmount = 0;
 		if (lights[i].type == LIGHT_TYPE_DIRECTIONAL) {
-			lightAmount += DirectionalToon(lights[i], input.normal, cameraPos, input.worldPos.xyz, specExponent, surfaceColor, roughnessMap, RampTexture, BasicSampler);
+			lightAmount += DirectionalToon(lights[i], input.normal, cameraPos, input.worldPos.xyz, specExponent, surfaceColor, roughnessMap, RampTexture, RampSampler);
 			/*
 			float3 lightDir = normalize(lights[i].direction);
 			float3 dirToCamera = normalize(cameraPos - input.worldPos.xyz);
@@ -91,7 +92,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 			float3 diffuse = Diffuse(input.normal, -lightDir);
 
 			//use diffuse to calculate position in range band
-			float3 rampAmt = RampTexture.Sample(BasicSampler, diffuse.xy).rgb;
+			float rampAmt = RampTexture.Sample(BasicSampler, diffuse.x).r;
 
 			float3 spec = 0;
 			if (specExponent > 0.05) {
@@ -103,11 +104,11 @@ float4 main(VertexToPixel input) : SV_TARGET
 			//lightAmount += Directional(lights[i], input.normal, cameraPos, input.worldPos.xyz, specExponent, specColor, surfaceColor, roughnessMap, metalnessMap);
 		}
 		else if (lights[i].type == LIGHT_TYPE_POINT) {
-			lightAmount += PointToon(lights[i], input.normal, cameraPos, input.worldPos.xyz, specExponent, surfaceColor, roughnessMap, RampTexture, BasicSampler);
+			lightAmount += PointToon(lights[i], input.normal, cameraPos, input.worldPos.xyz, specExponent, surfaceColor, roughnessMap, RampTexture, RampSampler);
 			//lightAmount += Point(lights[i], input.normal, cameraPos, input.worldPos.xyz, specExponent, specColor, surfaceColor, roughnessMap, metalnessMap);
 		}
 		else if (lights[i].type == LIGHT_TYPE_SPOT) {
-			lightAmount += SpotToon(lights[i], input.normal, cameraPos, input.worldPos.xyz, specExponent, surfaceColor, roughnessMap, RampTexture, BasicSampler);
+			lightAmount += SpotToon(lights[i], input.normal, cameraPos, input.worldPos.xyz, specExponent, surfaceColor, roughnessMap, RampTexture, RampSampler);
 			//lightAmount += Spot(lights[i], input.normal, cameraPos, input.worldPos.xyz, specExponent, specColor, surfaceColor, roughnessMap, metalnessMap);
 		}
 

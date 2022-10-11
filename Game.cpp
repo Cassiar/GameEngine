@@ -141,7 +141,8 @@ void Game::Init()
 	toonMaterials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, toonPixelShader));
 
 	toonMaterials[0]->AddSampler("BasicSampler", basicSampler);
-	toonMaterials[0]->AddTextureSRV("AbledoTexture", toonAlbedoMaps[0]);
+	toonMaterials[0]->AddSampler("RampSampler", ppLightRaysSampler);
+	toonMaterials[0]->AddTextureSRV("AlbedoTexture", toonAlbedoMaps[0]);
 	toonMaterials[0]->AddTextureSRV("RoughnessTexture", toonRoughnessMaps[0]);
 	toonMaterials[0]->AddTextureSRV("AmbientTexture", toonAoMaps[0]);
 	toonMaterials[0]->AddTextureSRV("RampTexture", rampTexture);
@@ -235,9 +236,6 @@ void Game::LoadTextures() {
 	CreateWICTextureFromFile(device.Get(), context.Get(),
 		GetFullPathTo_Wide(L"../../Assets/Textures/Bronze_Metallic.tif").c_str(), nullptr, metalnessMaps[metalnessMaps.size() - 1].GetAddressOf());
 
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Ramp_Texture.png").c_str(), nullptr, rampTexture.GetAddressOf());
-
 	//toon materials, currently using defaults for many of them
 	//while we figure out if we need them for toon shading
 	toonAlbedoMaps.push_back(nullptr);
@@ -245,13 +243,16 @@ void Game::LoadTextures() {
 	toonAoMaps.push_back(nullptr);
 	toonMetalnessMaps.push_back(nullptr);
 	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/PirateShip_Albedo.png").c_str(), nullptr, toonAlbedoMaps[toonAlbedoMaps.size() - 1].GetAddressOf());
+		GetFullPathTo_Wide(L"../../Assets/Textures/Tree_Albedo.tif").c_str(), nullptr, toonAlbedoMaps[toonAlbedoMaps.size() - 1].GetAddressOf());
 	CreateWICTextureFromFile(device.Get(), context.Get(),
 		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonRoughnessMaps[toonRoughnessMaps.size() - 1].GetAddressOf());
 	CreateWICTextureFromFile(device.Get(), context.Get(),
 		GetFullPathTo_Wide(L"../../Assets/Textures/allMetal.png").c_str(), nullptr, toonAoMaps[toonAoMaps.size() - 1].GetAddressOf());
 	CreateWICTextureFromFile(device.Get(), context.Get(),
 		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonMetalnessMaps[toonMetalnessMaps.size() - 1].GetAddressOf());
+
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/Ramp_Texture.png").c_str(), nullptr, rampTexture.GetAddressOf());
 
 	//load cube map
 	skybox = CreateCubemap(
@@ -307,7 +308,7 @@ void Game::CreateBasicGeometry()
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/quad.obj").c_str(), device, context));
 
 	//toon meshes
-	toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/PirateShip.obj").c_str(), device, context));
+	toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/Tree.obj").c_str(), device, context));
 
 	//std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
 
@@ -416,7 +417,7 @@ void Game::CreateLights() {
 	temp.Position = XMFLOAT3(-20, 0, 0);//give direction lights position for shadows and light rays
 	temp.Direction = XMFLOAT3(1, 0, 0); // point right 
 	temp.Color = white;//XMFLOAT3(0, 0, 1);//bright blue 
-	temp.Intensity = 0.005f; //each for testing right now
+	temp.Intensity = 1.0f; //each for testing right now
 	temp.CastsShadows = false;
 
 	lights.push_back(temp);
@@ -1341,9 +1342,9 @@ void Game::Draw(float deltaTime, float totalTime)
 		
 		//unbind slot 0 which is where we send the middle process tex
 		//unbind all slots
-		//for (int j = 0; j < 9; j++) {
-			//context->PSSetShaderResources(j, 1, pSRV);
-		//}
+		for (int j = 0; j < 9; j++) {
+			context->PSSetShaderResources(j, 1, pSRV);
+		}
 		
 		std::shared_ptr<SimpleVertexShader> vs = gameEntities[i]->GetMaterial()->GetVertexShader();
 		//send shadow info to vertex shader
