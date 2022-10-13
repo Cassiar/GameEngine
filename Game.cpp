@@ -1400,26 +1400,29 @@ void Game::Draw(float deltaTime, float totalTime)
 	Transform lightWorldMat = Transform();
 	lightWorldMat.MoveAbsolute(lights[0].Direction.x * -20, lights[0].Direction.y * -20, lights[0].Direction.z * -20);
 	//add rotation to mat
-	lightWorldMat.SetRotation(lights[0].Direction);
+	lightWorldMat.SetRotation(lights[0].Direction); //fix this, find rotation to point toward this direction
 
 	ppLightRaysVertexShader->SetMatrix4x4("world", lightWorldMat.GetWorldMatrix());
 	//ppLightRaysVertexShader->SetMatrix4x4("worldInverseTranspose", );
 	ppLightRaysVertexShader->SetMatrix4x4("view", camera->GetViewMatrix());
 	ppLightRaysVertexShader->SetMatrix4x4("proj", camera->GetProjectionMatrix());
-	ppLightRaysVertexShader->SetFloat3("lightPos", lights[0].Direction);
+	ppLightRaysVertexShader->SetFloat3("lightPos", lights[0].Position);
 
 
 	//float density;
 	//float weight;
 	//float decay;
 	//float exposure;
+	ppLightRaysPixelShader->SetFloat3("lightColor", lights[0].Color);
 	ppLightRaysPixelShader->SetFloat("density", 1.0f);
 	ppLightRaysPixelShader->SetFloat("weight", 0.2f);
 	ppLightRaysPixelShader->SetFloat("decay", 0.98f);
 	ppLightRaysPixelShader->SetFloat("exposure", 0.2f);
 
 	ppLightRaysPixelShader->SetShaderResourceView("ScreenTexture", middleBufferSRV.Get());
+	ppLightRaysPixelShader->SetShaderResourceView("ShadowMap", shadowSRV);
 	ppLightRaysPixelShader->SetSamplerState("BasicSampler", ppLightRaysSampler);
+	ppLightRaysPixelShader->SetSamplerState("ShadowSampler", shadowSampler);
 
 	ppLightRaysVertexShader->CopyAllBufferData();
 	ppLightRaysPixelShader->CopyAllBufferData();	

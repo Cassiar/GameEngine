@@ -86,6 +86,7 @@ struct VertexToPixel_Sky {
 
 struct VertexToPixel_PPLightRays {
 	float4 position			: SV_POSITION; //where it is in triangle
+	float4 shadowPos		: SHADOWPOS;
 	float2 lightScreenPos	: LIGHTPOS; //where the light is in screen space
 	float2 texCoord			: TEXCOORD; //where the pixel is in screen space
 };
