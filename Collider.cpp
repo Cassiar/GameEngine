@@ -101,7 +101,12 @@ void Collider::CalcHalfDimensions() {
 	m_halfHeight = abs(m_maxPoint.y - m_minPoint.y) / 2.0f;
 	m_halfDepth =  abs(m_maxPoint.z - m_minPoint.z) / 2.0f;
 
-	m_preCheckRadiusSquared = pow(m_maxPoint.x - m_centerPoint.x, 2) + pow(m_maxPoint.y - m_centerPoint.y, 2) + pow(m_maxPoint.z - m_centerPoint.z, 2);
+	m_preCheckRadiusSquared = pow(m_maxPoint.x - m_centerPoint.x, 2.0f) + pow(m_maxPoint.y - m_centerPoint.y, 2.0f) + pow(m_maxPoint.z - m_centerPoint.z, 2.0f);
+	float scale = sqrt(m_preCheckRadiusSquared);//sqrt(m_preCheckRadiusSquared) / sqrt(m_debugSphereMeshRadius);
+	if (m_sphere)
+	{
+		m_sphere->SetScale(XMFLOAT3(scale, scale, scale));
+	}
 
 	m_halvesDirty = false;
 }

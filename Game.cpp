@@ -16,6 +16,8 @@
 // For the DirectX Math library
 using namespace DirectX;
 
+float Collider::m_debugSphereMeshRadius;
+
 // --------------------------------------------------------
 // Constructor
 //
@@ -276,6 +278,36 @@ void Game::CreateBasicGeometry()
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/helix.obj").c_str(), device, context));
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/sphere.obj").c_str(), device, context));
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/quad.obj").c_str(), device, context));
+
+	std::vector<Vertex> verts = meshes[3]->GetVerticies();
+
+	XMFLOAT4 currPos = XMFLOAT4(verts[0].Position.x, verts[0].Position.y, verts[0].Position.z, 1.0f);
+
+	//Inefficient could probs be better done through a compute shader
+	float xMax = currPos.x;
+	float xMin = currPos.x;
+
+	float yMax = currPos.y;
+	float yMin = currPos.y;
+
+	float zMax = currPos.z;
+	float zMin = currPos.z;
+	for (int i = 1; i < verts.size(); i++)
+	{
+		currPos = XMFLOAT4(verts[i].Position.x, verts[i].Position.y, verts[i].Position.z, 1.0f);
+
+		xMax = currPos.x > xMax ? currPos.x : xMax;
+		xMin = currPos.x < xMin ? currPos.x : xMin;
+
+		yMax = currPos.y > yMax ? currPos.y : yMax;
+		yMin = currPos.y < yMin ? currPos.y : yMin;
+
+		zMax = currPos.z > zMax ? currPos.z : zMax;
+		zMin = currPos.z < zMin ? currPos.z : zMin;
+	}
+
+	Collider::SetDebugSphereMeshRadius(pow((xMax-xMin) / 2, 2) + pow((yMax - yMin) / 2, 2) + pow((zMax - zMin) / 2, 2));
+
 	//meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Toon/tree obj.obj").c_str(), device, context));
 
 	std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);

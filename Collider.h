@@ -13,6 +13,8 @@ private:
 	std::vector<DirectX::XMFLOAT3> l_transformedCubeVerts;
 	Transform m_transform;
 
+	static float m_debugSphereMeshRadius;
+
 	DirectX::XMFLOAT3 m_maxPoint;
 	DirectX::XMFLOAT3 m_minPoint;
 	DirectX::XMFLOAT3 m_centerPoint;
@@ -48,5 +50,7 @@ public:
 	bool CheckForCollision(const std::shared_ptr<Collider> other);
 	void MakePointsDirty() { m_pointsDirty = true; }
 	void MakeHalvesDirty() { m_pointsDirty = true; }
+
+	void static SetDebugSphereMeshRadius(float newRadius) { m_debugSphereMeshRadius = newRadius; }
 };
 
