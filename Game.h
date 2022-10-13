@@ -163,5 +163,11 @@ private:
 
 	//testing stuff for post process
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> ppLightRaysSampler;
+
+	//variables to control light rays effect
+	float lightRaysDensity = 1.0f;
+	float lightRaysWeight = 0.2f;
+	float lightRaysDecay = 0.98f;
+	float lightRaysExposure = 0.2f;
 };
 

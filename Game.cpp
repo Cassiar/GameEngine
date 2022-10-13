@@ -1236,6 +1236,27 @@ void Game::CreateGui(float deltaTime) {
 
 		ImGui::PopID();
 
+		ImGui::PushID(4);
+		//ImGui::Text("Light Rays");
+
+		ImGui::Text("Density: ");
+		ImGui::SameLine();
+		ImGui::DragFloat(" ", &lightRaysDensity, .01f, 0.01f, 1.0f);
+
+		ImGui::Text("Weight: ");
+		ImGui::SameLine();
+		ImGui::DragFloat(" ", &lightRaysWeight, .01f, 0.01f, 1.0f);
+
+		ImGui::Text("Decay: ");
+		ImGui::SameLine();
+		ImGui::DragFloat(" ", &lightRaysDecay, .01f, 0.01f, 1.0f);
+
+		ImGui::Text("Exposure: ");
+		ImGui::SameLine();
+		ImGui::DragFloat(" ", &lightRaysExposure, .01f, 0.01f, 1.0f);
+
+		ImGui::PopID();
+
 		// Show the demo window
 		//ImGui::ShowDemoWindow();
 	}
@@ -1414,10 +1435,10 @@ void Game::Draw(float deltaTime, float totalTime)
 	//float decay;
 	//float exposure;
 	ppLightRaysPixelShader->SetFloat3("lightColor", lights[0].Color);
-	ppLightRaysPixelShader->SetFloat("density", 1.0f);
-	ppLightRaysPixelShader->SetFloat("weight", 0.2f);
-	ppLightRaysPixelShader->SetFloat("decay", 0.98f);
-	ppLightRaysPixelShader->SetFloat("exposure", 0.2f);
+	ppLightRaysPixelShader->SetFloat("density", lightRaysDensity);
+	ppLightRaysPixelShader->SetFloat("weight", lightRaysWeight);
+	ppLightRaysPixelShader->SetFloat("decay", lightRaysDecay);
+	ppLightRaysPixelShader->SetFloat("exposure", lightRaysExposure);
 
 	ppLightRaysPixelShader->SetShaderResourceView("ScreenTexture", middleBufferSRV.Get());
 	ppLightRaysPixelShader->SetShaderResourceView("ShadowMap", shadowSRV);
