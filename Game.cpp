@@ -255,6 +255,7 @@ void Game::LoadShaders()
 	shadowVertexShader = std::make_shared<SimpleVertexShader>(device, context, GetFullPathTo_Wide(L"ShadowVertexShader.cso").c_str());
 
 	pixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"PixelShader.cso").c_str());
+	debugPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"DebugColorShader.cso").c_str());
 	skyPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"SkyPixelShader.cso").c_str());
 	shadowPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"ShadowPixelShader.cso").c_str());
 
@@ -281,22 +282,22 @@ void Game::CreateBasicGeometry()
 
 	//create some entities
 	//cube direectly in front of camera
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[0], materials[0], camera, std::make_shared<GameEntity>(meshes[3], materials[3], camera), device));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[0], materials[0], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
 	//sphere to left of cube
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[3], materials[3], camera, std::make_shared<GameEntity>(meshes[3], materials[3], camera), device));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[3], materials[3], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
 	//helix to right
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[3], camera, std::make_shared<GameEntity>(meshes[3], materials[3], camera), device));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[3], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
 	//helix below cube
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[2], camera, std::make_shared<GameEntity>(meshes[3], materials[3], camera), device));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[2], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
 	//cylinder one behind cube
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[1], camera, std::make_shared<GameEntity>(meshes[3], materials[3], camera), device));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[1], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
 	//cylinder above cube
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[3], camera, std::make_shared<GameEntity>(meshes[3], materials[3], camera), device));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[3], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
 
 	m_EntityManager->GetEntity(2)->GetTransform()->AddChild(m_EntityManager->GetEntity(5)->GetTransform());
 
 	//big plane to act as floor
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[4], materials[2], camera, std::make_shared<GameEntity>(meshes[3], materials[3], camera), device));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[4], materials[2], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
 
 	//move objects so there isn't overlap
 	m_EntityManager->GetEntity(0)->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));

@@ -127,7 +127,7 @@ bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
 	CalcCenterPoint();
 	other->CalcCenterPoint();
 
-	float centerSquareDist = pow(m_centerPoint.x - other->m_centerPoint.x, 2) + pow(m_centerPoint.y - other->m_centerPoint.y, 2) + pow(m_centerPoint.z - other->m_centerPoint.z, 2);
+	float centerSquareDist = pow(m_centerPoint.x - other->m_centerPoint.x, 2.0f) + pow(m_centerPoint.y - other->m_centerPoint.y, 2.0f) + pow(m_centerPoint.z - other->m_centerPoint.z, 2.0f);
 	if (m_preCheckRadiusSquared + other->m_preCheckRadiusSquared <= centerSquareDist) {
 		return false;
 	}

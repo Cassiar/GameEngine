@@ -23,7 +23,6 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 
 	m_rigidBody = std::make_shared<RigidBody>(&transform);
 	m_collider = std::make_shared<Collider>(in_mesh, &transform, sphere->GetTransform());
-	sphere->mesh = in_mesh;
 
 	//create rasterizer state
 	D3D11_RASTERIZER_DESC shadowRastDesc = {};
@@ -34,6 +33,7 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> rast;// = sphere->GetRastState();
 	device->CreateRasterizerState(&shadowRastDesc, rast.GetAddressOf());
 	sphere->SetDebugRast(rast);
+
 	m_sphere = sphere;
 }
 
@@ -122,17 +122,24 @@ void GameEntity::Update(float dt, std::vector<std::shared_ptr<GameEntity>>& coll
 	// Implement a singleton collision manager allowing for ease of collision checks
 	if (m_collider)
 	{
+		bool colliding = false;
 		for (auto& entity : collisionEntities)
 		{
 			if (entity.get() != this && m_collider->CheckForCollision(entity->GetCollider())) {
-				//material->SetColorTint(DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f));
-				this->GetTransform()->SetScale(1.25, 1.25, 1.25);
+				colliding = true;
 				break;
+			}
+		}
+
+		//Debug collision code
+		if (m_sphere) {
+			if (colliding)
+			{
+				m_sphere->GetMaterial()->SetColorTint(DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f));
 			}
 			else
 			{
-				//material->SetColorTint(DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
-				this->GetTransform()->SetScale(1.0f, 1.0f, 1.0f);
+				m_sphere->GetMaterial()->SetColorTint(DirectX::XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f));
 			}
 		}
 	}
