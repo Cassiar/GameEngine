@@ -154,8 +154,8 @@ bool Collider::CheckSATCollision(const std::shared_ptr<Collider> other) {
 	//aU and bU are the same as their respective Model Matricies
 	XMFLOAT4X4 world = m_transform.GetWorldMatrix();
 	XMFLOAT4X4 otherWorld = other->m_transform.GetWorldMatrix();
-	XMMATRIX aU = XMLoadFloat4x4(&(world));
-	XMMATRIX bU = XMLoadFloat4x4(&(otherWorld));
+	XMMATRIX aU = XMMatrixTranspose(XMLoadFloat4x4(&(world)));
+	XMMATRIX bU = XMMatrixTranspose(XMLoadFloat4x4(&(otherWorld)));
 
 	// Compute rotation matrix expressing b in a's coordinate frame
 	for (int i = 0; i < 3; i++)
