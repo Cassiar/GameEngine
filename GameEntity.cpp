@@ -2,7 +2,7 @@
 
 #include "BufferStructs.h"
 
-bool g_drawDebugSpheresDefault = true;
+bool g_drawDebugSpheresDefault = false;
 
 GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, bool isDebugSphere)
 {
