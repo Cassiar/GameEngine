@@ -92,5 +92,7 @@ public:
 		return -1;
 	}
 
+	bool IsWorldDirty() { return m_bRecalcWorld; }
+
 };
 

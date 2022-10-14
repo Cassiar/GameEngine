@@ -365,9 +365,22 @@ void Mesh::Draw()
 		0);    // Offset to add to each index when looking up vertices
 }
 
+void Mesh::Draw(Microsoft::WRL::ComPtr<ID3D11RasterizerState> customRast)
+{	
+	context->RSSetState(customRast.Get());
+	
+	this->Draw();
+
+	context->RSSetState(0);
+}
+
 //helper methods
 void Mesh::CreateBuffers(Vertex* in_verts, unsigned int numVerts, unsigned int* in_indices, Microsoft::WRL::ComPtr<ID3D11Device> device)
 {
+	for (int i = 0; i < numVerts; i++) {
+		m_verts.push_back(in_verts[i]);
+	}
+
 	//create the buffers and send to GPU
 	D3D11_BUFFER_DESC vbd = {};
 	vbd.Usage = D3D11_USAGE_IMMUTABLE;
