@@ -1082,9 +1082,10 @@ void Game::CreateGui(float deltaTime) {
 		ImGui::PushID(1);
 		bool entitiesOpen = ImGui::TreeNode("Entities", "%s", "Entities");
 		if (entitiesOpen) {
+			std::unordered_map<Transform*, std::shared_ptr<GameEntity>> childEntityTransformMap;
 
 			//Lambda function cause I thought it'd be cool but as it turns out it was more of a hassle than it was worth lol
-			static auto addEntity = [&](auto&& addEntity, Transform* entityTransform, int entityNum) {
+			static auto addEntity = [&](auto&& addEntity, Transform* entityTransform, int entityNum, std::shared_ptr<GameEntity> currEntity) {
 
 				ImGui::PushID(entityTransform);
 				bool nodeOpen = ImGui::TreeNode("Entity", "%s %i", "Entity", entityNum);
@@ -1092,6 +1093,12 @@ void Game::CreateGui(float deltaTime) {
 					ImGui::PopID();
 					return;
 				}
+
+				bool drawSphere = currEntity->ShouldDrawSphere();
+				ImGui::Text("Draw Bounding Sphere: ");
+				ImGui::SameLine();
+				ImGui::Checkbox("   ", &drawSphere);
+				currEntity->SetDrawSphere(drawSphere);
 
 				//Allows for control over position of entities
 				DirectX::XMFLOAT3 position = entityTransform->GetPosition();
@@ -1118,7 +1125,12 @@ void Game::CreateGui(float deltaTime) {
 				//First transform is debug sphere
 				for (int i = 1; i < numChildren; i++)
 				{
-					addEntity(addEntity, entityTransform->GetChild(i), i);
+					Transform* tempTransform = entityTransform->GetChild(i);
+					//Currently bounding sphere's will be limited to the top level entity in the tree
+					if (childEntityTransformMap[tempTransform])
+					{
+						addEntity(addEntity, tempTransform, i, childEntityTransformMap[tempTransform]);
+					}
 				}
 
 				ImGui::TreePop();
@@ -1129,10 +1141,20 @@ void Game::CreateGui(float deltaTime) {
 			for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
 				std::shared_ptr<GameEntity> currEntity = m_EntityManager->GetEntity(i);
 
-				if (currEntity->GetTransform()->GetParent())
-					continue;
+				if (currEntity->GetTransform()->GetParent()) {
+					childEntityTransformMap[currEntity->GetTransform()] = currEntity;
+				}
+			}
 
-				addEntity(addEntity, currEntity->GetTransform(), entityID);
+			for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
+				std::shared_ptr<GameEntity> currEntity = m_EntityManager->GetEntity(i);
+
+				if (currEntity->GetTransform()->GetParent()) {
+					continue;
+				}
+
+				addEntity(addEntity, currEntity->GetTransform(), entityID, currEntity);
+
 				entityID++;
 			}
 			ImGui::TreePop();

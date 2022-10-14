@@ -13,6 +13,7 @@
 
 #include <DirectXMath.h>
 #include <memory> //for shared pointers
+#include <unordered_map> //to avoid searching in ImGui debug sphere drawing
 #include <vector> //for vector
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
 
