@@ -360,7 +360,7 @@ void Game::CreateBasicGeometry()
 	//cylinder above cube
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[1], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
 
-	m_EntityManager->GetEntity(2)->GetTransform()->AddChild(m_EntityManager->GetEntity(5)->GetTransform());
+	//m_EntityManager->GetEntity(2)->GetTransform()->AddChild(m_EntityManager->GetEntity(5)->GetTransform());
 
 	//big plane to act as floor
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[4], materials[2], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));

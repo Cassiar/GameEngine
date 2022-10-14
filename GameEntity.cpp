@@ -2,6 +2,8 @@
 
 #include "BufferStructs.h"
 
+bool g_drawDebugSpheresDefault = true;
+
 GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, bool isDebugSphere)
 {
 	mesh = in_mesh;
@@ -12,7 +14,7 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 	m_rigidBody = std::make_shared<RigidBody>(&transform);
 	m_collider = std::make_shared<Collider>(in_mesh, &transform);
 	m_sphere = nullptr;
-	m_drawDebugSphere = false;
+	m_drawDebugSphere = g_drawDebugSpheresDefault;
 	m_isDebugSphere = isDebugSphere;
 }
 
@@ -37,7 +39,7 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 	sphere->SetDebugRast(rast);
 
 	m_sphere = sphere;
-	m_drawDebugSphere = false;
+	m_drawDebugSphere = g_drawDebugSpheresDefault;
 	m_isDebugSphere = false;
 }
 
@@ -51,7 +53,7 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 	m_rigidBody = rigidBody;
 	m_collider = collider;
 	m_sphere = nullptr;
-	m_drawDebugSphere = false;
+	m_drawDebugSphere = g_drawDebugSpheresDefault;
 	m_isDebugSphere = false;
 }
 

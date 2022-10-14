@@ -133,10 +133,10 @@ bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
 
 	float centerSquareDist = pow(m_centerPoint.x - other->m_centerPoint.x, 2.0f) + pow(m_centerPoint.y - other->m_centerPoint.y, 2.0f) + pow(m_centerPoint.z - other->m_centerPoint.z, 2.0f);
 	if (m_preCheckRadiusSquared + other->m_preCheckRadiusSquared <= centerSquareDist) {
-		return false;
+		//return false;
 	}
 
-	return true;// CheckGJKCollision(other);
+	return !CheckSATCollision(other);//true;// CheckGJKCollision(other);
 }
 
 #pragma region SAT collision
@@ -146,9 +146,118 @@ bool Collider::CheckSATCollision(const std::shared_ptr<Collider> other) {
 	//XMVECTOR thisForward = XMLoadFloat3( &(m_transform.GetParent()->GetUp()));
 	//XMVECTOR thisRight = XMLoadFloat3( &(m_transform.GetParent()->GetUp()));
 
-	
+	float ra, rb;
+	float R[3][3];
+	float AbsR[3][3];
 
-	return false;
+	//aU and bU are the same as their respective Model Matricies
+	XMFLOAT4X4 world = m_transform.GetWorldMatrix();
+	XMFLOAT4X4 otherWorld = other->m_transform.GetWorldMatrix();
+	XMMATRIX aU = XMLoadFloat4x4(&(world));
+	XMMATRIX bU = XMLoadFloat4x4(&(otherWorld));
+
+	// Compute rotation matrix expressing b in a's coordinate frame
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			XMStoreFloat(&R[i][j], XMVector3Dot(aU.r[i], bU.r[j]));
+
+	// Compute translation vector t
+	XMVECTOR vecT = XMLoadFloat3(&other->m_centerPoint) - XMLoadFloat3(&m_centerPoint);
+	// Bring translation into a’s coordinate frame
+	XMFLOAT3 tempDot;
+	XMStoreFloat(&tempDot.x, XMVector3Dot(vecT, aU.r[0]));
+	XMStoreFloat(&tempDot.y, XMVector3Dot(vecT, aU.r[1]));
+	XMStoreFloat(&tempDot.z, XMVector3Dot(vecT, aU.r[2]));
+	vecT = XMLoadFloat3(&tempDot);
+	XMFLOAT3 vecTLoad;
+	XMStoreFloat3(&vecTLoad, vecT);
+
+	float t[3];
+	t[0] = vecTLoad.x;
+	t[1] = vecTLoad.y;
+	t[2] = vecTLoad.z;
+
+	// Compute common subexpressions. Add in an epsilon term to
+	// counteract arithmetic errors when two edges are parallel and
+	// their cross product is (near) null (see text for details)
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			AbsR[i][j] = abs(R[i][j]) + .0000001f;
+
+	float halfWidths[3] = { m_halfWidth, m_halfHeight, m_halfDepth };
+	float otherHalfWidths[3] = { other->m_halfWidth, other->m_halfHeight, other->m_halfDepth };
+	// Test axes L = A0, L = A1, L = A2
+	for (int i = 0; i < 3; i++) {
+		ra = halfWidths[i];
+		rb = otherHalfWidths[0] * AbsR[i][0] + otherHalfWidths[1] * AbsR[i][1] + otherHalfWidths[2] * AbsR[i][2];
+		if (abs(t[i]) > ra + rb) {
+			return 1 + i;
+		}
+	}
+
+	// Test axes L = B0, L = B1, L = B2
+	for (int i = 0; i < 3; i++) {
+		ra = halfWidths[0] * AbsR[0][i] + halfWidths[1] * AbsR[1][i] + halfWidths[2] * AbsR[2][i];
+		rb = otherHalfWidths[i];
+		if (abs(t[0] * R[0][i] + t[1] * R[1][i] + t[2] * R[2][i]) > ra + rb)
+			return 4 + i;
+	}
+	// Test axis L = A0 x B0
+	ra =halfWidths[1] * AbsR[2][0] +halfWidths[2] * AbsR[1][0];
+	rb = otherHalfWidths[1] * AbsR[0][2] + otherHalfWidths[2] * AbsR[0][1];
+	if (abs(t[2] * R[1][0] - t[1] * R[2][0]) > ra + rb)
+		return eSATResults::SAT_AXxBX;
+
+	// Test axis L = A0 x B1
+	ra =halfWidths[1] * AbsR[2][1] +halfWidths[2] * AbsR[1][1];
+	rb = otherHalfWidths[0] * AbsR[0][2] + otherHalfWidths[2] * AbsR[0][0];
+	if (abs(t[2] * R[1][1] - t[1] * R[2][1]) > ra + rb)
+		return eSATResults::SAT_AXxBY;
+
+	// Test axis L = A0 x B2
+	ra =halfWidths[1] * AbsR[2][2] +halfWidths[2] * AbsR[1][2];
+	rb = otherHalfWidths[0] * AbsR[0][1] + otherHalfWidths[1] * AbsR[0][0];
+	if (abs(t[2] * R[1][2] - t[1] * R[2][2]) > ra + rb)
+		return eSATResults::SAT_AXxBZ;
+
+	// Test axis L = A1 x B0
+	ra =halfWidths[0] * AbsR[2][0] +halfWidths[2] * AbsR[0][0];
+	rb = otherHalfWidths[1] * AbsR[1][2] + otherHalfWidths[2] * AbsR[1][1];
+	if (abs(t[0] * R[2][0] - t[2] * R[0][0]) > ra + rb)
+		return eSATResults::SAT_AYxBX;
+
+	// Test axis L = A1 x B1
+	ra =halfWidths[0] * AbsR[2][1] +halfWidths[2] * AbsR[0][1];
+	rb = otherHalfWidths[0] * AbsR[1][2] + otherHalfWidths[2] * AbsR[1][0];
+	if (abs(t[0] * R[2][1] - t[2] * R[0][1]) > ra + rb)
+		return eSATResults::SAT_AYxBY;
+
+	// Test axis L = A1 x B2
+	ra =halfWidths[0] * AbsR[2][2] +halfWidths[2] * AbsR[0][2];
+	rb = otherHalfWidths[0] * AbsR[1][1] + otherHalfWidths[1] * AbsR[1][0];
+	if (abs(t[0] * R[2][2] - t[2] * R[0][2]) > ra + rb)
+		return eSATResults::SAT_AYxBZ;
+
+	// Test axis L = A2 x B0
+	ra =halfWidths[0] * AbsR[1][0] +halfWidths[1] * AbsR[0][0];
+	rb = otherHalfWidths[1] * AbsR[2][2] + otherHalfWidths[2] * AbsR[2][1];
+	if (abs(t[1] * R[0][0] - t[0] * R[1][0]) > ra + rb)
+		return eSATResults::SAT_AZxBX;
+
+	// Test axis L = A2 x B1
+	ra =halfWidths[0] * AbsR[1][1] +halfWidths[1] * AbsR[0][1];
+	rb = otherHalfWidths[0] * AbsR[2][2] + otherHalfWidths[2] * AbsR[2][0];
+	if (abs(t[1] * R[0][1] - t[0] * R[1][1]) > ra + rb)
+		return eSATResults::SAT_AZxBY;
+
+	// Test axis L = A2 x B2
+	ra =halfWidths[0] * AbsR[1][2] +halfWidths[1] * AbsR[0][2];
+	rb = otherHalfWidths[0] * AbsR[2][1] + otherHalfWidths[1] * AbsR[2][0];
+	if (abs(t[1] * R[0][2] - t[0] * R[1][2]) > ra + rb)
+		return eSATResults::SAT_AZxBZ;
+
+	//there is no axis test that separates this two objects
+	return eSATResults::SAT_NONE;
 }
 
 #pragma endregion
