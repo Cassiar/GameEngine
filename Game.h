@@ -1,19 +1,20 @@
 #pragma once
 
-#include "DXCore.h"
-#include "Mesh.h"
-#include "Material.h"
-#include "Transform.h"
-#include "GameEntity.h"
 #include "Camera.h"
-#include "SimpleShader.h"
+#include "DXCore.h"
+#include "EntityManager.h"
+#include "GameEntity.h"
 #include "Lights.h"
+#include "Material.h"
+#include "Mesh.h"
+#include "SimpleShader.h"
 #include "Sky.h"
+#include "Transform.h"
 
 #include <DirectXMath.h>
-#include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
 #include <memory> //for shared pointers
 #include <vector> //for vector
+#include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
 
 //handles updating game logic and stores objects that are drawn
 class Game 
@@ -89,7 +90,7 @@ private:
 
 
 	std::shared_ptr<SimplePixelShader> toonPixelShader;
-
+	std::shared_ptr<SimplePixelShader> debugPixelShader;
 	std::shared_ptr<SimpleVertexShader> skyVertexShader;
 	std::shared_ptr<SimplePixelShader> skyPixelShader;
 	
@@ -111,8 +112,9 @@ private:
 	std::vector<std::shared_ptr<Mesh>> meshes;
 	std::vector<std::shared_ptr<Mesh>> toonMeshes;
 	//array to hold game entities
-	std::vector<std::shared_ptr<GameEntity>> gameEntities;
 	std::vector<std::shared_ptr<GameEntity>> renderableEntities;
+
+	std::shared_ptr<EntityManager> m_EntityManager;
 
 	std::shared_ptr<Camera> camera;
 
