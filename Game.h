@@ -171,5 +171,6 @@ private:
 	float lightRaysWeight = 0.2f;
 	float lightRaysDecay = 0.98f;
 	float lightRaysExposure = 0.2f;
+	bool enableLightRays = false;
 };
 

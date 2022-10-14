@@ -348,22 +348,22 @@ void Game::CreateBasicGeometry()
 
 	//create some entities
 	//cube direectly in front of camera
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[0], materials[0], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[0], materials[0], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
 	//sphere to left of cube
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[3], materials[3], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[3], materials[3], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
 	//helix to right
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[3], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[3], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
 	//helix below cube
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[2], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[2], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
 	//cylinder one behind cube
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[1], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[1], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
 	//cylinder above cube
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[1], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[1], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
 
 	m_EntityManager->GetEntity(2)->GetTransform()->AddChild(m_EntityManager->GetEntity(5)->GetTransform());
 
 	//big plane to act as floor
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[4], materials[2], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[4], materials[2], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
 
 	//sphere to match direction light position
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[3], materials[0], camera));
@@ -1115,9 +1115,10 @@ void Game::CreateGui(float deltaTime) {
 				entityTransform->SetScale(scale);
 
 				int numChildren = entityTransform->GetNumChildren();
-				for (int i = 0; i < numChildren; i++)
+				//First transform is debug sphere
+				for (int i = 1; i < numChildren; i++)
 				{
-					addEntity(addEntity, entityTransform->GetChild(i), i + 1);
+					addEntity(addEntity, entityTransform->GetChild(i), i);
 				}
 
 				ImGui::TreePop();
@@ -1267,6 +1268,39 @@ void Game::CreateGui(float deltaTime) {
 		ImGui::PopID();
 
 		ImGui::PushID(3);
+		bool raysOpen = ImGui::TreeNode("God Rays", "%s", "God Rays");
+		if (raysOpen)
+		{
+			//ImGui::Text("Light Rays");
+
+			ImGui::Text("Enable Light Rays: ");
+			ImGui::SameLine();
+			ImGui::Checkbox("   ", &enableLightRays);
+
+			if (enableLightRays)
+			{
+				ImGui::Text("Density: ");
+				ImGui::SameLine();
+				ImGui::DragFloat(" ", &lightRaysDensity, .01f, 0.01f, 1.0f);
+
+				ImGui::Text("Weight: ");
+				ImGui::SameLine();
+				ImGui::DragFloat("  ", &lightRaysWeight, .01f, 0.01f, 1.0f);
+
+				ImGui::Text("Decay: ");
+				ImGui::SameLine();
+				ImGui::DragFloat("   ", &lightRaysDecay, .01f, 0.01f, 1.0f);
+
+				ImGui::Text("Exposure: ");
+				ImGui::SameLine();
+				ImGui::DragFloat("    ", &lightRaysExposure, .01f, 0.01f, 1.0f);
+			}
+			
+			ImGui::TreePop();
+		}
+		ImGui::PopID();
+
+		ImGui::PushID(4);
 
 		if (camera) {
 			ImGui::Text("Move Speed: ");
@@ -1279,27 +1313,7 @@ void Game::CreateGui(float deltaTime) {
 		}
 
 		ImGui::PopID();
-
-		ImGui::PushID(4);
-		//ImGui::Text("Light Rays");
-
-		ImGui::Text("Density: ");
-		ImGui::SameLine();
-		ImGui::DragFloat(" ", &lightRaysDensity, .01f, 0.01f, 1.0f);
-
-		ImGui::Text("Weight: ");
-		ImGui::SameLine();
-		ImGui::DragFloat(" ", &lightRaysWeight, .01f, 0.01f, 1.0f);
-
-		ImGui::Text("Decay: ");
-		ImGui::SameLine();
-		ImGui::DragFloat(" ", &lightRaysDecay, .01f, 0.01f, 1.0f);
-
-		ImGui::Text("Exposure: ");
-		ImGui::SameLine();
-		ImGui::DragFloat(" ", &lightRaysExposure, .01f, 0.01f, 1.0f);
-
-		ImGui::PopID();
+		
 
 		// Show the demo window
 		//ImGui::ShowDemoWindow();
@@ -1366,15 +1380,17 @@ void Game::Draw(float deltaTime, float totalTime)
 		1.0f,
 		0);
 
-	//draw to secondary render target so we can do post process effects
-	context->OMSetRenderTargets(1, middleBufferRTV.GetAddressOf(), middleDepthStencilView.Get());
+	if (enableLightRays) {
+		//draw to secondary render target so we can do post process effects
+		context->OMSetRenderTargets(1, middleBufferRTV.GetAddressOf(), middleDepthStencilView.Get());
 
-	context->ClearRenderTargetView(middleBufferRTV.Get(), color);
-	context->ClearDepthStencilView(
-		middleDepthStencilView.Get(),
-		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
-		1.0f,
-		0);
+		context->ClearRenderTargetView(middleBufferRTV.Get(), color);
+		context->ClearDepthStencilView(
+			middleDepthStencilView.Get(),
+			D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
+			1.0f,
+			0);
+	}
 
 	//stuff above needed every frame.
 
@@ -1399,9 +1415,15 @@ void Game::Draw(float deltaTime, float totalTime)
 		}
 	}
 
-	//draw game entities
-	//draw to secondary render target so we can do post process effects
-	context->OMSetRenderTargets(1, middleBufferRTV.GetAddressOf(), middleDepthStencilView.Get());
+	if (enableLightRays) {
+		//draw game entities
+		//draw to secondary render target so we can do post process effects
+		context->OMSetRenderTargets(1, middleBufferRTV.GetAddressOf(), middleDepthStencilView.Get());
+	}
+	else
+	{
+		context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	}
 	
 	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
 		std::shared_ptr<GameEntity> entity = m_EntityManager->GetEntity(i);
@@ -1449,54 +1471,54 @@ void Game::Draw(float deltaTime, float totalTime)
 	//draw sky, after everthying else to reduce overdraw
 	sky->Draw(camera);
 
-	//unbind slot 0 which is where we send the middle process tex
-	context->PSSetShaderResources(0, 1, pSRV);
+	if (enableLightRays)
+	{
+		//unbind slot 0 which is where we send the middle process tex
+		context->PSSetShaderResources(0, 1, pSRV);
 
-	//switch render target back to main to draw post process effects
-	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+		//switch render target back to main to draw post process effects
+		context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
 	
-	//matrix world;
-	//matrix worldInvTranspose
-	//matrix proj;
-	//matrix view;
-	//float4 lightPos;
-	ppLightRaysVertexShader->SetShader();
-	ppLightRaysPixelShader->SetShader();
+		//matrix world;
+		//matrix worldInvTranspose
+		//matrix proj;
+		//matrix view;
+		//float4 lightPos;
+		ppLightRaysVertexShader->SetShader();
+		ppLightRaysPixelShader->SetShader();
 
-	Transform lightWorldMat = Transform();
-	lightWorldMat.MoveAbsolute(lights[0].Direction.x * -20, lights[0].Direction.y * -20, lights[0].Direction.z * -20);
-	//add rotation to mat
-	lightWorldMat.SetRotation(lights[0].Direction); //fix this, find rotation to point toward this direction
+		Transform lightWorldMat = Transform();
+		lightWorldMat.MoveAbsolute(lights[0].Direction.x * -20, lights[0].Direction.y * -20, lights[0].Direction.z * -20);
+		//add rotation to mat
+		lightWorldMat.SetRotation(lights[0].Direction); //fix this, find rotation to point toward this direction
 
-	ppLightRaysVertexShader->SetMatrix4x4("world", lightWorldMat.GetWorldMatrix());
-	//ppLightRaysVertexShader->SetMatrix4x4("worldInverseTranspose", );
-	ppLightRaysVertexShader->SetMatrix4x4("view", camera->GetViewMatrix());
-	ppLightRaysVertexShader->SetMatrix4x4("proj", camera->GetProjectionMatrix());
-	ppLightRaysVertexShader->SetFloat3("lightPos", lights[0].Position);
-
-
-	//float density;
-	//float weight;
-	//float decay;
-	//float exposure;
-	ppLightRaysPixelShader->SetFloat3("lightColor", lights[0].Color);
-	ppLightRaysPixelShader->SetFloat("density", lightRaysDensity);
-	ppLightRaysPixelShader->SetFloat("weight", lightRaysWeight);
-	ppLightRaysPixelShader->SetFloat("decay", lightRaysDecay);
-	ppLightRaysPixelShader->SetFloat("exposure", lightRaysExposure);
-
-	ppLightRaysPixelShader->SetShaderResourceView("ScreenTexture", middleBufferSRV.Get());
-	ppLightRaysPixelShader->SetShaderResourceView("ShadowMap", shadowSRV);
-	ppLightRaysPixelShader->SetSamplerState("BasicSampler", ppLightRaysSampler);
-	ppLightRaysPixelShader->SetSamplerState("ShadowSampler", shadowSampler);
-
-	ppLightRaysVertexShader->CopyAllBufferData();
-	ppLightRaysPixelShader->CopyAllBufferData();	
+		ppLightRaysVertexShader->SetMatrix4x4("world", lightWorldMat.GetWorldMatrix());
+		//ppLightRaysVertexShader->SetMatrix4x4("worldInverseTranspose", );
+		ppLightRaysVertexShader->SetMatrix4x4("view", camera->GetViewMatrix());
+		ppLightRaysVertexShader->SetMatrix4x4("proj", camera->GetProjectionMatrix());
+		ppLightRaysVertexShader->SetFloat3("lightPos", lights[0].Position);
 
 
-	
-	context->Draw(3, 0);
+		//float density;
+		//float weight;
+		//float decay;
+		//float exposure;
+		ppLightRaysPixelShader->SetFloat3("lightColor", lights[0].Color);
+		ppLightRaysPixelShader->SetFloat("density", lightRaysDensity);
+		ppLightRaysPixelShader->SetFloat("weight", lightRaysWeight);
+		ppLightRaysPixelShader->SetFloat("decay", lightRaysDecay);
+		ppLightRaysPixelShader->SetFloat("exposure", lightRaysExposure);
 
+		ppLightRaysPixelShader->SetShaderResourceView("ScreenTexture", middleBufferSRV.Get());
+		ppLightRaysPixelShader->SetShaderResourceView("ShadowMap", shadowSRV);
+		ppLightRaysPixelShader->SetSamplerState("BasicSampler", ppLightRaysSampler);
+		ppLightRaysPixelShader->SetSamplerState("ShadowSampler", shadowSampler);
+
+		ppLightRaysVertexShader->CopyAllBufferData();
+		ppLightRaysPixelShader->CopyAllBufferData();
+
+		context->Draw(3, 0);
+	}
 
 	{
 		// Render dear imgui into screen

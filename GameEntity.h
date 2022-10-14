@@ -17,7 +17,7 @@
 class GameEntity
 {
 public:
-	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera);
+	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, bool isDebugSphere = false);
 	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<GameEntity> sphere, Microsoft::WRL::ComPtr<ID3D11Device> device);
 	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<RigidBody> rigidBody, std::shared_ptr<Collider> collider);
 	~GameEntity();
@@ -36,6 +36,11 @@ public:
 	void SetDebugRast(Microsoft::WRL::ComPtr<ID3D11RasterizerState> custRast) { m_debugRastState = custRast; }
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> GetRastState() { return m_debugRastState; }
 
+	bool IsDebugSphere() { return m_isDebugSphere; }
+
+	bool ShouldDrawSphere() { return m_drawDebugSphere; }
+	void SetDrawSphere(bool drawDebugSphere) { m_drawDebugSphere = drawDebugSphere; }
+
 	//will hold draw code
 	void Draw();
 	//Updates entity and checks for collisions
@@ -52,4 +57,6 @@ private:
 
 	std::shared_ptr<GameEntity> m_sphere;
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> m_debugRastState;
+	bool m_drawDebugSphere;
+	bool m_isDebugSphere;
 };

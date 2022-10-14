@@ -2,7 +2,7 @@
 
 #include "BufferStructs.h"
 
-GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera)
+GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, bool isDebugSphere)
 {
 	mesh = in_mesh;
 	material = in_material;
@@ -12,6 +12,8 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 	m_rigidBody = std::make_shared<RigidBody>(&transform);
 	m_collider = std::make_shared<Collider>(in_mesh, &transform);
 	m_sphere = nullptr;
+	m_drawDebugSphere = false;
+	m_isDebugSphere = isDebugSphere;
 }
 
 GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<GameEntity> sphere, Microsoft::WRL::ComPtr<ID3D11Device> device)
@@ -35,6 +37,8 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 	sphere->SetDebugRast(rast);
 
 	m_sphere = sphere;
+	m_drawDebugSphere = false;
+	m_isDebugSphere = false;
 }
 
 GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<RigidBody> rigidBody, std::shared_ptr<Collider> collider)
@@ -47,6 +51,8 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 	m_rigidBody = rigidBody;
 	m_collider = collider;
 	m_sphere = nullptr;
+	m_drawDebugSphere = false;
+	m_isDebugSphere = false;
 }
 
 GameEntity::~GameEntity()
@@ -107,7 +113,7 @@ void GameEntity::Draw()
 		mesh->Draw();
 	}
 
-	if (m_sphere) {
+	if (m_drawDebugSphere && m_sphere) {
 		//m_sphere->GetTransform()->SetScale(1.5f, 1.5f, 1.5f);
 		m_sphere->Draw();
 	}
