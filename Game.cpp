@@ -107,6 +107,17 @@ void Game::Init()
 	//create sampler
 	device->CreateSamplerState(&samplerDesc, basicSampler.GetAddressOf());
 
+	//create sampler state for post process
+	D3D11_SAMPLER_DESC ppSamplerDesc = {};
+	ppSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSamplerDesc.Filter = D3D11_FILTER_ANISOTROPIC; // allowing anisotropic filtering
+	ppSamplerDesc.MaxAnisotropy = 4;
+	ppSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX; //allways use mipmapping
+
+	device->CreateSamplerState(&ppSamplerDesc, ppLightRaysSampler.GetAddressOf());
+
 	// Helper methods for loading shaders, creating some basic
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
@@ -117,7 +128,8 @@ void Game::Init()
 	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for scifi panel
 	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for cobblestone wall
 	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for bronze
-	catapultMaterial = std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, catapultPixelShader);
+	//materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, toonPixelShader)); //toon shader material for testing
+	//catapultMaterial = std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, catapultPixelShader);
 
 	//add textures to each material
 	for (unsigned int i = 0; i < materials.size(); i++) {
@@ -129,10 +141,22 @@ void Game::Init()
 		materials[i]->AddTextureSRV("MetalnessTexture", metalnessMaps[i]);
 	}
 
-	catapultMaterial->AddSampler("BasicSampler", basicSampler);
-	catapultMaterial->AddTextureSRV("AlbedoTexture", catapultMaps[0]);
-	catapultMaterial->AddTextureSRV("RoughnessTexture", catapultMaps[1]);
-	catapultMaterial->AddTextureSRV("NormalTexture", catapultMaps[2]);
+	//toon shader. for testing uses scifi panel
+	toonMaterials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, toonPixelShader));
+
+	toonMaterials[0]->AddSampler("BasicSampler", basicSampler);
+	toonMaterials[0]->AddSampler("RampSampler", ppLightRaysSampler);
+	toonMaterials[0]->AddTextureSRV("AlbedoTexture", toonAlbedoMaps[0]);
+	toonMaterials[0]->AddTextureSRV("RoughnessTexture", toonRoughnessMaps[0]);
+	toonMaterials[0]->AddTextureSRV("AmbientTexture", toonAoMaps[0]);
+	toonMaterials[0]->AddTextureSRV("RampTexture", rampTexture);
+	toonMaterials[0]->AddTextureSRV("MetalnessTexture", toonMetalnessMaps[0]);
+
+
+	//catapultMaterial->AddSampler("BasicSampler", basicSampler);
+	//catapultMaterial->AddTextureSRV("AlbedoTexture", catapultMaps[0]);
+	//catapultMaterial->AddTextureSRV("RoughnessTexture", catapultMaps[1]);
+	//catapultMaterial->AddTextureSRV("NormalTexture", catapultMaps[2]);
 
 
 	//load create the shapes and skybox
@@ -216,19 +240,23 @@ void Game::LoadTextures() {
 	CreateWICTextureFromFile(device.Get(), context.Get(),
 		GetFullPathTo_Wide(L"../../Assets/Textures/Bronze_Metallic.tif").c_str(), nullptr, metalnessMaps[metalnessMaps.size() - 1].GetAddressOf());
 
-
-	//catapult materials
-	catapultMaps.push_back(nullptr);
-	catapultMaps.push_back(nullptr);
-	catapultMaps.push_back(nullptr);
+	//toon materials, currently using defaults for many of them
+	//while we figure out if we need them for toon shading
+	toonAlbedoMaps.push_back(nullptr);
+	toonRoughnessMaps.push_back(nullptr);
+	toonAoMaps.push_back(nullptr);
+	toonMetalnessMaps.push_back(nullptr);
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/Tree_Albedo.tif").c_str(), nullptr, toonAlbedoMaps[toonAlbedoMaps.size() - 1].GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonRoughnessMaps[toonRoughnessMaps.size() - 1].GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/allMetal.png").c_str(), nullptr, toonAoMaps[toonAoMaps.size() - 1].GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonMetalnessMaps[toonMetalnessMaps.size() - 1].GetAddressOf());
 
 	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Catapult_Diffuse.tif").c_str(), nullptr, catapultMaps[0].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Catapult_Specular.tif").c_str(), nullptr, catapultMaps[1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Catapult_Bump.tif").c_str(), nullptr, catapultMaps[2].GetAddressOf());
-
+		GetFullPathTo_Wide(L"../../Assets/Textures/Ramp_Texture.png").c_str(), nullptr, rampTexture.GetAddressOf());
 
 	//load cube map
 	skybox = CreateCubemap(
@@ -260,8 +288,13 @@ void Game::LoadShaders()
 	debugPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"DebugColorShader.cso").c_str());
 	skyPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"SkyPixelShader.cso").c_str());
 	shadowPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"ShadowPixelShader.cso").c_str());
+	toonPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"ToonPixelShader.cso").c_str());
 
-	catapultPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"CatapultPixelShader.cso").c_str());
+	//post process shaders
+	ppLightRaysVertexShader = std::make_shared<SimpleVertexShader>(device, context, GetFullPathTo_Wide(L"PostProcessLightRaysVertexShader.cso").c_str());
+	ppLightRaysPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"PostProcessLightRaysPixelShader.cso").c_str());
+
+	//catapultPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"CatapultPixelShader.cso").c_str());
 	a5PixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"A5CustomPS.cso").c_str());
 }
 
@@ -278,7 +311,7 @@ void Game::CreateBasicGeometry()
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/helix.obj").c_str(), device, context));
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/sphere.obj").c_str(), device, context));
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/quad.obj").c_str(), device, context));
-
+  
 	std::vector<Vertex> verts = meshes[3]->GetVerticies();
 
 	XMFLOAT4 currPos = XMFLOAT4(verts[0].Position.x, verts[0].Position.y, verts[0].Position.z, 1.0f);
@@ -307,10 +340,11 @@ void Game::CreateBasicGeometry()
 	}
 
 	Collider::SetDebugSphereMeshRadius(powf((xMax-xMin) / 2, 2) + powf((yMax - yMin) / 2, 2) + powf((zMax - zMin) / 2, 2));
+  
+	//toon meshes
+	toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/Tree.obj").c_str(), device, context));
 
-	//meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Toon/tree obj.obj").c_str(), device, context));
-
-	std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
+	//std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
 
 	//create some entities
 	//cube direectly in front of camera
@@ -324,12 +358,18 @@ void Game::CreateBasicGeometry()
 	//cylinder one behind cube
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[1], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
 	//cylinder above cube
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[3], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[1], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
 
 	m_EntityManager->GetEntity(2)->GetTransform()->AddChild(m_EntityManager->GetEntity(5)->GetTransform());
 
 	//big plane to act as floor
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[4], materials[2], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
+
+	//sphere to match direction light position
+	gameEntities.push_back(std::make_shared<GameEntity>(meshes[3], materials[0], camera));
+
+	//toon pirate ship
+	gameEntities.push_back(std::make_shared<GameEntity>(toonMeshes[0], toonMaterials[0], camera));
 
 	//move objects so there isn't overlap
 	m_EntityManager->GetEntity(0)->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));
@@ -343,26 +383,74 @@ void Game::CreateBasicGeometry()
 	m_EntityManager->GetEntity(6)->GetTransform()->Scale(20);//scale up a bunch to act as floor
 
 	//catapult
-	if (catapult->GetVertexBuffer()) {
-		meshes.push_back(catapult);
-		m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[5], catapultMaterial, camera));
-		m_EntityManager->GetEntity(7)->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, -5.0f, -2.5f));
-		m_EntityManager->GetEntity(7)->GetTransform()->SetScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
-	}
+	//if (catapult->GetVertexBuffer()) {
+	//	meshes.push_back(catapult);
+	//	gameEntities.push_back(std::make_shared<GameEntity>(meshes[5], catapultMaterial, camera));
+	//	gameEntities[7]->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, -5.0f, -2.5f));
+	//	gameEntities[7]->GetTransform()->SetScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
+	//}
 
 	//create sky obj
 	sky = std::make_shared<Sky>(meshes[0], basicSampler, skybox, device, context, skyVertexShader, skyPixelShader);
 }
 
+void Game::CreateExtraRenderTargets()
+{
+	ID3D11Texture2D* backBufferTexture = 0;
+	swapChain->GetBuffer(
+		0,
+		__uuidof(ID3D11Texture2D),
+		(void**)&backBufferTexture);
+
+	// Now that we have the texture, create a render target view
+	// for the back buffer so we can render into it.  Then release
+	// our local reference to the texture, since we have the view.
+	if (backBufferTexture != 0)
+	{
+		device->CreateRenderTargetView(
+			backBufferTexture,
+			0,
+			backBufferRTV.GetAddressOf());
+		backBufferTexture->Release();
+	}
+
+	// Set up the description of the texture to use for the depth buffer
+	D3D11_TEXTURE2D_DESC depthStencilDesc = {};
+	depthStencilDesc.Width = width;
+	depthStencilDesc.Height = height;
+	depthStencilDesc.MipLevels = 1;
+	depthStencilDesc.ArraySize = 1;
+	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
+	depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depthStencilDesc.CPUAccessFlags = 0;
+	depthStencilDesc.MiscFlags = 0;
+	depthStencilDesc.SampleDesc.Count = 1;
+	depthStencilDesc.SampleDesc.Quality = 0;
+
+	// Create the depth buffer and its view, then 
+	// release our reference to the texture
+	ID3D11Texture2D* depthBufferTexture = 0;
+	device->CreateTexture2D(&depthStencilDesc, 0, &depthBufferTexture);
+	if (depthBufferTexture != 0)
+	{
+		device->CreateDepthStencilView(
+			depthBufferTexture,
+			0,
+			depthStencilView.GetAddressOf());
+		depthBufferTexture->Release();
+	}
+}
 
 void Game::CreateLights() {
 	XMFLOAT3 white = { 1,1,1 };
 	//create direction light
 	Light temp = {};
 	temp.Type = LIGHT_TYPE_DIRECTIONAL;
-	temp.Direction = XMFLOAT3(1, -2, 0); // point directly 'right'
+	temp.Position = XMFLOAT3(-20, 0, 0);//give direction lights position for shadows and light rays
+	temp.Direction = XMFLOAT3(1, 0, 0); // point right 
 	temp.Color = white;//XMFLOAT3(0, 0, 1);//bright blue 
-	temp.Intensity = 0.005f; //each for testing right now
+	temp.Intensity = 1.0f; //each for testing right now
 	temp.CastsShadows = false;
 
 	lights.push_back(temp);
@@ -397,6 +485,12 @@ void Game::CreateLights() {
 	temp.CastsShadows = true;
 
 	lights.push_back(temp);
+
+	for (int i = 0; i < lights.size(); i++)
+	{
+		lightPoses.push_back(lights[i].Position);
+	}
+
 }
 
 void Game::CreateShadowResources()
@@ -480,39 +574,44 @@ void Game::CreateShadowResources()
 	cubeDesc.Usage = D3D11_USAGE_DEFAULT; // Standard usage
 
 	// Create the actual texture resource
-	Microsoft::WRL::ComPtr<ID3D11Texture2D> cubeMapTexture = 0;
-	device->CreateTexture2D(&cubeDesc, 0, cubeMapTexture.GetAddressOf());
+	std::vector<Microsoft::WRL::ComPtr<ID3D11Texture2D>> cubeMapTextures;
+	cubeMapTextures.resize(MAX_POINT_SHADOWS_NUM);
 
+	shadowBoxStencils.resize(MAX_POINT_SHADOWS_NUM);
+	shadowBoxSRVs.resize(MAX_POINT_SHADOWS_NUM);
+	//run twice to set up two point maps
+	for (int i = 0; i < MAX_POINT_SHADOWS_NUM; i++) {
+		device->CreateTexture2D(&cubeDesc, 0, cubeMapTextures[i].GetAddressOf());
 
-	for (int i = 0; i < 6; i++) {
-		//create depth/stencil
-		D3D11_DEPTH_STENCIL_VIEW_DESC shadowBoxStencilDesc = {};
-		shadowBoxStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
-		shadowBoxStencilDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
-		shadowBoxStencilDesc.Texture2DArray.MipSlice = 0;
-		shadowBoxStencilDesc.Texture2DArray.ArraySize = 1;
-		shadowBoxStencilDesc.Texture2DArray.FirstArraySlice = i;
+		for (int j = 0; j < 6; j++) {
+			//create depth/stencil
+			D3D11_DEPTH_STENCIL_VIEW_DESC shadowBoxStencilDesc = {};
+			shadowBoxStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
+			shadowBoxStencilDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+			shadowBoxStencilDesc.Texture2DArray.MipSlice = 0;
+			shadowBoxStencilDesc.Texture2DArray.ArraySize = 1;
+			shadowBoxStencilDesc.Texture2DArray.FirstArraySlice = j;
 
-		shadowBoxStencils.push_back(nullptr);
-		device->CreateDepthStencilView(cubeMapTexture.Get(), &shadowBoxStencilDesc, shadowBoxStencils[shadowBoxStencils.size() - 1].GetAddressOf());
+			shadowBoxStencils[i].push_back(nullptr);
+			device->CreateDepthStencilView(cubeMapTextures[i].Get(), &shadowBoxStencilDesc, shadowBoxStencils[i][j].GetAddressOf());
+		}
+
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE; // Treat this as a cube!
+		srvDesc.TextureCube.MipLevels = 1; // Only need access to 1 mip
+		srvDesc.TextureCube.MostDetailedMip = 0; // Index of the first mip we want to see
+		device->CreateShaderResourceView(cubeMapTextures[i].Get(), &srvDesc, shadowBoxSRVs[i].GetAddressOf());
+
 	}
-
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE; // Treat this as a cube!
-	srvDesc.TextureCube.MipLevels = 1; // Only need access to 1 mip
-	srvDesc.TextureCube.MostDetailedMip = 0; // Index of the first mip we want to see
-	device->CreateShaderResourceView(cubeMapTexture.Get(), &srvDesc, shadowBoxSRV.GetAddressOf());
-
-
 }
 
-void Game::RenderDirectionalShadowMap()
+void Game::RenderDirectionalShadowMap(XMFLOAT3 dir)
 {
-
+	//move 20 units back along view direction
 	//create "camera" mats
 	XMMATRIX shView = XMMatrixLookAtLH(
-		XMVectorSet(-20, 40, 0, 0),//move 20 units left to 'match' lig
+		XMVectorSet(dir.x * -20, dir.y * -20, dir.z * -20, 0),
 		XMVectorSet(0, 0, 0, 0),
 		XMVectorSet(0, 1, 0, 0));
 	XMStoreFloat4x4(&shadowViewMat, shView);
@@ -566,24 +665,37 @@ void Game::RenderDirectionalShadowMap()
 
 
 	//reset all render states
-	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	//context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	context->OMSetRenderTargets(1, middleBufferRTV.GetAddressOf(), middleDepthStencilView.Get());
 	vp.Width = (float)this->width;
 	vp.Height = (float)this->height;
 	context->RSSetViewports(1, &vp);
 	context->RSSetState(0); //reset
 }
 
-void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ, float farZ)
+void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, int index, float range, float nearZ, float farZ)
 {
-
 	//unbind shadow resource
 	ID3D11ShaderResourceView* const pSRV[1] = { NULL };
-	context->PSSetShaderResources(6, 1, pSRV);
+	context->PSSetShaderResources(7 + index, 1, pSRV); //shadow map starts at 7th
 
 	//setup pipline for shadow map
-	context->OMSetRenderTargets(0, 0, shadowBoxStencils[0].Get());
-	context->ClearDepthStencilView(shadowBoxStencils[0].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][0].Get());
+	context->ClearDepthStencilView(shadowBoxStencils[index][0].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	context->RSSetState(shadowRasterizer.Get());
+
+	//find which entities are in range to be rendered to map
+	renderableEntities.clear(); //clear previous culling
+	//loop and draw all objects in range of shadow
+	// '&' is important because it prevents making copies
+	for (auto& entities : gameEntities) {
+		DirectX::XMFLOAT3 ePos = entities.get()->GetTransform()->GetPosition();
+		//get square dist cause faster
+		float squareDist = pow(pos.x - ePos.x, 2) + pow(pos.y - ePos.y, 2) + pow(pos.z - ePos.z, 2);
+		if (squareDist < pow(farZ, 2)) {
+			renderableEntities.push_back(entities);
+		}
+	}
 
 	//Create viewport that matches shadow map resolution
 	D3D11_VIEWPORT vp = {};
@@ -641,8 +753,8 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 	//left side
 #pragma region Left
 
-	context->OMSetRenderTargets(0, 0, shadowBoxStencils[1].Get());
-	context->ClearDepthStencilView(shadowBoxStencils[1].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][1].Get());
+	context->ClearDepthStencilView(shadowBoxStencils[index][1].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	shView = XMMatrixLookToLH(
 		XMVectorSet(pos.x, pos.y, pos.z, 0),//start at origin to match point like
@@ -661,10 +773,9 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 	context->PSSetShader(0, 0, 0);
 
 	//loop and draw all objects in range of shadow
-	// '&' is important because it prevents making copies
 	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
 		std::shared_ptr<GameEntity> entity = m_EntityManager->GetEntity(i);
-
+    
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -678,8 +789,8 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 #pragma region Up
 
-	context->OMSetRenderTargets(0, 0, shadowBoxStencils[2].Get());
-	context->ClearDepthStencilView(shadowBoxStencils[2].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][2].Get());
+	context->ClearDepthStencilView(shadowBoxStencils[index][2].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	shView = XMMatrixLookToLH(
 		XMVectorSet(pos.x, pos.y, pos.z, 0),//start at origin to match point like
@@ -698,7 +809,6 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 	context->PSSetShader(0, 0, 0);
 
 	//loop and draw all objects in range of shadow
-	// '&' is important because it prevents making copies
 	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
 		std::shared_ptr<GameEntity> entity = m_EntityManager->GetEntity(i);
 
@@ -715,8 +825,8 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 #pragma region Down
 
-	context->OMSetRenderTargets(0, 0, shadowBoxStencils[3].Get());
-	context->ClearDepthStencilView(shadowBoxStencils[3].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][3].Get());
+	context->ClearDepthStencilView(shadowBoxStencils[index][3].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	shView = XMMatrixLookToLH(
 		XMVectorSet(pos.x, pos.y, pos.z, 0),//start at origin to match point like
@@ -736,6 +846,7 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
+
 	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
 		std::shared_ptr<GameEntity> entity = m_EntityManager->GetEntity(i);
 
@@ -752,8 +863,8 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 #pragma region Front
 
-	context->OMSetRenderTargets(0, 0, shadowBoxStencils[4].Get());
-	context->ClearDepthStencilView(shadowBoxStencils[4].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][4].Get());
+	context->ClearDepthStencilView(shadowBoxStencils[index][4].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	shView = XMMatrixLookToLH(
 		XMVectorSet(pos.x, pos.y, pos.z, 0),//start at origin to match point like
@@ -772,7 +883,6 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 	context->PSSetShader(0, 0, 0);
 
 	//loop and draw all objects in range of shadow
-	// '&' is important because it prevents making copies
 	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
 		std::shared_ptr<GameEntity> entity = m_EntityManager->GetEntity(i);
 
@@ -789,8 +899,8 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 #pragma region Back
 
-	context->OMSetRenderTargets(0, 0, shadowBoxStencils[5].Get());
-	context->ClearDepthStencilView(shadowBoxStencils[5].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(0, 0, shadowBoxStencils[index][5].Get());
+	context->ClearDepthStencilView(shadowBoxStencils[index][5].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	shView = XMMatrixLookToLH(
 		XMVectorSet(pos.x, pos.y, pos.z, 0),//start at origin to match point like
@@ -809,7 +919,6 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 	context->PSSetShader(0, 0, 0);
 
 	//loop and draw all objects in range of shadow
-	// '&' is important because it prevents making copies
 	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
 		std::shared_ptr<GameEntity> entity = m_EntityManager->GetEntity(i);
 
@@ -824,8 +933,13 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 #pragma endregion
 
+	//clear render target
+	ID3D11RenderTargetView* nullView = NULL;
+	context->OMSetRenderTargets(1, &nullView, NULL);
+
 	//reset all render states
-	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	//context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	context->OMSetRenderTargets(1, middleBufferRTV.GetAddressOf(), middleDepthStencilView.Get());
 	vp.Width = (float)this->width;
 	vp.Height = (float)this->height;
 	context->RSSetViewports(1, &vp);
@@ -837,7 +951,7 @@ void Game::RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, flo
 
 	//unbind shadow resource
 	ID3D11ShaderResourceView* const pSRV[1] = { NULL };
-	context->PSSetShaderResources(7, 1, pSRV); //spot shadow map is 7th
+	context->PSSetShaderResources(6, 1, pSRV); //spot shadow map is 6th
 
 	//create "camera" mats
 	XMMATRIX shView = XMMatrixLookToLH(
@@ -853,7 +967,7 @@ void Game::RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, flo
 
 	float yAngle = (spotFallOff / 2.0f) / range;
 	//use perspective for point light shadows
-	XMMATRIX shProj = XMMatrixPerspectiveFovLH(45.0f * toRadians, 1.0f, nearZ, farZ);// XMMatrixPerspectiveLH(spotFallOff, spotFallOff, nearZ, farZ);
+	XMMATRIX shProj = XMMatrixPerspectiveFovLH(90.0f * toRadians, 1.0f, nearZ, farZ);// XMMatrixPerspectiveLH(spotFallOff, spotFallOff, nearZ, farZ);
 	XMStoreFloat4x4(&spotShadowProjMat, shProj);
 
 	//setup pipline for shadow map
@@ -896,7 +1010,8 @@ void Game::RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, flo
 
 
 	//reset all render states
-	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	//context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	context->OMSetRenderTargets(1, middleBufferRTV.GetAddressOf(), middleDepthStencilView.Get());
 	vp.Width = (float)this->width;
 	vp.Height = (float)this->height;
 	context->RSSetViewports(1, &vp);
@@ -1166,6 +1281,27 @@ void Game::CreateGui(float deltaTime) {
 
 		ImGui::PopID();
 
+		ImGui::PushID(4);
+		//ImGui::Text("Light Rays");
+
+		ImGui::Text("Density: ");
+		ImGui::SameLine();
+		ImGui::DragFloat(" ", &lightRaysDensity, .01f, 0.01f, 1.0f);
+
+		ImGui::Text("Weight: ");
+		ImGui::SameLine();
+		ImGui::DragFloat(" ", &lightRaysWeight, .01f, 0.01f, 1.0f);
+
+		ImGui::Text("Decay: ");
+		ImGui::SameLine();
+		ImGui::DragFloat(" ", &lightRaysDecay, .01f, 0.01f, 1.0f);
+
+		ImGui::Text("Exposure: ");
+		ImGui::SameLine();
+		ImGui::DragFloat(" ", &lightRaysExposure, .01f, 0.01f, 1.0f);
+
+		ImGui::PopID();
+
 		// Show the demo window
 		//ImGui::ShowDemoWindow();
 	}
@@ -1193,6 +1329,11 @@ void Game::Update(float deltaTime, float totalTime)
 
 	m_EntityManager->UpdateEntities(deltaTime);
 
+	gameEntities[7]->GetTransform()->SetPosition(lights[0].Position);
+
+	//rotate pirate ship around
+	gameEntities[8]->GetTransform()->Rotate(XMFLOAT3(0, deltaTime * 0.5f, 0));
+
 	CreateGui(deltaTime);
 
 	camera->Update(deltaTime);
@@ -1205,7 +1346,17 @@ void Game::Draw(float deltaTime, float totalTime)
 {
 	// Background color (Cornflower Blue in this case) for clearing
 	const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
+	
+	//clear render target
+	ID3D11RenderTargetView* pNullRTV = NULL;
+	context->OMSetRenderTargets(1, &pNullRTV, NULL);
 
+	//unbind slot 0 which is where we send the middle process tex
+	ID3D11ShaderResourceView* const pSRV[1] = { NULL };
+	context->PSSetShaderResources(0, 1, pSRV);
+
+	//draw to secondary render target so we can do post process effects
+	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
 	// Clear the render target and depth buffer (erases what's on the screen)
 	//  - Do this ONCE PER FRAME
 	//  - At the beginning of Draw (before drawing *anything*)
@@ -1215,16 +1366,33 @@ void Game::Draw(float deltaTime, float totalTime)
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 		1.0f,
 		0);
+
+	//draw to secondary render target so we can do post process effects
+	context->OMSetRenderTargets(1, middleBufferRTV.GetAddressOf(), middleDepthStencilView.Get());
+
+	context->ClearRenderTargetView(middleBufferRTV.Get(), color);
+	context->ClearDepthStencilView(
+		middleDepthStencilView.Get(),
+		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
+		1.0f,
+		0);
+
 	//stuff above needed every frame.
 
+
+	//make sure we only render two point maps at max
+	int numPointMaps = 0;
 	//do shadow rendering stuff
 	for (int i = 0; i < lights.size(); i++) {
+		//lights[i].ShadowNumber = -1; //set to -1 so ps knows that it's doesn't use point shadow map
 		if (lights[i].CastsShadows) {
 			if (lights[i].Type == LIGHT_TYPE_DIRECTIONAL) {
-				RenderDirectionalShadowMap();
+				RenderDirectionalShadowMap(lights[i].Direction);
 			}
-			else if (lights[i].Type == LIGHT_TYPE_POINT) {
-				RenderPointShadowMap(lights[i].Position, lights[i].Range, lights[i].NearZ, lights[i].FarZ);
+			else if (lights[i].Type == LIGHT_TYPE_POINT && numPointMaps < MAX_POINT_SHADOWS_NUM) {
+				RenderPointShadowMap(lights[i].Position, numPointMaps, lights[i].Range, lights[i].NearZ, lights[i].FarZ);
+				//lights[i].ShadowNumber = numPointMaps;
+				numPointMaps++;
 			}
 			else if (lights[i].Type == LIGHT_TYPE_SPOT) {
 				RenderSpotShadowMap(lights[i].Position, lights[i].Direction, lights[i].Range, lights[i].SpotFalloff, lights[i].NearZ, lights[i].FarZ);
@@ -1233,26 +1401,43 @@ void Game::Draw(float deltaTime, float totalTime)
 	}
 
 	//draw game entities
+	//draw to secondary render target so we can do post process effects
+	context->OMSetRenderTargets(1, middleBufferRTV.GetAddressOf(), middleDepthStencilView.Get());
+	
 	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
 		std::shared_ptr<GameEntity> entity = m_EntityManager->GetEntity(i);
 
+		//unbind slot 0 which is where we send the middle process tex
+		//unbind all slots
+		for (int j = 0; j < 9; j++) {
+			context->PSSetShaderResources(j, 1, pSRV);
+		}
+		
 		std::shared_ptr<SimpleVertexShader> vs = entity->GetMaterial()->GetVertexShader();
 		//send shadow info to vertex shader
 		vs->SetMatrix4x4("lightView", shadowViewMat);
+		//vs->SetData("lightView", &sh)
 		vs->SetMatrix4x4("lightProj", shadowProjMat);
 		vs->SetMatrix4x4("spotLightView", spotShadowViewMat);
 		vs->SetMatrix4x4("spotLightProj", spotShadowProjMat);
-		for (int j = 0; j < lights.size(); j++) {
-			if (lights[j].Type == LIGHT_TYPE_POINT)
-				vs->SetFloat3("lightPos", lights[j].Position);
-		}
+		/*for (int j = 0; j < lights.size(); j++) {
+			if (lights[j].Type == LIGHT_TYPE_POINT) {
+				lightPoses[j] = lights[j].Position;
+			}
+		}*/
+
+		//vs->SetData("lightPoses", &lightPoses[0], sizeof(XMFLOAT3) * (int)lightPoses.size());
 
 		std::shared_ptr<SimplePixelShader> ps = entity->GetMaterial()->GetPixelShader();
 		//send light data to shaders
 		ps->SetInt("numLights", static_cast<int>(lights.size()));
 		ps->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
 		ps->SetShaderResourceView("ShadowMap", shadowSRV);
-		ps->SetShaderResourceView("ShadowBox", shadowBoxSRV);
+		ps->SetShaderResourceView("ShadowBox1", shadowBoxSRVs[0]);
+		ps->SetShaderResourceView("ShadowBox2", shadowBoxSRVs[1]);
+		//ps->SetShaderResourceView("ShadowBox", &shadowBoxSRVs[0]);// , sizeof(shadowBoxSRVs)* (int)shadowBoxSRVs.size());
+		//context->PSSetShaderResources(7, 1, &shadowBoxSRVs[0]);
+		//context->PSSetShaderResources(8, 1, &shadowBoxSRVs[1]);
 		ps->SetShaderResourceView("ShadowSpotMap", shadowSpotSRV);
 
 		ps->SetFloat3("ambientTerm", ambientTerm);
@@ -1264,6 +1449,55 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	//draw sky, after everthying else to reduce overdraw
 	sky->Draw(camera);
+
+	//unbind slot 0 which is where we send the middle process tex
+	context->PSSetShaderResources(0, 1, pSRV);
+
+	//switch render target back to main to draw post process effects
+	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	
+	//matrix world;
+	//matrix worldInvTranspose
+	//matrix proj;
+	//matrix view;
+	//float4 lightPos;
+	ppLightRaysVertexShader->SetShader();
+	ppLightRaysPixelShader->SetShader();
+
+	Transform lightWorldMat = Transform();
+	lightWorldMat.MoveAbsolute(lights[0].Direction.x * -20, lights[0].Direction.y * -20, lights[0].Direction.z * -20);
+	//add rotation to mat
+	lightWorldMat.SetRotation(lights[0].Direction); //fix this, find rotation to point toward this direction
+
+	ppLightRaysVertexShader->SetMatrix4x4("world", lightWorldMat.GetWorldMatrix());
+	//ppLightRaysVertexShader->SetMatrix4x4("worldInverseTranspose", );
+	ppLightRaysVertexShader->SetMatrix4x4("view", camera->GetViewMatrix());
+	ppLightRaysVertexShader->SetMatrix4x4("proj", camera->GetProjectionMatrix());
+	ppLightRaysVertexShader->SetFloat3("lightPos", lights[0].Position);
+
+
+	//float density;
+	//float weight;
+	//float decay;
+	//float exposure;
+	ppLightRaysPixelShader->SetFloat3("lightColor", lights[0].Color);
+	ppLightRaysPixelShader->SetFloat("density", lightRaysDensity);
+	ppLightRaysPixelShader->SetFloat("weight", lightRaysWeight);
+	ppLightRaysPixelShader->SetFloat("decay", lightRaysDecay);
+	ppLightRaysPixelShader->SetFloat("exposure", lightRaysExposure);
+
+	ppLightRaysPixelShader->SetShaderResourceView("ScreenTexture", middleBufferSRV.Get());
+	ppLightRaysPixelShader->SetShaderResourceView("ShadowMap", shadowSRV);
+	ppLightRaysPixelShader->SetSamplerState("BasicSampler", ppLightRaysSampler);
+	ppLightRaysPixelShader->SetSamplerState("ShadowSampler", shadowSampler);
+
+	ppLightRaysVertexShader->CopyAllBufferData();
+	ppLightRaysPixelShader->CopyAllBufferData();	
+
+
+	
+	context->Draw(3, 0);
+
 
 	{
 		// Render dear imgui into screen
@@ -1280,7 +1514,8 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	// Due to the usage of a more sophisticated swap chain,
 	// the render target must be re-bound after every call to Present()
-	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	//context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+	//context->OMSetRenderTargets(1, middleBufferRTV.GetAddressOf(), middleDepthStencilView.Get());
 }
 
 
@@ -1371,4 +1606,31 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Game::CreateCubemap(
 		textures[i]->Release();
 	// Send back the SRV, which is what we need for our shaders
 	return cubeSRV;
+}
+
+///Helper function to reduce amount of typing in shadow map functions.
+void PassShadowObjs() {
+	/*
+	//turn on our special shadow shader
+	shadowVertexShader->SetShader();
+	//the view and proj will be the same for all objects
+	shadowVertexShader->SetMatrix4x4("view", shadowBoxViewMat);
+	shadowVertexShader->SetMatrix4x4("proj", shadowBoxProjMat);
+	shadowVertexShader->SetFloat3("lightPos", pos);
+	//custom ps that outputs linear depth
+	//shadowPixelShader->SetShader();
+	context->PSSetShader(0, 0, 0);
+
+	//loop and draw all objects in range of shadow
+	// '&' is important because it prevents making copies
+	for (auto& entity : renderableEntities) {
+		//set this game entity's world mat, send to gpu
+		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
+		//copy data over
+		shadowVertexShader->CopyAllBufferData();
+
+		//draw. Don't need material
+		entity->GetMesh()->Draw();
+	}
+	*/
 }

@@ -222,7 +222,7 @@ HRESULT DXCore::InitDirectX()
 		0,
 		__uuidof(ID3D11Texture2D),
 		(void**)&backBufferTexture);
-
+	
 	// Now that we have the texture, create a render target view
 	// for the back buffer so we can render into it.  Then release
 	// our local reference to the texture, since we have the view.
@@ -234,7 +234,7 @@ HRESULT DXCore::InitDirectX()
 			backBufferRTV.GetAddressOf());
 		backBufferTexture->Release();
 	}
-
+		
 	// Set up the description of the texture to use for the depth buffer
 	D3D11_TEXTURE2D_DESC depthStencilDesc = {};
 	depthStencilDesc.Width				= width;
@@ -253,14 +253,57 @@ HRESULT DXCore::InitDirectX()
 	// release our reference to the texture
 	ID3D11Texture2D* depthBufferTexture = 0;
 	device->CreateTexture2D(&depthStencilDesc, 0, &depthBufferTexture);
+
 	if (depthBufferTexture != 0)
 	{
 		device->CreateDepthStencilView(
-			depthBufferTexture, 
-			0, 
+			depthBufferTexture,
+			0,
 			depthStencilView.GetAddressOf());
 		depthBufferTexture->Release();
 	}
+
+	D3D11_TEXTURE2D_DESC ppTexDesc = {};
+	ppTexDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+	ppTexDesc.Usage = D3D11_USAGE_DEFAULT;
+	ppTexDesc.Width = width;
+	ppTexDesc.Height = height;
+	ppTexDesc.ArraySize = 1;
+	ppTexDesc.CPUAccessFlags = 0;
+	ppTexDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	ppTexDesc.MipLevels = 1;
+	ppTexDesc.MiscFlags = 0;
+	ppTexDesc.SampleDesc.Count = 1;
+	ppTexDesc.SampleDesc.Quality = 0;
+
+
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> ppBackBufferTex;
+	device->CreateTexture2D(&ppTexDesc, 0, ppBackBufferTex.GetAddressOf());
+
+	//switch format to single channel for depth buffer
+	ppTexDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+	ppTexDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_USAGE_DEFAULT;
+
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> ppDepthBufferTex;
+	device->CreateTexture2D(&ppTexDesc, 0, ppDepthBufferTex.GetAddressOf());
+
+
+	//create depth/stencil
+	D3D11_DEPTH_STENCIL_VIEW_DESC ppStencilDesc = {};
+	ppStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	ppStencilDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	ppStencilDesc.Texture2D.MipSlice = 0;
+	device->CreateDepthStencilView(ppDepthBufferTex.Get(), &ppStencilDesc, middleDepthStencilView.GetAddressOf());
+
+	//create SRV
+	D3D11_SHADER_RESOURCE_VIEW_DESC ppSRVDesc = {};
+	ppSRVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	ppSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	ppSRVDesc.Texture2D.MipLevels = 1;
+	ppSRVDesc.Texture2D.MostDetailedMip = 0;
+	device->CreateShaderResourceView(ppBackBufferTex.Get(), &ppSRVDesc, middleBufferSRV.GetAddressOf());
+
+	device->CreateRenderTargetView(ppBackBufferTex.Get(), 0, middleBufferRTV.GetAddressOf());
 
 	// Bind the views to the pipeline, so rendering properly 
 	// uses their underlying textures
