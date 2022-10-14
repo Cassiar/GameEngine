@@ -306,7 +306,7 @@ void Game::CreateBasicGeometry()
 		zMin = currPos.z < zMin ? currPos.z : zMin;
 	}
 
-	Collider::SetDebugSphereMeshRadius(pow((xMax-xMin) / 2, 2) + pow((yMax - yMin) / 2, 2) + pow((zMax - zMin) / 2, 2));
+	Collider::SetDebugSphereMeshRadius(powf((xMax-xMin) / 2, 2) + powf((yMax - yMin) / 2, 2) + powf((zMax - zMin) / 2, 2));
 
 	//meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Toon/tree obj.obj").c_str(), device, context));
 
