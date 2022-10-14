@@ -16,6 +16,8 @@
 // For the DirectX Math library
 using namespace DirectX;
 
+float Collider::m_debugSphereMeshRadius;
+
 // --------------------------------------------------------
 // Constructor
 //
@@ -84,6 +86,8 @@ void Game::Init()
 		ImGui_ImplWin32_Init(this->hWnd);
 		ImGui_ImplDX11_Init(device.Get(), context.Get());
 	}
+
+	m_EntityManager = EntityManager::GetInstance();
 
 	//get's the next multiple of 16, so that they'll be extra space
 	unsigned int size = sizeof(VertexShaderData);
@@ -253,6 +257,7 @@ void Game::LoadShaders()
 	shadowVertexShader = std::make_shared<SimpleVertexShader>(device, context, GetFullPathTo_Wide(L"ShadowVertexShader.cso").c_str());
 
 	pixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"PixelShader.cso").c_str());
+	debugPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"DebugColorShader.cso").c_str());
 	skyPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"SkyPixelShader.cso").c_str());
 	shadowPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"ShadowPixelShader.cso").c_str());
 
@@ -273,47 +278,76 @@ void Game::CreateBasicGeometry()
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/helix.obj").c_str(), device, context));
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/sphere.obj").c_str(), device, context));
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/quad.obj").c_str(), device, context));
+
+	std::vector<Vertex> verts = meshes[3]->GetVerticies();
+
+	XMFLOAT4 currPos = XMFLOAT4(verts[0].Position.x, verts[0].Position.y, verts[0].Position.z, 1.0f);
+
+	//Inefficient could probs be better done through a compute shader
+	float xMax = currPos.x;
+	float xMin = currPos.x;
+
+	float yMax = currPos.y;
+	float yMin = currPos.y;
+
+	float zMax = currPos.z;
+	float zMin = currPos.z;
+	for (int i = 1; i < verts.size(); i++)
+	{
+		currPos = XMFLOAT4(verts[i].Position.x, verts[i].Position.y, verts[i].Position.z, 1.0f);
+
+		xMax = currPos.x > xMax ? currPos.x : xMax;
+		xMin = currPos.x < xMin ? currPos.x : xMin;
+
+		yMax = currPos.y > yMax ? currPos.y : yMax;
+		yMin = currPos.y < yMin ? currPos.y : yMin;
+
+		zMax = currPos.z > zMax ? currPos.z : zMax;
+		zMin = currPos.z < zMin ? currPos.z : zMin;
+	}
+
+	Collider::SetDebugSphereMeshRadius(powf((xMax-xMin) / 2, 2) + powf((yMax - yMin) / 2, 2) + powf((zMax - zMin) / 2, 2));
+
 	//meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Toon/tree obj.obj").c_str(), device, context));
 
 	std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
 
-
 	//create some entities
 	//cube direectly in front of camera
-	gameEntities.push_back(std::make_shared<GameEntity>(meshes[0], materials[0], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[0], materials[0], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
 	//sphere to left of cube
-	gameEntities.push_back(std::make_shared<GameEntity>(meshes[3], materials[3], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[3], materials[3], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
 	//helix to right
-	gameEntities.push_back(std::make_shared<GameEntity>(meshes[2], materials[3], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[3], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
 	//helix below cube
-	gameEntities.push_back(std::make_shared<GameEntity>(meshes[2], materials[2], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[2], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
 	//cylinder one behind cube
-	gameEntities.push_back(std::make_shared<GameEntity>(meshes[1], materials[1], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[1], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
 	//cylinder above cube
-	gameEntities.push_back(std::make_shared<GameEntity>(meshes[1], materials[3], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[3], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
 
-	gameEntities[2]->GetTransform()->AddChild(gameEntities[5]->GetTransform());
+	m_EntityManager->GetEntity(2)->GetTransform()->AddChild(m_EntityManager->GetEntity(5)->GetTransform());
 
 	//big plane to act as floor
-	gameEntities.push_back(std::make_shared<GameEntity>(meshes[4], materials[2], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[4], materials[2], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
 
 	//move objects so there isn't overlap
-	gameEntities[0]->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));
-	gameEntities[1]->GetTransform()->MoveAbsolute(XMFLOAT3(5.0f, 10.0f, 5.0f));
-	gameEntities[2]->GetTransform()->MoveAbsolute(XMFLOAT3(7.0f, 3.0f, 3.0f));
-	gameEntities[3]->GetTransform()->MoveAbsolute(XMFLOAT3(0.0f, 0.0f, -5.0f));
-	gameEntities[4]->GetTransform()->MoveAbsolute(XMFLOAT3(4.0f, 0.0f, -4.0f));
-	gameEntities[5]->GetTransform()->MoveAbsolute(XMFLOAT3(2.5f, 0.0f, -2.5f));
-	gameEntities[6]->GetTransform()->MoveAbsolute(XMFLOAT3(0.0f, 0.0f, 5.0f)); //move left and down
-	gameEntities[6]->GetTransform()->Rotate(XMFLOAT3(-1 * XM_PIDIV2, 0, 0));
-	gameEntities[6]->GetTransform()->Scale(20);//scale up a bunch to act as floor
+	m_EntityManager->GetEntity(0)->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));
+	m_EntityManager->GetEntity(1)->GetTransform()->MoveAbsolute(XMFLOAT3(5.0f, 10.0f, 5.0f));
+	m_EntityManager->GetEntity(2)->GetTransform()->MoveAbsolute(XMFLOAT3(7.0f, 3.0f, 3.0f));
+	m_EntityManager->GetEntity(3)->GetTransform()->MoveAbsolute(XMFLOAT3(0.0f, 0.0f, -5.0f));
+	m_EntityManager->GetEntity(4)->GetTransform()->MoveAbsolute(XMFLOAT3(4.0f, 0.0f, -4.0f));
+	m_EntityManager->GetEntity(5)->GetTransform()->MoveAbsolute(XMFLOAT3(2.5f, 0.0f, -2.5f));
+	m_EntityManager->GetEntity(6)->GetTransform()->MoveAbsolute(XMFLOAT3(0.0f, 0.0f, 5.0f)); //move left and down
+	m_EntityManager->GetEntity(6)->GetTransform()->Rotate(XMFLOAT3(-1 * XM_PIDIV2, 0, 0));
+	m_EntityManager->GetEntity(6)->GetTransform()->Scale(20);//scale up a bunch to act as floor
 
 	//catapult
 	if (catapult->GetVertexBuffer()) {
 		meshes.push_back(catapult);
-		gameEntities.push_back(std::make_shared<GameEntity>(meshes[5], catapultMaterial, camera));
-		gameEntities[7]->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, -5.0f, -2.5f));
-		gameEntities[7]->GetTransform()->SetScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
+		m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[5], catapultMaterial, camera));
+		m_EntityManager->GetEntity(7)->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, -5.0f, -2.5f));
+		m_EntityManager->GetEntity(7)->GetTransform()->SetScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
 	}
 
 	//create sky obj
@@ -517,7 +551,9 @@ void Game::RenderDirectionalShadowMap()
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
+		std::shared_ptr<GameEntity> entity = m_EntityManager->GetEntity(i);
+
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -588,7 +624,9 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
+		std::shared_ptr<GameEntity> entity = m_EntityManager->GetEntity(i);
+
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -624,7 +662,9 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
+		std::shared_ptr<GameEntity> entity = m_EntityManager->GetEntity(i);
+
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -659,7 +699,9 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
+		std::shared_ptr<GameEntity> entity = m_EntityManager->GetEntity(i);
+
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -694,7 +736,9 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
+		std::shared_ptr<GameEntity> entity = m_EntityManager->GetEntity(i);
+
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -729,7 +773,9 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
+		std::shared_ptr<GameEntity> entity = m_EntityManager->GetEntity(i);
+
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -764,7 +810,9 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, float range, float nearZ,
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
+		std::shared_ptr<GameEntity> entity = m_EntityManager->GetEntity(i);
+
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -833,7 +881,9 @@ void Game::RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, flo
 
 	//loop and draw all objects in range of shadow
 	// '&' is important because it prevents making copies
-	for (auto& entity : gameEntities) {
+	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
+		std::shared_ptr<GameEntity> entity = m_EntityManager->GetEntity(i);
+
 		//set this game entity's world mat, send to gpu
 		shadowVertexShader->SetMatrix4x4("world", entity->GetTransform()->GetWorldMatrix());
 		//copy data over
@@ -961,9 +1011,8 @@ void Game::CreateGui(float deltaTime) {
 			};
 
 			int entityID = 1;
-			for (int i = 0; i < gameEntities.size(); i++) {
-				std::shared_ptr<GameEntity> currEntity = gameEntities[i];
-
+			for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
+				std::shared_ptr<GameEntity> currEntity = m_EntityManager->GetEntity(i);
 
 				if (currEntity->GetTransform()->GetParent())
 					continue;
@@ -1040,7 +1089,7 @@ void Game::CreateGui(float deltaTime) {
 
 				bool nodeOpen = ImGui::TreeNode("Light", "%s %i", "Light", i + 1);
 				if (nodeOpen) {
-					const char* items[] = { "Directional", "Point" };
+					const char* items[] = { "Directional", "Point", "Spot" };
 					ImGui::Text("Light Type: ");
 					ImGui::SameLine();
 					ImGui::Combo("        ", &currLight.Type, items, IM_ARRAYSIZE(items));
@@ -1068,6 +1117,15 @@ void Game::CreateGui(float deltaTime) {
 						ImGui::DragFloat("  ", &currLight.Range, 0.1f, 0.1f, D3D11_FLOAT32_MAX);
 						break;
 
+					case 2:
+						ImGui::Text("Direction: ");
+						ImGui::SameLine();
+						ImGui::DragFloat3(" ", &currLight.Direction.x, .01f, -1.0f, 1.0f);
+
+						ImGui::Text("Spot Falloff: ");
+						ImGui::SameLine();
+						ImGui::DragFloat("  ", &currLight.SpotFalloff);
+						break;
 					default:
 						break;
 					}
@@ -1079,6 +1137,10 @@ void Game::CreateGui(float deltaTime) {
 					ImGui::Text("Color: ");
 					ImGui::SameLine();
 					ImGui::ColorEdit3(" ", &currLight.Color.x);
+
+					ImGui::Text("Casts Shadows: ");
+					ImGui::SameLine();
+					ImGui::Checkbox("   ", &currLight.CastsShadows);
 
 					ImGui::TreePop();
 				}
@@ -1122,12 +1184,14 @@ void Game::Update(float deltaTime, float totalTime)
 	}
 
 	//make objects move, scale, or rotate
-	gameEntities[0]->GetTransform()->MoveRelative(XMFLOAT3(-sin(totalTime * 2.0f) * 0.25f, 0, 0));
-	gameEntities[1]->GetTransform()->MoveRelative(XMFLOAT3(0, sin(totalTime) * 0.25f, 0));
+	m_EntityManager->GetEntity(0)->GetTransform()->MoveRelative(XMFLOAT3(-sin(totalTime * 2.0f) * 0.25f, 0, 0));
+	m_EntityManager->GetEntity(1)->GetTransform()->MoveRelative(XMFLOAT3(0, sin(totalTime) * 0.25f, 0));
 
-	gameEntities[2]->GetTransform()->Rotate(XMFLOAT3(0, 0, deltaTime * 0.5f));
-	gameEntities[3]->GetTransform()->Rotate(XMFLOAT3(0, deltaTime * 0.5f, 0));
-	gameEntities[4]->GetTransform()->Rotate(XMFLOAT3(deltaTime * 0.5f, 0, 0));
+	m_EntityManager->GetEntity(2)->GetTransform()->Rotate(XMFLOAT3(0, 0, deltaTime * 0.5f));
+	m_EntityManager->GetEntity(3)->GetTransform()->Rotate(XMFLOAT3(0, deltaTime * 0.5f, 0));
+	m_EntityManager->GetEntity(4)->GetTransform()->Rotate(XMFLOAT3(deltaTime * 0.5f, 0, 0));
+
+	m_EntityManager->UpdateEntities(deltaTime);
 
 	CreateGui(deltaTime);
 
@@ -1169,8 +1233,10 @@ void Game::Draw(float deltaTime, float totalTime)
 	}
 
 	//draw game entities
-	for (int i = 0; i < gameEntities.size(); i++) {
-		std::shared_ptr<SimpleVertexShader> vs = gameEntities[i]->GetMaterial()->GetVertexShader();
+	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
+		std::shared_ptr<GameEntity> entity = m_EntityManager->GetEntity(i);
+
+		std::shared_ptr<SimpleVertexShader> vs = entity->GetMaterial()->GetVertexShader();
 		//send shadow info to vertex shader
 		vs->SetMatrix4x4("lightView", shadowViewMat);
 		vs->SetMatrix4x4("lightProj", shadowProjMat);
@@ -1181,7 +1247,7 @@ void Game::Draw(float deltaTime, float totalTime)
 				vs->SetFloat3("lightPos", lights[j].Position);
 		}
 
-		std::shared_ptr<SimplePixelShader> ps = gameEntities[i]->GetMaterial()->GetPixelShader();
+		std::shared_ptr<SimplePixelShader> ps = entity->GetMaterial()->GetPixelShader();
 		//send light data to shaders
 		ps->SetInt("numLights", static_cast<int>(lights.size()));
 		ps->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
@@ -1191,9 +1257,9 @@ void Game::Draw(float deltaTime, float totalTime)
 
 		ps->SetFloat3("ambientTerm", ambientTerm);
 		ps->SetSamplerState("ShadowSampler", shadowSampler);
-		gameEntities[i]->GetMaterial()->PrepareMaterial();
+		entity->GetMaterial()->PrepareMaterial();
 
-		gameEntities[i]->Draw();
+		entity->Draw();
 	}
 
 	//draw sky, after everthying else to reduce overdraw
