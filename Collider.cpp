@@ -97,9 +97,9 @@ void Collider::CalcHalfDimensions() {
 
 	CalcMinMaxPoints();
 
-	m_halfWidth =  abs(m_maxPoint.x - m_minPoint.x) / 2.0f;
-	m_halfHeight = abs(m_maxPoint.y - m_minPoint.y) / 2.0f;
-	m_halfDepth =  abs(m_maxPoint.z - m_minPoint.z) / 2.0f;
+	m_halfWidth =  (m_maxPoint.x - m_minPoint.x) / 2.0f;
+	m_halfHeight = (m_maxPoint.y - m_minPoint.y) / 2.0f;
+	m_halfDepth =  (m_maxPoint.z - m_minPoint.z) / 2.0f;
 
 	m_halvesDirty = false;
 }
@@ -141,14 +141,15 @@ bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
 
 #pragma region SAT collision
 
+// Code edited and re-used from an old DSA2 project which I believe referenced a book that I can't seem to find the name of TODO: Cite the book here
 bool Collider::CheckSATCollision(const std::shared_ptr<Collider> other) {
 	//XMVECTOR thisUp = XMLoadFloat3( &(m_transform.GetParent()->GetUp()));
 	//XMVECTOR thisForward = XMLoadFloat3( &(m_transform.GetParent()->GetUp()));
 	//XMVECTOR thisRight = XMLoadFloat3( &(m_transform.GetParent()->GetUp()));
 
 	float ra, rb;
-	float R[3][3];
-	float AbsR[3][3];
+	float R[3][3] = { {0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f}};
+	float AbsR[3][3] = { {0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
 	//aU and bU are the same as their respective Model Matricies
 	XMFLOAT4X4 world = m_transform.GetWorldMatrix();
