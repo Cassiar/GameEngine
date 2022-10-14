@@ -366,10 +366,10 @@ void Game::CreateBasicGeometry()
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[4], materials[2], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera), device));
 
 	//sphere to match direction light position
-	gameEntities.push_back(std::make_shared<GameEntity>(meshes[3], materials[0], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[3], materials[0], camera));
 
 	//toon pirate ship
-	gameEntities.push_back(std::make_shared<GameEntity>(toonMeshes[0], toonMaterials[0], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(toonMeshes[0], toonMaterials[0], camera));
 
 	//move objects so there isn't overlap
 	m_EntityManager->GetEntity(0)->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));
@@ -687,13 +687,12 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, int index, float range, f
 	//find which entities are in range to be rendered to map
 	renderableEntities.clear(); //clear previous culling
 	//loop and draw all objects in range of shadow
-	// '&' is important because it prevents making copies
-	for (auto& entities : gameEntities) {
-		DirectX::XMFLOAT3 ePos = entities.get()->GetTransform()->GetPosition();
+	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
+		DirectX::XMFLOAT3 ePos = m_EntityManager->GetEntity(i)->GetTransform()->GetPosition();
 		//get square dist cause faster
 		float squareDist = pow(pos.x - ePos.x, 2) + pow(pos.y - ePos.y, 2) + pow(pos.z - ePos.z, 2);
 		if (squareDist < pow(farZ, 2)) {
-			renderableEntities.push_back(entities);
+			renderableEntities.push_back(m_EntityManager->GetEntity(i));
 		}
 	}
 
@@ -1329,10 +1328,10 @@ void Game::Update(float deltaTime, float totalTime)
 
 	m_EntityManager->UpdateEntities(deltaTime);
 
-	gameEntities[7]->GetTransform()->SetPosition(lights[0].Position);
+	m_EntityManager->GetEntity(7)->GetTransform()->SetPosition(lights[0].Position);
 
 	//rotate pirate ship around
-	gameEntities[8]->GetTransform()->Rotate(XMFLOAT3(0, deltaTime * 0.5f, 0));
+	m_EntityManager->GetEntity(8)->GetTransform()->Rotate(XMFLOAT3(0, deltaTime * 0.5f, 0));
 
 	CreateGui(deltaTime);
 
