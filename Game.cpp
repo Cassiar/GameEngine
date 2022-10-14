@@ -1311,11 +1311,11 @@ void Game::CreateGui(float deltaTime) {
 
 				ImGui::Text("Decay: ");
 				ImGui::SameLine();
-				ImGui::DragFloat("   ", &lightRaysDecay, .01f, 0.01f, 1.0f);
+				ImGui::DragFloat("    ", &lightRaysDecay, .01f, 0.01f, 1.0f);
 
 				ImGui::Text("Exposure: ");
 				ImGui::SameLine();
-				ImGui::DragFloat("    ", &lightRaysExposure, .01f, 0.01f, 1.0f);
+				ImGui::DragFloat("     ", &lightRaysExposure, .01f, 0.01f, 1.0f);
 			}
 			
 			ImGui::TreePop();
