@@ -1533,7 +1533,7 @@ void Game::Draw(float deltaTime, float totalTime)
 		}
 
 		
-		float density = pow(lightRaysDensity, 1/dot);
+		float density = pow(lightRaysDensity, 1/(dot+0.001));
 		printf("scale amount : % f\n", density);
 
 		ppLightRaysVertexShader->SetMatrix4x4("world", lightWorldMat.GetWorldMatrix());
