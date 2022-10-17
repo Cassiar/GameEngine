@@ -44,7 +44,8 @@ VertexToPixel_PPLightRays main(uint id : SV_VERTEXID)
 	output.position.x = output.position.x * 2 - 1;
 	output.position.y = output.position.y * -2 + 1;
 
-	//output.shadowPos = mul(wvp, output.position);
+	//Removes VS warning. Might be able to remove variable from struct entirely
+	output.shadowPos = float4(0.0f,0.0f,0.0f,0.0f);//mul(wvp, output.position);
 
 	return output;
 }

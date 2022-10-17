@@ -377,7 +377,7 @@ void Mesh::Draw(Microsoft::WRL::ComPtr<ID3D11RasterizerState> customRast)
 //helper methods
 void Mesh::CreateBuffers(Vertex* in_verts, unsigned int numVerts, unsigned int* in_indices, Microsoft::WRL::ComPtr<ID3D11Device> device)
 {
-	for (int i = 0; i < numVerts; i++) {
+	for (unsigned int i = 0; i < numVerts; i++) {
 		m_verts.push_back(in_verts[i]);
 	}
 

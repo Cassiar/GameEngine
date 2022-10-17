@@ -112,11 +112,11 @@ void Collider::CalcCenterPoint() {
 	m_centerPoint = XMFLOAT3(parentPos.x + thisPos.x, parentPos.y + thisPos.y, parentPos.z + thisPos.z);
 
 
-	m_preCheckRadiusSquared = pow(m_maxPoint.x - m_centerPoint.x, 2.0f) + pow(m_maxPoint.y - m_centerPoint.y, 2.0f) + pow(m_maxPoint.z - m_centerPoint.z, 2.0f);
+	m_preCheckRadiusSquared = powf(m_maxPoint.x - m_centerPoint.x, 2.0f) + powf(m_maxPoint.y - m_centerPoint.y, 2.0f) + powf(m_maxPoint.z - m_centerPoint.z, 2.0f);
 
 	if (m_sphere)
 	{
-		float scale = sqrt(m_preCheckRadiusSquared);// -1 / m_debugSphereMeshRadius;//sqrt(m_preCheckRadiusSquared) / sqrt(m_debugSphereMeshRadius);
+		float scale = sqrtf(m_preCheckRadiusSquared);// -1 / m_debugSphereMeshRadius;//sqrt(m_preCheckRadiusSquared) / sqrt(m_debugSphereMeshRadius);
 		m_sphere->SetScale(XMFLOAT3(scale, scale, scale));
 		m_sphere->SetPosition(m_centerPoint);
 	}
@@ -131,7 +131,7 @@ bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
 	CalcCenterPoint();
 	other->CalcCenterPoint();
 
-	float centerSquareDist = pow(m_centerPoint.x - other->m_centerPoint.x, 2.0f) + pow(m_centerPoint.y - other->m_centerPoint.y, 2.0f) + pow(m_centerPoint.z - other->m_centerPoint.z, 2.0f);
+	float centerSquareDist = powf(m_centerPoint.x - other->m_centerPoint.x, 2.0f) + powf(m_centerPoint.y - other->m_centerPoint.y, 2.0f) + powf(m_centerPoint.z - other->m_centerPoint.z, 2.0f);
 	if (m_preCheckRadiusSquared + other->m_preCheckRadiusSquared <= centerSquareDist) {
 		//return false;
 	}
@@ -142,7 +142,7 @@ bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
 #pragma region SAT collision
 
 // Code edited and re-used from an old DSA2 project which I believe referenced a book that I can't seem to find the name of TODO: Cite the book here
-bool Collider::CheckSATCollision(const std::shared_ptr<Collider> other) {
+int Collider::CheckSATCollision(const std::shared_ptr<Collider> other) {
 	//XMVECTOR thisUp = XMLoadFloat3( &(m_transform.GetParent()->GetUp()));
 	//XMVECTOR thisForward = XMLoadFloat3( &(m_transform.GetParent()->GetUp()));
 	//XMVECTOR thisRight = XMLoadFloat3( &(m_transform.GetParent()->GetUp()));

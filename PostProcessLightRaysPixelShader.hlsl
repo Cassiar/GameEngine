@@ -33,7 +33,7 @@ float4 main(VertexToPixel_PPLightRays input) : SV_TARGET
 	deltaTexCoord *= 1.0f / NUM_SAMPLES * density;
 	
 	// Store initial sample.    
-	float3 color = ScreenTexture.Sample(BasicSampler, input.texCoord);
+	float3 color = ScreenTexture.Sample(BasicSampler, input.texCoord).xyz;
 	//return float4(color.rgb,1);
 	//return float4(input.texCoord.xy, 0,1);
 
@@ -47,7 +47,7 @@ float4 main(VertexToPixel_PPLightRays input) : SV_TARGET
 		input.texCoord -= deltaTexCoord;     
 		
 		// Retrieve sample at new location.    
-		float3 newColor = ScreenTexture.Sample(BasicSampler, input.texCoord);
+		float3 newColor = ScreenTexture.Sample(BasicSampler, input.texCoord).xyz;
 		//float3 newColor = lightColor.rgb;
 		// Apply sample attenuation scale/decay factors.     
 		newColor *= illuminationDecay * weight;

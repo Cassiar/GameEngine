@@ -690,8 +690,8 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, int index, float range, f
 	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
 		DirectX::XMFLOAT3 ePos = m_EntityManager->GetEntity(i)->GetTransform()->GetPosition();
 		//get square dist cause faster
-		float squareDist = pow(pos.x - ePos.x, 2) + pow(pos.y - ePos.y, 2) + pow(pos.z - ePos.z, 2);
-		if (squareDist < pow(farZ, 2)) {
+		float squareDist = powf(pos.x - ePos.x, 2) + powf(pos.y - ePos.y, 2) + powf(pos.z - ePos.z, 2);
+		if (squareDist < powf(farZ, 2)) {
 			renderableEntities.push_back(m_EntityManager->GetEntity(i));
 		}
 	}
