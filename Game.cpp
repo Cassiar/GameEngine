@@ -1512,7 +1512,29 @@ void Game::Draw(float deltaTime, float totalTime)
 		Transform lightWorldMat = Transform();
 		lightWorldMat.MoveAbsolute(lights[0].Direction.x * -20, lights[0].Direction.y * -20, lights[0].Direction.z * -20);
 		//add rotation to mat
-		lightWorldMat.SetRotation(lights[0].Direction); //fix this, find rotation to point toward this direction
+		//lightWorldMat.SetRotation(lights[0].Direction); //fix this, find rotation to point toward this direction
+
+		//load camera transform because XMLoadFloat has to take a l-value
+		XMFLOAT3 cameraPos = camera->GetTransform()->GetPosition();
+		XMFLOAT3 cameraForward = camera->GetTransform()->GetForward();
+
+		//get dot product between camera forward vector and direction to sun
+		//lights[0] is sun
+		XMVECTOR dirToLight = XMLoadFloat3(&lights[0].Position) - XMLoadFloat3(&cameraPos);
+		float dot = 0;
+		XMStoreFloat(&dot, XMVector3Dot(XMVector3Normalize(dirToLight), XMVector3Normalize(XMLoadFloat3(&cameraForward))));
+
+
+		//printf("dot product: %f\n", dot);
+		//if the dot product is negative scale the density of the light rays by 1 - abs(dot)
+		//if it's positive don't scale density. ie dot = 1
+		if (dot < 0) {
+			dot = 0;
+		}
+
+		
+		float density = pow(lightRaysDensity, 1/dot);
+		printf("scale amount : % f\n", density);
 
 		ppLightRaysVertexShader->SetMatrix4x4("world", lightWorldMat.GetWorldMatrix());
 		//ppLightRaysVertexShader->SetMatrix4x4("worldInverseTranspose", );
@@ -1526,7 +1548,7 @@ void Game::Draw(float deltaTime, float totalTime)
 		//float decay;
 		//float exposure;
 		ppLightRaysPixelShader->SetFloat3("lightColor", lights[0].Color);
-		ppLightRaysPixelShader->SetFloat("density", lightRaysDensity);
+		ppLightRaysPixelShader->SetFloat("density", density);
 		ppLightRaysPixelShader->SetFloat("weight", lightRaysWeight);
 		ppLightRaysPixelShader->SetFloat("decay", lightRaysDecay);
 		ppLightRaysPixelShader->SetFloat("exposure", lightRaysExposure);

@@ -30,7 +30,7 @@ float4 main(VertexToPixel_PPLightRays input) : SV_TARGET
 	float2 deltaTexCoord = (input.texCoord - input.lightScreenPos);
 
 	// Divide by number of samples and scale by control factor.   
-	deltaTexCoord *= 1.0f / NUM_SAMPLES * density;   
+	deltaTexCoord *= 1.0f / NUM_SAMPLES * density;
 	
 	// Store initial sample.    
 	float3 color = ScreenTexture.Sample(BasicSampler, input.texCoord);
@@ -39,29 +39,7 @@ float4 main(VertexToPixel_PPLightRays input) : SV_TARGET
 
 	// Set up illumination decay factor.    
 	float illuminationDecay = 1.0f;   
-	
-	//input.texCoord -= deltaTexCoord;
-	////test just one step
-	//float3 newColor = ScreenTexture.Sample(BasicSampler, input.texCoord);
-	////float3 newColor = lightColor;
-	//newColor *= illuminationDecay * weight;
-	//color += newColor;
-	//return color.rgbr;
 
-
-	//see if we can get if pixel is in shadow or not
-	// calculate shadow stuff
-	//convert form [-1,1] to [0,1]
-	//float2 shadowMapUV = input.shadowPos.xy / input.shadowPos.w * 0.5f + 0.5f;
-	////flip y since we're in uv space and y is flipped
-	//shadowMapUV.y = 1.0f - shadowMapUV.y;
-
-	////test how far from ligt
-	//float depthFromLight = input.shadowPos.z / input.shadowPos.w;
-	////use comparison sampler to check if pixel is in shadow
-	//float shadowAmount = ShadowMap.SampleCmpLevelZero(ShadowSampler, shadowMapUV, depthFromLight);
-
-	//return float4(color * shadowAmount, 1.0f);
 
 	// Evaluate summation from Equation 3 NUM_SAMPLES iterations.    
 	for (int i = 0; i < NUM_SAMPLES; i++)   {     
