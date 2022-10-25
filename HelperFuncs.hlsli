@@ -165,17 +165,21 @@ float3 Directional(Light light, float3 normal, float3 cameraPos, float3 worldPos
 	return total;
 }
 
-float3 DirectionalToon(Light light, float3 normal, float3 cameraPos, float3 worldPos, float specExponent, float3 surfaceColor, float roughness) {
+float3 DirectionalToon(Light light, float3 normal, float3 cameraPos, float3 worldPos, float specExponent, float3 surfaceColor, float roughness, Texture2D ramp, SamplerState samplerState) {
 	float3 lightDir = normalize(light.direction);
 	float3 dirToCamera = normalize(cameraPos - worldPos);
 
 	float3 diffuse = Diffuse(normal, -lightDir);
+
+	//use diffuse to calculate position in range band
+	float3 rampAmt = ramp.Sample(samplerState, diffuse.x).rgb;
+
 	float3 spec = 0;
 	if (specExponent > 0.05) {
 		spec = Phong(cameraPos, worldPos, lightDir, normal, specExponent) * roughness;
 	}
 
-	return (diffuse * surfaceColor.rgb + spec) * light.intensity * light.color;
+	return (rampAmt * surfaceColor.rgb + spec) * light.intensity * light.color;
 }
 
 //before pbr
@@ -189,6 +193,22 @@ float3 PointOld(Light light, float3 normal, float3 cameraPos, float3 worldPos, f
 	}
 
 	float3 total = (diffuse * surfaceColor.rgb + spec) * light.intensity * light.color;
+
+	return total * Attenuate(light, worldPos);
+}
+
+float3 PointToon(Light light, float3 normal, float3 cameraPos, float3 worldPos, float specExponent, float3 surfaceColor, float roughness, Texture2D ramp, SamplerState samplerState) {
+	float3 dirToLight = normalize(light.position - worldPos);
+	float3 dirToCamera = normalize(cameraPos - worldPos);
+	float3 diffuse = Diffuse(normal, dirToLight);
+
+	float3 rampAmt = ramp.Sample(samplerState, diffuse.xy).xyz;
+	float3 spec = 0;
+	if (specExponent > 0.05) {
+		spec = Phong(cameraPos, worldPos, -dirToLight, normal, specExponent) * roughness;
+	}
+
+	float3 total = (rampAmt * surfaceColor.rgb + spec) * light.intensity * light.color;
 
 	return total * Attenuate(light, worldPos);
 }
@@ -222,6 +242,17 @@ float3 SpotOld(Light light, float3 normal, float3 cameraPos, float3 worldPos, fl
 	float spotAmount = pow(angle, light.spotFalloff);
 
 	return PointOld(light, normal, cameraPos, worldPos, specExponent, surfaceColor, roughness) * spotAmount;
+}
+
+float3 SpotToon(Light light, float3 normal, float3 cameraPos, float3 worldPos, float specExponent, float3 surfaceColor, float roughness, Texture2D ramp, SamplerState samplerState) {
+	float3 dirToLight = normalize(light.position - worldPos);
+	//compare light dir to pixel to true direction 
+	float angle = max(dot(-dirToLight, light.direction), 0.0f);
+
+	//raise by power to get a nice falloff
+	float spotAmount = pow(angle, light.spotFalloff);
+	//PointToon(Light light, float3 normal, float3 cameraPos, float3 worldPos, float specExponent, float3 surfaceColor, float roughness, Texture2D ramp, SamplerState samplerState)
+	return PointToon(light, normal, cameraPos, worldPos, specExponent, surfaceColor, roughness, ramp, samplerState) * spotAmount;
 }
 
 float3 Spot(Light light, float3 normal, float3 cameraPos, float3 worldPos, float specExponent, float3 specColor, float3 surfaceColor, float roughness, float metalness) {

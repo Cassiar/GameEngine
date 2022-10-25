@@ -11,7 +11,7 @@ cbuffer ExternalData : register(b0) {
 	matrix lightProj;
 	matrix spotLightView;
 	matrix spotLightProj;
-	float3 lightPos;
+	//float3 lightPoses[MAX_LIGHTS_NUM];
 }
 
 // --------------------------------------------------------
@@ -30,9 +30,9 @@ VertexToPixel main( VertexShaderInput input )
 	matrix wvp = mul(mul(proj, view), world);
 	output.screenPosition = mul(wvp, float4(input.localPosition, 1.0f));
 
-	//position in shadow map
 	matrix swvp = mul(mul(lightProj, lightView), world);
 	output.shadowPos = mul(swvp, float4(input.localPosition, 1.0f));
+	
 
 	matrix spotswvp = mul(mul(spotLightProj, spotLightView), world);
 	output.spotShadowPos = mul(spotswvp, float4(input.localPosition, 1.0f));
