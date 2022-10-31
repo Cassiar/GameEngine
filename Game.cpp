@@ -343,8 +343,49 @@ void Game::CreateBasicGeometry()
   
 	//toon meshes
 	toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/Tree.obj").c_str(), device, context));
+	//toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), device, context));
+	//Model source from GEnshinImpact
+	std::string filename = GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx");
+	std::ifstream stream = std::ifstream(filename, std::ios_base::binary);
+	lisa.Read(&stream);
+	stream.close();	//create the buffers and send to GPU
 
-	//std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
+	D3D11_BUFFER_DESC vbd = {};
+	vbd.Usage = D3D11_USAGE_IMMUTABLE;
+	vbd.ByteWidth = sizeof(pmx::PmxVertex) * lisa.vertex_count;       // number of vertices in the buffer
+	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER; // Tells DirectX this is a vertex buffer
+	vbd.CPUAccessFlags = 0;
+	vbd.MiscFlags = 0;
+	vbd.StructureByteStride = 0;
+
+	// Create the proper struct to hold the initial vertex data
+	// - This is how we put the initial data into the buffer
+	D3D11_SUBRESOURCE_DATA initialVertexData = {};
+	initialVertexData.pSysMem = &lisa.vertices[0];
+
+	// Actually create the buffer with the initial data
+	// - Once we do this, we'll NEVER CHANGE THE BUFFER AGAIN
+	device->CreateBuffer(&vbd, &initialVertexData, lisaVertBuf.GetAddressOf());
+
+
+
+	// Create the INDEX BUFFER description 
+	D3D11_BUFFER_DESC ibd = {};
+	ibd.Usage = D3D11_USAGE_IMMUTABLE;
+	ibd.ByteWidth = sizeof(int) * lisa.index_count;	// number of indices in the buffer
+	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;	// Tells DirectX this is an index buffer
+	ibd.CPUAccessFlags = 0;
+	ibd.MiscFlags = 0;
+	ibd.StructureByteStride = 0;
+
+	// Create the proper struct to hold the initial index data
+	// - This is how we put the initial data into the buffer
+	D3D11_SUBRESOURCE_DATA initialIndexData = {};
+	initialIndexData.pSysMem = &lisa.indices[0];
+
+	// Actually create the buffer with the initial data
+	// - Once we do this, we'll NEVER CHANGE THE BUFFER AGAIN
+	device->CreateBuffer(&ibd, &initialIndexData, lisaIndexBuf.GetAddressOf());
 
 	//create some entities
 	//cube direectly in front of camera
@@ -1490,6 +1531,21 @@ void Game::Draw(float deltaTime, float totalTime)
 		entity->Draw();
 	}
 
+	//draw Lisa pmx model for testing
+	// Set buffers in the input assembler
+//once per object
+	UINT stride = sizeof(pmx::PmxVertex);
+	UINT offset = 0;
+	context->IASetVertexBuffers(0, 1, lisaVertBuf.GetAddressOf(), &stride, &offset);
+	context->IASetIndexBuffer(lisaIndexBuf.Get(), DXGI_FORMAT_R32_UINT, 0);
+
+	// Finally do the actual drawing
+	// Once per object
+	context->DrawIndexed(
+		lisa.index_count,     // The number of indices to use (we could draw a subset if we wanted)
+		0,     // Offset to the first index we want to use
+		0);    // Offset to add to each index when looking up vertices
+
 	//draw sky, after everthying else to reduce overdraw
 	sky->Draw(camera);
 
@@ -1534,7 +1590,7 @@ void Game::Draw(float deltaTime, float totalTime)
 
 		
 		float density = pow(lightRaysDensity, 1/(dot+0.001));
-		printf("scale amount : % f\n", density);
+		//printf("scale amount : % f\n", density);
 
 		ppLightRaysVertexShader->SetMatrix4x4("world", lightWorldMat.GetWorldMatrix());
 		//ppLightRaysVertexShader->SetMatrix4x4("worldInverseTranspose", );

@@ -10,6 +10,7 @@
 #include "SimpleShader.h"
 #include "Sky.h"
 #include "Transform.h"
+#include "Pmx.h" //to load and use pmx models
 
 #include <DirectXMath.h>
 #include <memory> //for shared pointers
@@ -173,5 +174,9 @@ private:
 	float lightRaysDecay = 0.98f;
 	float lightRaysExposure = 0.2f;
 	bool enableLightRays = false;
+
+	pmx::PmxModel lisa;
+	Microsoft::WRL::ComPtr<ID3D11Buffer> lisaVertBuf;
+	Microsoft::WRL::ComPtr<ID3D11Buffer> lisaIndexBuf;
 };
 
