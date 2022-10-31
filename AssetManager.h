@@ -52,12 +52,15 @@ private:
 	// Not sure these belong here
 	//std::shared_ptr<Camera> camera;
 	//Microsoft::WRL::ComPtr<ID3D11SamplerState> basicSampler;
+	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D11SamplerState>> m_samplers;
 
-	AssetManager();
+	AssetManager(Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> context);
 	void Init(Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> context);
 	void InitTextures();
 	void InitShaders();
 	void InitMeshes();
+	void InitSamplers();
+	void InitMaterials();
 
 public:
 	// Normally this intialization function wouldn't be necessary, however, for this
@@ -69,6 +72,25 @@ public:
 	static std::shared_ptr<AssetManager> GetInstance();
 
 	~AssetManager();
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetSRV(SRVMaps map, int srvIndex);
+
+	std::shared_ptr<Mesh> GetMesh(int index) { return m_meshes[index]; }
+	std::vector<std::shared_ptr<Mesh>> GetMeshes() { return m_meshes; }
+
+	std::shared_ptr<Mesh> GetToonMesh(int index) { return m_toonMeshes[index]; }
+	std::vector<std::shared_ptr<Mesh>> GetToonMeshes() { return m_toonMeshes; }
+
+	std::shared_ptr<Material> GetMaterial(int index) { return m_materials[index]; }
+	std::vector<std::shared_ptr<Material>> GetMaterials() { return m_materials; }
+
+	std::shared_ptr<Material> GetToonMaterial(int index) { return m_toonMaterials[index]; }
+	std::vector<std::shared_ptr<Material>> GetToonMaterials() { return m_toonMaterials; }
+
+	std::shared_ptr<SimpleVertexShader> GetVertexShader(std::string shaderName) { return m_vertexShaders[shaderName]; }
+	std::shared_ptr<SimplePixelShader> GetPixelShader(std::string shaderName) { return m_pixelShaders[shaderName]; }
+
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> GetSampler(std::string samplerName) { return m_samplers[samplerName]; }
 
 	// Helper for creating a cubemap from 6 individual textures
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> CreateCubemap(
@@ -85,11 +107,9 @@ public:
 	std::shared_ptr<Mesh> LoadMesh(std::string meshPath, bool customLocation = false);
 
 	void AddSRVToMap(SRVMaps mapTypeName, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srvToAdd);
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetSRV(SRVMaps map, int srvIndex);
 
 	std::shared_ptr<SimpleVertexShader> MakeSimpleVertexShader(std::wstring csoName);
 	std::shared_ptr<SimplePixelShader> MakeSimplePixelShader(std::wstring csoName);
-
 
 	///------------------ Written by Chris Cascioli ------------------------------///
 	// Helpers for determining the actual path to the executable

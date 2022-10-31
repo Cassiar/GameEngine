@@ -89,75 +89,8 @@ void Game::Init()
 
 	m_EntityManager = EntityManager::GetInstance();
 
-	//get's the next multiple of 16, so that they'll be extra space
-	unsigned int size = sizeof(VertexShaderData);
-	size = (size + 15) / 16 * 16; //integer division to get rid of excess, * 16 to get byte size.
-
-	LoadTextures();
-
-	//create description and sampler state
-	D3D11_SAMPLER_DESC samplerDesc = {};
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP; // allows textures to tile
-	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC; // allowing anisotropic filtering
-	samplerDesc.MaxAnisotropy = 4;
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX; //allways use mipmapping
-
-	//create sampler
-	device->CreateSamplerState(&samplerDesc, basicSampler.GetAddressOf());
-
-	//create sampler state for post process
-	D3D11_SAMPLER_DESC ppSamplerDesc = {};
-	ppSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	ppSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	ppSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-	ppSamplerDesc.Filter = D3D11_FILTER_ANISOTROPIC; // allowing anisotropic filtering
-	ppSamplerDesc.MaxAnisotropy = 4;
-	ppSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX; //allways use mipmapping
-
-	device->CreateSamplerState(&ppSamplerDesc, ppLightRaysSampler.GetAddressOf());
-
-	// Helper methods for loading shaders, creating some basic
-	// geometry to draw and some simple camera matrices.
-	//  - You'll be expanding and/or replacing these later
-	LoadShaders();
-
-	//create the materials
-	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for medieval floor
-	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for scifi panel
-	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for cobblestone wall
-	materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));//white material for bronze
-	//materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, toonPixelShader)); //toon shader material for testing
-	//catapultMaterial = std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, catapultPixelShader);
-
-	//add textures to each material
-	for (unsigned int i = 0; i < materials.size(); i++) {
-		materials[i]->AddSampler("BasicSampler", basicSampler);
-		materials[i]->AddTextureSRV("AlbedoTexture", albedoMaps[i]);
-		materials[i]->AddTextureSRV("RoughnessTexture", roughnessMaps[i]);
-		materials[i]->AddTextureSRV("AmbientTexture", aoMaps[i]);
-		materials[i]->AddTextureSRV("NormalTexture", normalMaps[i]);
-		materials[i]->AddTextureSRV("MetalnessTexture", metalnessMaps[i]);
-	}
-
-	//toon shader. for testing uses scifi panel
-	toonMaterials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, toonPixelShader));
-
-	toonMaterials[0]->AddSampler("BasicSampler", basicSampler);
-	toonMaterials[0]->AddSampler("RampSampler", ppLightRaysSampler);
-	toonMaterials[0]->AddTextureSRV("AlbedoTexture", toonAlbedoMaps[0]);
-	toonMaterials[0]->AddTextureSRV("RoughnessTexture", toonRoughnessMaps[0]);
-	toonMaterials[0]->AddTextureSRV("AmbientTexture", toonAoMaps[0]);
-	toonMaterials[0]->AddTextureSRV("RampTexture", rampTexture);
-	toonMaterials[0]->AddTextureSRV("MetalnessTexture", toonMetalnessMaps[0]);
-
-
-	//catapultMaterial->AddSampler("BasicSampler", basicSampler);
-	//catapultMaterial->AddTextureSRV("AlbedoTexture", catapultMaps[0]);
-	//catapultMaterial->AddTextureSRV("RoughnessTexture", catapultMaps[1]);
-	//catapultMaterial->AddTextureSRV("NormalTexture", catapultMaps[2]);
-
+	AssetManager::InitializeSingleton(device, context);
+	m_AssetManager = AssetManager::GetInstance();
 
 	//load create the shapes and skybox
 	CreateBasicGeometry();
@@ -177,6 +110,9 @@ void Game::Init()
 // --------------------------------------------------------
 void Game::CreateBasicGeometry()
 {
+	std::vector<std::shared_ptr<Mesh>> meshes = m_AssetManager->GetMeshes();
+	std::vector<std::shared_ptr<Material>> materials = m_AssetManager->GetMaterials();
+
 	std::vector<Vertex> verts = meshes[3]->GetVerticies();
 
 	XMFLOAT4 currPos = XMFLOAT4(verts[0].Position.x, verts[0].Position.y, verts[0].Position.z, 1.0f);
@@ -206,6 +142,9 @@ void Game::CreateBasicGeometry()
 
 	Collider::SetDebugSphereMeshRadius(powf((xMax-xMin) / 2, 2) + powf((yMax - yMin) / 2, 2) + powf((zMax - zMin) / 2, 2));
   
+	std::shared_ptr<SimpleVertexShader> vertexShader = m_AssetManager->GetVertexShader("vertexShader");
+	std::shared_ptr<SimplePixelShader> debugPixelShader = m_AssetManager->GetPixelShader("debugPixelShader");
+
 	//create some entities
 	//cube direectly in front of camera
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[0], materials[0], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
@@ -229,7 +168,7 @@ void Game::CreateBasicGeometry()
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[3], materials[0], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
 
 	//toon pirate ship
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(toonMeshes[0], toonMaterials[0], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(m_AssetManager->GetToonMesh(0), m_AssetManager->GetToonMaterial(0), camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
 
 	//move objects so there isn't overlap
 	m_EntityManager->GetEntity(0)->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));
@@ -242,16 +181,9 @@ void Game::CreateBasicGeometry()
 	m_EntityManager->GetEntity(6)->GetTransform()->Rotate(XMFLOAT3(-1 * XM_PIDIV2, 0, 0));
 	m_EntityManager->GetEntity(6)->GetTransform()->Scale(20);//scale up a bunch to act as floor
 
-	//catapult
-	//if (catapult->GetVertexBuffer()) {
-	//	meshes.push_back(catapult);
-	//	gameEntities.push_back(std::make_shared<GameEntity>(meshes[5], catapultMaterial, camera));
-	//	gameEntities[7]->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, -5.0f, -2.5f));
-	//	gameEntities[7]->GetTransform()->SetScale(XMFLOAT3(0.25f, 0.25f, 0.25f));
-	//}
 
 	//create sky obj
-	sky = std::make_shared<Sky>(meshes[0], basicSampler, skybox, device, context, skyVertexShader, skyPixelShader);
+	sky = std::make_shared<Sky>(meshes[0], m_AssetManager->GetSampler("basicSampler"), m_AssetManager->GetSRV(SkyBox, 0), device, context, m_AssetManager->GetVertexShader("skyVertexShader"), m_AssetManager->GetPixelShader("skyPixelShader"));
 }
 
 void Game::CreateExtraRenderTargets()
@@ -844,6 +776,8 @@ void Game::RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, flo
 	vp.MaxDepth = 1.0f;
 	context->RSSetViewports(1, &vp);
 
+	std::shared_ptr<SimpleVertexShader> shadowVertexShader = m_AssetManager->GetVertexShader("shadowVertexShader");
+
 	//turn on our special shadow shader
 	shadowVertexShader->SetShader();
 	//the view and proj will be the same for all objects
@@ -1393,7 +1327,7 @@ void Game::Draw(float deltaTime, float totalTime)
 
 		ppLightRaysPixelShader->SetShaderResourceView("ScreenTexture", middleBufferSRV.Get());
 		ppLightRaysPixelShader->SetShaderResourceView("ShadowMap", shadowSRV);
-		ppLightRaysPixelShader->SetSamplerState("BasicSampler", ppLightRaysSampler);
+		ppLightRaysPixelShader->SetSamplerState("BasicSampler", m_AssetManager->GetSampler("ppLightRaysSampler"));
 		ppLightRaysPixelShader->SetSamplerState("ShadowSampler", shadowSampler);
 
 		ppLightRaysVertexShader->CopyAllBufferData();

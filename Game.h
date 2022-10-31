@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AssetManager.h"
 #include "Camera.h"
 #include "DXCore.h"
 #include "EntityManager.h"
@@ -48,8 +49,6 @@ private:
 	const float toRadians = 3.1415f / 180.0f;
 
 	// Initialization helper methods - feel free to customize, combine, etc.
-	void LoadTextures();
-	void LoadShaders(); 
 	void CreateBasicGeometry();
 	void CreateLights();
 	void CreateShadowResources();
@@ -116,32 +115,12 @@ private:
 	std::vector<std::shared_ptr<GameEntity>> renderableEntities;
 
 	std::shared_ptr<EntityManager> m_EntityManager;
+	std::shared_ptr<AssetManager> m_AssetManager;
 
 	std::shared_ptr<Camera> camera;
 
 	//pointer for sky box
 	std::shared_ptr<Sky> sky;
-
-	//texture related stuff
-	//create srv for medieval floor albedo
-	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> albedoMaps;
-	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> roughnessMaps;
-	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> aoMaps;
-	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> normalMaps;
-	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> metalnessMaps;
-
-	//toon maps
-	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> toonAlbedoMaps;
-	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> toonRoughnessMaps;
-	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> toonAoMaps;
-	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> toonMetalnessMaps;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> rampTexture;
-	Microsoft::WRL::ComPtr<ID3D11SamplerState> basicSampler;
-
-	//index 0 is diffuse, 1 is specular, 2 is bump
-	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> catapultMaps;
-	std::shared_ptr<Material> catapultMaterial;
-	std::shared_ptr<SimplePixelShader> catapultPixelShader;
 
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> skybox;
 
@@ -163,9 +142,6 @@ private:
 
 	DirectX::XMFLOAT4X4 spotShadowViewMat;
 	DirectX::XMFLOAT4X4 spotShadowProjMat;
-
-	//testing stuff for post process
-	Microsoft::WRL::ComPtr<ID3D11SamplerState> ppLightRaysSampler;
 
 	//variables to control light rays effect
 	float lightRaysDensity = 1.0f;

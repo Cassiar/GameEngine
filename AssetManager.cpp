@@ -4,12 +4,17 @@ using namespace DirectX;
 
 std::shared_ptr<AssetManager> AssetManager::s_instance;
 
+AssetManager::AssetManager(Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> context) {
+	Init(device, context);
+}
+//Nothing to delete right now
+AssetManager::~AssetManager() {}
+
 void AssetManager::InitializeSingleton(Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> context)
 {
 	if (!s_instance.get()) {
-		std::shared_ptr<AssetManager> newInstance(new AssetManager());
+		std::shared_ptr<AssetManager> newInstance(new AssetManager(device, context));
 		s_instance = newInstance;
-		s_instance->Init(device, context);
 	}
 }
 
@@ -23,25 +28,31 @@ void AssetManager::Init(Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::
 	m_device = device;
 	m_context = context;
 
-	m_vertexShaders = std::unordered_map<std::string, std::shared_ptr<SimpleVertexShader>>();
-	m_pixelShaders = std::unordered_map<std::string, std::shared_ptr<SimplePixelShader>>();
-
 	// Some of the basic map lists that we already need
 	m_srvMaps = std::unordered_map<SRVMaps, std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>>();
 
-	m_srvMaps[SRVMaps::Albedo]		 = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
-	m_srvMaps[SRVMaps::Roughness]	 = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
-	m_srvMaps[SRVMaps::AO]			 = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
-	m_srvMaps[SRVMaps::Normal]		 = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
-	m_srvMaps[SRVMaps::Metalness]	 = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
-	
-	m_srvMaps[SRVMaps::ToonAlbedo]	  = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
+	m_srvMaps[SRVMaps::Albedo] = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
+	m_srvMaps[SRVMaps::Roughness] = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
+	m_srvMaps[SRVMaps::AO] = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
+	m_srvMaps[SRVMaps::Normal] = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
+	m_srvMaps[SRVMaps::Metalness] = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
+
+	m_srvMaps[SRVMaps::ToonAlbedo] = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
 	m_srvMaps[SRVMaps::ToonRoughness] = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
-	m_srvMaps[SRVMaps::ToonAO]		  = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
+	m_srvMaps[SRVMaps::ToonAO] = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
 	m_srvMaps[SRVMaps::ToonMetalness] = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
+
+	m_vertexShaders = std::unordered_map<std::string, std::shared_ptr<SimpleVertexShader>>();
+	m_pixelShaders = std::unordered_map<std::string, std::shared_ptr<SimplePixelShader>>();
+
+	m_meshes = std::vector<std::shared_ptr<Mesh>>();
+	m_toonMeshes = std::vector<std::shared_ptr<Mesh>>();
 
 	InitTextures();
 	InitShaders();
+	InitMeshes();
+	InitSamplers();
+	InitMaterials();
 }
 
 void AssetManager::InitTextures()
@@ -121,6 +132,67 @@ void AssetManager::InitMeshes()
 	m_meshes.push_back(LoadMesh("quad.obj"));
 
 	m_toonMeshes.push_back(LoadMesh("Tree.obj"));
+}
+
+void AssetManager::InitSamplers()
+{
+	//create description and sampler state
+	D3D11_SAMPLER_DESC samplerDesc = {};
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP; // allows textures to tile
+	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC; // allowing anisotropic filtering
+	samplerDesc.MaxAnisotropy = 4;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX; //allways use mipmapping
+
+	m_samplers["basicSampler"] = Microsoft::WRL::ComPtr<ID3D11SamplerState>();
+	//create sampler
+	m_device->CreateSamplerState(&samplerDesc, m_samplers["basicSampler"].GetAddressOf());
+
+
+	//create sampler state for post process
+	D3D11_SAMPLER_DESC ppSamplerDesc = {};
+	ppSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSamplerDesc.Filter = D3D11_FILTER_ANISOTROPIC; // allowing anisotropic filtering
+	ppSamplerDesc.MaxAnisotropy = 4;
+	ppSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX; //allways use mipmapping
+
+	m_samplers["ppLightRaysSampler"] = Microsoft::WRL::ComPtr<ID3D11SamplerState>();
+	m_device->CreateSamplerState(&ppSamplerDesc, m_samplers["ppLightRaysSampler"].GetAddressOf());
+}
+
+void AssetManager::InitMaterials()
+{
+	//create the materials
+	m_materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, m_vertexShaders["vertexShader"], m_pixelShaders["pixelShader"]));//white material for medieval floor
+	m_materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, m_vertexShaders["vertexShader"], m_pixelShaders["pixelShader"]));//white material for scifi panel
+	m_materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, m_vertexShaders["vertexShader"], m_pixelShaders["pixelShader"]));//white material for cobblestone wall
+	m_materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, m_vertexShaders["vertexShader"], m_pixelShaders["pixelShader"]));//white material for bronze
+	//materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, toonPixelShader)); //toon shader material for testing
+	//catapultMaterial = std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, catapultPixelShader);
+
+	//add textures to each material
+	for (unsigned int i = 0; i < m_materials.size(); i++) {
+		m_materials[i]->AddSampler("BasicSampler",			m_samplers["basicSampler"]);
+		m_materials[i]->AddTextureSRV("AlbedoTexture",		m_srvMaps[Albedo][i]);
+		m_materials[i]->AddTextureSRV("RoughnessTexture",	m_srvMaps[Roughness][i]);
+		m_materials[i]->AddTextureSRV("AmbientTexture",		m_srvMaps[AO][i]);
+		m_materials[i]->AddTextureSRV("NormalTexture",		m_srvMaps[Normal][i]);
+		m_materials[i]->AddTextureSRV("MetalnessTexture",	m_srvMaps[Metalness][i]);
+	}
+
+	//toon shader. for testing uses scifi panel
+	m_toonMaterials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, m_vertexShaders["vertexShader"], m_pixelShaders["toonPixelShader"]));
+
+	m_toonMaterials[0]->AddSampler("BasicSampler",			m_samplers["basicSampler"]);
+	m_toonMaterials[0]->AddSampler("RampSampler",			m_samplers["ppLightRaysSampler"]);
+	m_toonMaterials[0]->AddTextureSRV("AlbedoTexture",		m_srvMaps[ToonAlbedo][0]);
+	m_toonMaterials[0]->AddTextureSRV("RoughnessTexture",	m_srvMaps[ToonRoughness][0]);
+	m_toonMaterials[0]->AddTextureSRV("AmbientTexture",		m_srvMaps[ToonAO][0]);
+	m_toonMaterials[0]->AddTextureSRV("RampTexture",		m_srvMaps[SampleTexture][0]);
+	m_toonMaterials[0]->AddTextureSRV("MetalnessTexture",	m_srvMaps[ToonMetalness][0]);
 }
 
 
@@ -246,7 +318,7 @@ std::shared_ptr<Mesh> AssetManager::LoadMesh(std::string meshPath, bool customLo
 {
 	std::string path = (customLocation ? "" : MODEL_FOLDER);
 	path += meshPath;
-	return std::make_shared<Mesh>(GetFullPathTo(meshPath).c_str(), m_device, m_context);
+	return std::make_shared<Mesh>(GetFullPathTo(path).c_str(), m_device, m_context);
 }
 
 void AssetManager::AddSRVToMap(SRVMaps mapTypeName, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srvToAdd)
