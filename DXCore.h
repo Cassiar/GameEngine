@@ -75,14 +75,6 @@ protected:
 	// Helper function for allocating a console window
 	void CreateConsoleWindow(int bufferLines, int bufferColumns, int windowLines, int windowColumns);
 
-	// Helpers for determining the actual path to the executable
-	std::string GetExePath();
-	std::wstring GetExePath_Wide();
-
-	std::string GetFullPathTo(std::string relativeFilePath);
-	std::wstring GetFullPathTo_Wide(std::wstring relativeFilePath);
-
-
 private:
 	// Timing related data
 	double perfCounterSeconds;
