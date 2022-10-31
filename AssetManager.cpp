@@ -28,112 +28,99 @@ void AssetManager::Init(Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::
 
 	// Some of the basic map lists that we already need
 	m_srvMaps = std::unordered_map<SRVMaps, std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>>();
+
 	m_srvMaps[SRVMaps::Albedo]		 = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
+	m_srvMaps[SRVMaps::Roughness]	 = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
 	m_srvMaps[SRVMaps::AO]			 = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
 	m_srvMaps[SRVMaps::Normal]		 = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
 	m_srvMaps[SRVMaps::Metalness]	 = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
 	
 	m_srvMaps[SRVMaps::ToonAlbedo]	  = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
+	m_srvMaps[SRVMaps::ToonRoughness] = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
 	m_srvMaps[SRVMaps::ToonAO]		  = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
 	m_srvMaps[SRVMaps::ToonMetalness] = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>();
+
+	InitTextures();
+	InitShaders();
 }
 
 void AssetManager::InitTextures()
 {
-	//make sure there's space for CreateWICTextureFromFile
-	albedoMaps.push_back(nullptr);
-	roughnessMaps.push_back(nullptr);
-	aoMaps.push_back(nullptr);
-	normalMaps.push_back(nullptr);
-	metalnessMaps.push_back(nullptr);
+	AddSRVToMap(Albedo,	LoadSRV(L"Medieval_Floor_Albedo.tif"));
+	AddSRVToMap(Roughness, LoadSRV(L"Medieval_Floor_Roughness.tif"));
+	AddSRVToMap(AO,		LoadSRV(L"Medieval_Floor_AO.tif"));
+	AddSRVToMap(Normal,	LoadSRV(L"Medieval_Floor_Normal.tif"));
+	AddSRVToMap(Metalness, LoadSRV(L"noMetal.png"));
 
-	//load textures
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Medieval_Floor_Albedo.tif").c_str(), nullptr, albedoMaps[albedoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Medieval_Floor_Roughness.tif").c_str(), nullptr, roughnessMaps[roughnessMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Medieval_Floor_AO.tif").c_str(), nullptr, aoMaps[aoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Medieval_Floor_Normal.tif").c_str(), nullptr, normalMaps[normalMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, metalnessMaps[metalnessMaps.size() - 1].GetAddressOf());
+	AddSRVToMap(Albedo,	LoadSRV(L"SciFi_Panel_Albedo.tif"));
+	AddSRVToMap(Roughness, LoadSRV(L"SciFi_Panel_Roughness.tif"));
+	AddSRVToMap(AO,		LoadSRV(L"SciFi_Panel_AO.tif"));
+	AddSRVToMap(Normal,	LoadSRV(L"SciFi_Panel_Normal.tif"));
+	AddSRVToMap(Metalness, LoadSRV(L"SciFi_Panel_Metalness.tif"));
 
-	albedoMaps.push_back(nullptr);
-	roughnessMaps.push_back(nullptr);
-	aoMaps.push_back(nullptr);
-	normalMaps.push_back(nullptr);
-	metalnessMaps.push_back(nullptr);
+	AddSRVToMap(Albedo,	LoadSRV(L"Brick_Wall_Albedo.tif"));
+	AddSRVToMap(Roughness, LoadSRV(L"Brick_Wall_Roughness.tif"));
+	AddSRVToMap(AO,		LoadSRV(L"Brick_Wall_AO.tif"));
+	AddSRVToMap(Normal,	LoadSRV(L"Brick_Wall_Normal.tif"));
+	AddSRVToMap(Metalness, LoadSRV(L"noMetal.png"));
 
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/SciFi_Panel_Albedo.tif").c_str(), nullptr, albedoMaps[albedoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/SciFi_Panel_Roughness.tif").c_str(), nullptr, roughnessMaps[roughnessMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/SciFi_Panel_AO.tif").c_str(), nullptr, aoMaps[aoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/SciFi_Panel_Normal.tif").c_str(), nullptr, normalMaps[normalMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/SciFi_Panel_Metalness.tif").c_str(), nullptr, metalnessMaps[metalnessMaps.size() - 1].GetAddressOf());
+	AddSRVToMap(Albedo,	LoadSRV(L"Bronze_Albedo.tif"));
+	AddSRVToMap(Roughness, LoadSRV(L"Bronze_Roughness.tif"));
+	AddSRVToMap(AO,		LoadSRV(L"Bronze_AO.tif"));
+	AddSRVToMap(Normal,	LoadSRV(L"Bronze_Normal.tif"));
+	AddSRVToMap(Metalness, LoadSRV(L"Bronze_Metallic.tif"));
 
-	albedoMaps.push_back(nullptr);
-	roughnessMaps.push_back(nullptr);
-	aoMaps.push_back(nullptr);
-	normalMaps.push_back(nullptr);
-	metalnessMaps.push_back(nullptr);
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Brick_Wall_Albedo.tif").c_str(), nullptr, albedoMaps[albedoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Brick_Wall_Roughness.tif").c_str(), nullptr, roughnessMaps[roughnessMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Brick_Wall_AO.tif").c_str(), nullptr, aoMaps[aoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Brick_Wall_Normal.tif").c_str(), nullptr, normalMaps[normalMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, metalnessMaps[metalnessMaps.size() - 1].GetAddressOf());
+	AddSRVToMap(ToonAlbedo,	LoadSRV(L"Tree_Albedo.tif"));
+	AddSRVToMap(ToonRoughness, LoadSRV(L"noMetal.png"));
+	AddSRVToMap(ToonAO,		LoadSRV(L"allMetal.png"));
+	AddSRVToMap(ToonMetalness,	LoadSRV(L"noMetal.png"));
 
-	albedoMaps.push_back(nullptr);
-	roughnessMaps.push_back(nullptr);
-	aoMaps.push_back(nullptr);
-	normalMaps.push_back(nullptr);
-	metalnessMaps.push_back(nullptr);
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Bronze_Albedo.tif").c_str(), nullptr, albedoMaps[albedoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Bronze_Roughness.tif").c_str(), nullptr, roughnessMaps[roughnessMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Bronze_AO.tif").c_str(), nullptr, aoMaps[aoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Bronze_Normal.tif").c_str(), nullptr, normalMaps[normalMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Bronze_Metallic.tif").c_str(), nullptr, metalnessMaps[metalnessMaps.size() - 1].GetAddressOf());
-
-	//toon materials, currently using defaults for many of them
-	//while we figure out if we need them for toon shading
-	toonAlbedoMaps.push_back(nullptr);
-	toonRoughnessMaps.push_back(nullptr);
-	toonAoMaps.push_back(nullptr);
-	toonMetalnessMaps.push_back(nullptr);
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Tree_Albedo.tif").c_str(), nullptr, toonAlbedoMaps[toonAlbedoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonRoughnessMaps[toonRoughnessMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/allMetal.png").c_str(), nullptr, toonAoMaps[toonAoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonMetalnessMaps[toonMetalnessMaps.size() - 1].GetAddressOf());
-
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Ramp_Texture.png").c_str(), nullptr, rampTexture.GetAddressOf());
+	AddSRVToMap(SampleTexture, LoadSRV(L"Ramp_Texture.png"));
 
 	//load cube map
-	skybox = CreateCubemap(
-		GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_right.png").c_str(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_left.png").c_str(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_up.png").c_str(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_down.png").c_str(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_front.png").c_str(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_back.png").c_str());
+	AddSRVToMap(SkyBox, CreateCubemap(
+							GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_right.png").c_str(),
+							GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_left.png").c_str(),
+							GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_up.png").c_str(),
+							GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_down.png").c_str(),
+							GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_front.png").c_str(),
+							GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_back.png").c_str()));
+}
+
+// --------------------------------------------------------
+// Loads shaders from compiled shader object (.cso) files
+// and also created the Input Layout that describes our 
+// vertex data to the rendering pipeline. 
+// - Input Layout creation is done here because it must 
+//    be verified against vertex shader byte code
+// - We'll have that byte code already loaded below
+// --------------------------------------------------------
+void AssetManager::InitShaders()
+{
+	//using Chirs's simple shader
+	m_vertexShaders["vertexShader"]				= MakeSimpleVertexShader(L"VertexShader.cso");
+	m_vertexShaders["skyVertexShader"]			= MakeSimpleVertexShader(L"SkyVertexShader.cso");
+	m_vertexShaders["shadowVertexShader"]		= MakeSimpleVertexShader(L"ShadowVertexShader.cso");
+	m_vertexShaders["ppLightRaysVertexShader"]	= MakeSimpleVertexShader(L"PostProcessLightRaysVertexShader.cso");
+
+	m_pixelShaders["pixelShader"]				= MakeSimplePixelShader(L"PixelShader.cso");
+	m_pixelShaders["debugPixelShader"]			= MakeSimplePixelShader(L"DebugColorShader.cso");
+	m_pixelShaders["skyPixelShader"]			= MakeSimplePixelShader(L"SkyPixelShader.cso");
+	m_pixelShaders["shadowPixelShader"]			= MakeSimplePixelShader(L"ShadowPixelShader.cso");
+	m_pixelShaders["toonPixelShader"]			= MakeSimplePixelShader(L"ToonPixelShader.cso");
+	m_pixelShaders["ppLightRaysPixelShader"]	= MakeSimplePixelShader(L"PostProcessLightRaysPixelShader.cso");
+	m_pixelShaders["a5PixelShader"]				= MakeSimplePixelShader(L"A5CustomPS.cso");
+}
+
+void AssetManager::InitMeshes()
+{
+	m_meshes.push_back(LoadMesh("cube.obj"));
+	m_meshes.push_back(LoadMesh("cylinder.obj"));
+	m_meshes.push_back(LoadMesh("helix.obj"));
+	m_meshes.push_back(LoadMesh("sphere.obj"));
+	m_meshes.push_back(LoadMesh("quad.obj"));
+
+	m_toonMeshes.push_back(LoadMesh("Tree.obj"));
 }
 
 
@@ -234,7 +221,9 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::CreateCubemap(
 	return cubeSRV;
 }
 
-Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::LoadSRV(const wchar_t* texturePath)
+
+
+Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::LoadSRV(std::wstring texturePath, bool customLocation /*Default = false*/)
 {
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> texture;
 	LoadSRV(texturePath, texture);
@@ -242,12 +231,22 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::LoadSRV(const wch
 	return texture;
 }
 
-Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::LoadSRV(const wchar_t* texturePath, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> textureDestination)
+Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::LoadSRV(std::wstring texturePath, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> textureDestination, bool customLocation /*Default = false*/)
 {
+	std::wstring path = (customLocation ? L"" : TEXTURE_FOLDER);
+	path += texturePath;
+
 	CreateWICTextureFromFile(m_device.Get(), m_context.Get(),
-		GetFullPathTo_Wide(texturePath).c_str(), nullptr, textureDestination.GetAddressOf());
+		GetFullPathTo_Wide(path).c_str(), nullptr, textureDestination.GetAddressOf());
 
 	return textureDestination;
+}
+
+std::shared_ptr<Mesh> AssetManager::LoadMesh(std::string meshPath, bool customLocation /*Default = false*/)
+{
+	std::string path = (customLocation ? "" : MODEL_FOLDER);
+	path += meshPath;
+	return std::make_shared<Mesh>(GetFullPathTo(meshPath).c_str(), m_device, m_context);
 }
 
 void AssetManager::AddSRVToMap(SRVMaps mapTypeName, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srvToAdd)
@@ -259,6 +258,18 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::GetSRV(SRVMaps ma
 {
 	return m_srvMaps[map][srvIndex];
 }
+
+std::shared_ptr<SimpleVertexShader> AssetManager::MakeSimpleVertexShader(std::wstring csoName)
+{
+	return std::make_shared<SimpleVertexShader>(m_device, m_context, GetFullPathTo_Wide(csoName).c_str());
+}
+
+std::shared_ptr<SimplePixelShader> AssetManager::MakeSimplePixelShader(std::wstring csoName)
+{
+	return std::make_shared<SimplePixelShader>(m_device, m_context, GetFullPathTo_Wide(csoName).c_str());
+}
+
+
 
 ///------------------ Written by Chris Cascioli ------------------------------///
 

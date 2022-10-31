@@ -10,73 +10,54 @@
 enum SRVMaps
 {
 	Albedo,
+	Roughness,
 	AO,
 	Normal,
 	Metalness,
 	ToonAlbedo,
+	ToonRoughness,
 	ToonAO,
-	ToonMetalness
+	ToonMetalness,
+	SampleTexture,
+	SkyBox
 };
 
 class AssetManager
 {
 private:
+	const std::wstring TEXTURE_FOLDER = L"../../Assets/Textures/";
+	const std::string MODEL_FOLDER = "../../Assets/Models/";
+
 	static std::shared_ptr<AssetManager> s_instance;
 
 	Microsoft::WRL::ComPtr<ID3D11Device> m_device;
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_context;
-
-	// Buffers to hold actual geometry data
-	Microsoft::WRL::ComPtr<ID3D11Buffer> m_vertexBuffer;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> m_indexBuffer;
 
 	std::unordered_map<std::string, std::shared_ptr<SimpleVertexShader>> m_vertexShaders;
 	std::unordered_map<std::string, std::shared_ptr<SimplePixelShader>> m_pixelShaders;
 
 	std::unordered_map<SRVMaps, std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>> m_srvMaps;
 
-
-	//simple shader stuff
-	std::shared_ptr<SimpleVertexShader> vertexShader;
-	std::shared_ptr<SimplePixelShader> pixelShader;
-
-
-	std::shared_ptr<SimplePixelShader> toonPixelShader;
-	std::shared_ptr<SimplePixelShader> debugPixelShader;
-	std::shared_ptr<SimpleVertexShader> skyVertexShader;
-	std::shared_ptr<SimplePixelShader> skyPixelShader;
-
-	std::shared_ptr<SimpleVertexShader> shadowVertexShader;
-	std::shared_ptr<SimplePixelShader> shadowPixelShader;
-
-	std::shared_ptr<SimpleVertexShader> ppLightRaysVertexShader;
-	std::shared_ptr<SimplePixelShader> ppLightRaysPixelShader;
-
-	std::shared_ptr<SimplePixelShader> a5PixelShader;
-	std::shared_ptr<SimplePixelShader> watercolorPixelShader;
+	//Needs to be either deleted or moved into m_PixelShaders
+	//std::shared_ptr<SimplePixelShader> watercolorPixelShader;
 
 	//array to hold materials
 	std::vector<std::shared_ptr<Material>> m_materials;
-
 	std::vector<std::shared_ptr<Material>> m_toonMaterials;
 
 	//array to hold meshes
 	std::vector<std::shared_ptr<Mesh>> m_meshes;
 	std::vector<std::shared_ptr<Mesh>> m_toonMeshes;
 
-	std::shared_ptr<Camera> camera;
-
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> rampTexture;
-	Microsoft::WRL::ComPtr<ID3D11SamplerState> basicSampler;
-
-	//index 0 is diffuse, 1 is specular, 2 is bump
-	std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> catapultMaps;
-	std::shared_ptr<Material> catapultMaterial;
-	std::shared_ptr<SimplePixelShader> catapultPixelShader;
+	// Not sure these belong here
+	//std::shared_ptr<Camera> camera;
+	//Microsoft::WRL::ComPtr<ID3D11SamplerState> basicSampler;
 
 	AssetManager();
 	void Init(Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> context);
 	void InitTextures();
+	void InitShaders();
+	void InitMeshes();
 
 public:
 	// Normally this intialization function wouldn't be necessary, however, for this
@@ -98,11 +79,17 @@ public:
 		const wchar_t* front,
 		const wchar_t* back);
 
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> LoadSRV(const wchar_t* texturePath);
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> LoadSRV(const wchar_t* texturePath, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> textureDestination);
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> LoadSRV(std::wstring texturePath, bool customLocation = false);
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> LoadSRV(std::wstring texturePath, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> textureDestination, bool customLocation = false);
+
+	std::shared_ptr<Mesh> LoadMesh(std::string meshPath, bool customLocation = false);
 
 	void AddSRVToMap(SRVMaps mapTypeName, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srvToAdd);
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetSRV(SRVMaps map, int srvIndex);
+
+	std::shared_ptr<SimpleVertexShader> MakeSimpleVertexShader(std::wstring csoName);
+	std::shared_ptr<SimplePixelShader> MakeSimplePixelShader(std::wstring csoName);
+
 
 	///------------------ Written by Chris Cascioli ------------------------------///
 	// Helpers for determining the actual path to the executable

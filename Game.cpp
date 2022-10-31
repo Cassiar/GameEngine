@@ -172,146 +172,11 @@ void Game::Init()
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
-void Game::LoadTextures() {
-	//make sure there's space for CreateWICTextureFromFile
-	albedoMaps.push_back(nullptr);
-	roughnessMaps.push_back(nullptr);
-	aoMaps.push_back(nullptr);
-	normalMaps.push_back(nullptr);
-	metalnessMaps.push_back(nullptr);
-	//load textures
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Medieval_Floor_Albedo.tif").c_str(), nullptr, albedoMaps[albedoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Medieval_Floor_Roughness.tif").c_str(), nullptr, roughnessMaps[roughnessMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Medieval_Floor_AO.tif").c_str(), nullptr, aoMaps[aoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Medieval_Floor_Normal.tif").c_str(), nullptr, normalMaps[normalMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, metalnessMaps[metalnessMaps.size() - 1].GetAddressOf());
-
-	albedoMaps.push_back(nullptr);
-	roughnessMaps.push_back(nullptr);
-	aoMaps.push_back(nullptr);
-	normalMaps.push_back(nullptr);
-	metalnessMaps.push_back(nullptr);
-
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/SciFi_Panel_Albedo.tif").c_str(), nullptr, albedoMaps[albedoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/SciFi_Panel_Roughness.tif").c_str(), nullptr, roughnessMaps[roughnessMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/SciFi_Panel_AO.tif").c_str(), nullptr, aoMaps[aoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/SciFi_Panel_Normal.tif").c_str(), nullptr, normalMaps[normalMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/SciFi_Panel_Metalness.tif").c_str(), nullptr, metalnessMaps[metalnessMaps.size() - 1].GetAddressOf());
-
-	albedoMaps.push_back(nullptr);
-	roughnessMaps.push_back(nullptr);
-	aoMaps.push_back(nullptr);
-	normalMaps.push_back(nullptr);
-	metalnessMaps.push_back(nullptr);
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Brick_Wall_Albedo.tif").c_str(), nullptr, albedoMaps[albedoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Brick_Wall_Roughness.tif").c_str(), nullptr, roughnessMaps[roughnessMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Brick_Wall_AO.tif").c_str(), nullptr, aoMaps[aoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Brick_Wall_Normal.tif").c_str(), nullptr, normalMaps[normalMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, metalnessMaps[metalnessMaps.size() - 1].GetAddressOf());
-
-	albedoMaps.push_back(nullptr);
-	roughnessMaps.push_back(nullptr);
-	aoMaps.push_back(nullptr);
-	normalMaps.push_back(nullptr);
-	metalnessMaps.push_back(nullptr);
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Bronze_Albedo.tif").c_str(), nullptr, albedoMaps[albedoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Bronze_Roughness.tif").c_str(), nullptr, roughnessMaps[roughnessMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Bronze_AO.tif").c_str(), nullptr, aoMaps[aoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Bronze_Normal.tif").c_str(), nullptr, normalMaps[normalMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Bronze_Metallic.tif").c_str(), nullptr, metalnessMaps[metalnessMaps.size() - 1].GetAddressOf());
-
-	//toon materials, currently using defaults for many of them
-	//while we figure out if we need them for toon shading
-	toonAlbedoMaps.push_back(nullptr);
-	toonRoughnessMaps.push_back(nullptr);
-	toonAoMaps.push_back(nullptr);
-	toonMetalnessMaps.push_back(nullptr);
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Tree_Albedo.tif").c_str(), nullptr, toonAlbedoMaps[toonAlbedoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonRoughnessMaps[toonRoughnessMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/allMetal.png").c_str(), nullptr, toonAoMaps[toonAoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonMetalnessMaps[toonMetalnessMaps.size() - 1].GetAddressOf());
-
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Ramp_Texture.png").c_str(), nullptr, rampTexture.GetAddressOf());
-
-	//load cube map
-	skybox = CreateCubemap(
-		GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_right.png").c_str(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_left.png").c_str(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_up.png").c_str(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_down.png").c_str(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_front.png").c_str(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_back.png").c_str());
-
-}
-
-// --------------------------------------------------------
-// Loads shaders from compiled shader object (.cso) files
-// and also created the Input Layout that describes our 
-// vertex data to the rendering pipeline. 
-// - Input Layout creation is done here because it must 
-//    be verified against vertex shader byte code
-// - We'll have that byte code already loaded below
-// --------------------------------------------------------
-void Game::LoadShaders()
-{
-	//using Chirs's simple shader
-	vertexShader = std::make_shared<SimpleVertexShader>(device, context, GetFullPathTo_Wide(L"VertexShader.cso").c_str());
-	skyVertexShader = std::make_shared<SimpleVertexShader>(device, context, GetFullPathTo_Wide(L"SkyVertexShader.cso").c_str());
-	shadowVertexShader = std::make_shared<SimpleVertexShader>(device, context, GetFullPathTo_Wide(L"ShadowVertexShader.cso").c_str());
-
-	pixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"PixelShader.cso").c_str());
-	debugPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"DebugColorShader.cso").c_str());
-	skyPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"SkyPixelShader.cso").c_str());
-	shadowPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"ShadowPixelShader.cso").c_str());
-	toonPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"ToonPixelShader.cso").c_str());
-
-	//post process shaders
-	ppLightRaysVertexShader = std::make_shared<SimpleVertexShader>(device, context, GetFullPathTo_Wide(L"PostProcessLightRaysVertexShader.cso").c_str());
-	ppLightRaysPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"PostProcessLightRaysPixelShader.cso").c_str());
-
-	//catapultPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"CatapultPixelShader.cso").c_str());
-	a5PixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"A5CustomPS.cso").c_str());
-}
-
-
-
 // --------------------------------------------------------
 // Creates the geometry we're going to draw - a single triangle for now
 // --------------------------------------------------------
 void Game::CreateBasicGeometry()
 {
-	//load object meshes
-	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/cube.obj").c_str(), device, context));
-	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/cylinder.obj").c_str(), device, context));
-	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/helix.obj").c_str(), device, context));
-	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/sphere.obj").c_str(), device, context));
-	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/quad.obj").c_str(), device, context));
-  
 	std::vector<Vertex> verts = meshes[3]->GetVerticies();
 
 	XMFLOAT4 currPos = XMFLOAT4(verts[0].Position.x, verts[0].Position.y, verts[0].Position.z, 1.0f);
@@ -341,11 +206,6 @@ void Game::CreateBasicGeometry()
 
 	Collider::SetDebugSphereMeshRadius(powf((xMax-xMin) / 2, 2) + powf((yMax - yMin) / 2, 2) + powf((zMax - zMin) / 2, 2));
   
-	//toon meshes
-	toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/Tree.obj").c_str(), device, context));
-
-	//std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
-
 	//create some entities
 	//cube direectly in front of camera
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[0], materials[0], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
