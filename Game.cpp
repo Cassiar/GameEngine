@@ -400,6 +400,8 @@ void Game::CreateShadowResources()
 
 void Game::RenderDirectionalShadowMap(XMFLOAT3 dir)
 {
+	std::shared_ptr<SimpleVertexShader> shadowVertexShader = m_AssetManager->GetVertexShader("shadowVertexShader");
+
 	//move 20 units back along view direction
 	//create "camera" mats
 	XMMATRIX shView = XMMatrixLookAtLH(
@@ -467,6 +469,8 @@ void Game::RenderDirectionalShadowMap(XMFLOAT3 dir)
 
 void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, int index, float range, float nearZ, float farZ)
 {
+	std::shared_ptr<SimpleVertexShader> shadowVertexShader = m_AssetManager->GetVertexShader("shadowVertexShader");
+
 	//unbind shadow resource
 	ID3D11ShaderResourceView* const pSRV[1] = { NULL };
 	context->PSSetShaderResources(7 + index, 1, pSRV); //shadow map starts at 7th
@@ -1294,6 +1298,9 @@ void Game::Draw(float deltaTime, float totalTime)
 
 		//switch render target back to main to draw post process effects
 		context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthStencilView.Get());
+
+		std::shared_ptr<SimpleVertexShader> ppLightRaysVertexShader = m_AssetManager->GetVertexShader("ppLightRaysVertexShader");
+		std::shared_ptr<SimplePixelShader> ppLightRaysPixelShader = m_AssetManager->GetPixelShader("ppLightRaysPixelShader");
 	
 		//matrix world;
 		//matrix worldInvTranspose
