@@ -344,7 +344,9 @@ void Game::CreateBasicGeometry()
 	//toon meshes
 	toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/Tree.obj").c_str(), device, context));
 	//toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), device, context));
-	//Model source from GEnshinImpact
+	
+#pragma region Lisa
+		//Model source from GEnshinImpact
 	std::string filename = GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx");
 	std::ifstream stream = std::ifstream(filename, std::ios_base::binary);
 	lisa.Read(&stream);
@@ -386,6 +388,12 @@ void Game::CreateBasicGeometry()
 	// Actually create the buffer with the initial data
 	// - Once we do this, we'll NEVER CHANGE THE BUFFER AGAIN
 	device->CreateBuffer(&ibd, &initialIndexData, lisaIndexBuf.GetAddressOf());
+#pragma endregion
+
+#pragma region SabaLisa
+	sabaLisa.Load(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx"), GetFullPathTo("../../Assets/Toon/Lisa/"));
+#pragma endregion
+
 
 	//create some entities
 	//cube direectly in front of camera
