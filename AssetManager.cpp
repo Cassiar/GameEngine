@@ -298,7 +298,7 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::CreateCubemap(
 Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::LoadSRV(std::wstring texturePath, bool customLocation /*Default = false*/)
 {
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> texture;
-	LoadSRV(texturePath, texture);
+	texture = LoadSRV(texturePath, texture);
 
 	return texture;
 }
