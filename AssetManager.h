@@ -5,7 +5,7 @@
 #include "Mesh.h"
 #include "SimpleShader.h"
 
-#include "WICTextureLoader.h"
+#include <WICTextureLoader.h>
 
 enum SRVMaps
 {
