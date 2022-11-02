@@ -18,7 +18,7 @@
 #include <vector> //for vector
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
 
-#include "Saba/Model/MMD/PMXModel.h"
+//#include "Saba/Model/MMD/PMXModel.h"
 
 //handles updating game logic and stores objects that are drawn
 class Game 
@@ -177,10 +177,7 @@ private:
 	float lightRaysExposure = 0.2f;
 	bool enableLightRays = false;
 
-	pmx::PmxModel lisa;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> lisaVertBuf;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> lisaIndexBuf;
-
-	saba::PMXModel sabaLisa;
+	std::shared_ptr<GameEntity> lisa;
+	//saba::PMXModel sabaLisa;
 };
 

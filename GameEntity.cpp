@@ -102,6 +102,7 @@ void GameEntity::Draw()
 	ps->SetFloat("roughness", material->GetRoughness());
 	
 	//copy data over to gpu. Equivelent to map, memcpy, unmap
+
 	vs->CopyAllBufferData();
 	ps->CopyAllBufferData();
 

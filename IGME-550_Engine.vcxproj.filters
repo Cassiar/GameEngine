@@ -164,10 +164,13 @@
     <ClInclude Include="Collider.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="EncodingHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Pmx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EncodingHelper.h">
+    <ClInclude Include="Vmd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

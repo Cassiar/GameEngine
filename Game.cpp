@@ -1,4 +1,4 @@
-#include "Game.h"
+﻿#include "Game.h"
 #include "Vertex.h"
 #include "Input.h"
 #include "BufferStructs.h"
@@ -143,14 +143,18 @@ void Game::Init()
 
 	//toon shader. for testing uses scifi panel
 	toonMaterials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, toonPixelShader));
+	//for lisa model
+	toonMaterials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, toonPixelShader));
 
-	toonMaterials[0]->AddSampler("BasicSampler", basicSampler);
-	toonMaterials[0]->AddSampler("RampSampler", ppLightRaysSampler);
-	toonMaterials[0]->AddTextureSRV("AlbedoTexture", toonAlbedoMaps[0]);
-	toonMaterials[0]->AddTextureSRV("RoughnessTexture", toonRoughnessMaps[0]);
-	toonMaterials[0]->AddTextureSRV("AmbientTexture", toonAoMaps[0]);
-	toonMaterials[0]->AddTextureSRV("RampTexture", rampTexture);
-	toonMaterials[0]->AddTextureSRV("MetalnessTexture", toonMetalnessMaps[0]);
+	for (unsigned int i = 0; i < toonMaterials.size(); i++) {
+		toonMaterials[i]->AddSampler("BasicSampler", basicSampler);
+		toonMaterials[i]->AddSampler("RampSampler", ppLightRaysSampler);
+		toonMaterials[i]->AddTextureSRV("AlbedoTexture", toonAlbedoMaps[i]);
+		toonMaterials[i]->AddTextureSRV("RoughnessTexture", toonRoughnessMaps[i]);
+		toonMaterials[i]->AddTextureSRV("AmbientTexture", toonAoMaps[i]);
+		toonMaterials[i]->AddTextureSRV("RampTexture", rampTexture);
+		toonMaterials[i]->AddTextureSRV("MetalnessTexture", toonMetalnessMaps[i]);
+	}
 
 
 	//catapultMaterial->AddSampler("BasicSampler", basicSampler);
@@ -255,8 +259,28 @@ void Game::LoadTextures() {
 	CreateWICTextureFromFile(device.Get(), context.Get(),
 		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonMetalnessMaps[toonMetalnessMaps.size() - 1].GetAddressOf());
 
+	toonAlbedoMaps.push_back(nullptr);
+	toonRoughnessMaps.push_back(nullptr);
+	toonAoMaps.push_back(nullptr);
+	toonMetalnessMaps.push_back(nullptr);	
+	//load lisa body texture. 服 == clothes
+	//CreateWICTextureFromFile(device.Get(), context.Get(),
+		//GetFullPathTo_Wide(L"../../Assets/Toon/Lisa/Texture/服.png").c_str(), nullptr, toonAlbedoMaps[toonAlbedoMaps.size() - 1].GetAddressOf());
+
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/Brick_Wall_Albedo.tif").c_str(), nullptr, toonAlbedoMaps[toonAlbedoMaps.size() - 1].GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonRoughnessMaps[toonRoughnessMaps.size() - 1].GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/allMetal.png").c_str(), nullptr, toonAoMaps[toonAoMaps.size() - 1].GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonMetalnessMaps[toonMetalnessMaps.size() - 1].GetAddressOf());
+
+
+
 	CreateWICTextureFromFile(device.Get(), context.Get(),
 		GetFullPathTo_Wide(L"../../Assets/Textures/Ramp_Texture.png").c_str(), nullptr, rampTexture.GetAddressOf());
+
 
 	//load cube map
 	skybox = CreateCubemap(
@@ -343,8 +367,8 @@ void Game::CreateBasicGeometry()
   
 	//toon meshes
 	toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/Tree.obj").c_str(), device, context));
-	//toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), device, context));
-	
+	toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), device, context, true));
+/*
 #pragma region Lisa
 		//Model source from GEnshinImpact
 	std::string filename = GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx");
@@ -389,10 +413,10 @@ void Game::CreateBasicGeometry()
 	// - Once we do this, we'll NEVER CHANGE THE BUFFER AGAIN
 	device->CreateBuffer(&ibd, &initialIndexData, lisaIndexBuf.GetAddressOf());
 #pragma endregion
-
-#pragma region SabaLisa
-	sabaLisa.Load(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx"), GetFullPathTo("../../Assets/Toon/Lisa/"));
-#pragma endregion
+*/
+//#pragma region SabaLisa
+//	sabaLisa.Load(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx"), GetFullPathTo("../../Assets/Toon/Lisa/"));
+//#pragma endregion
 
 
 	//create some entities
@@ -417,9 +441,11 @@ void Game::CreateBasicGeometry()
 	//sphere to match direction light position
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[3], materials[0], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
 
-	//toon pirate ship
+	//toon tree
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(toonMeshes[0], toonMaterials[0], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
-
+	//lisa
+	//m_EntityManager->AddEntity(std::make_shared<GameEntity>(toonMeshes[1], toonMaterials[1], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
+	lisa = std::make_shared<GameEntity>(toonMeshes[1], toonMaterials[1], camera);
 	//move objects so there isn't overlap
 	m_EntityManager->GetEntity(0)->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));
 	m_EntityManager->GetEntity(1)->GetTransform()->MoveAbsolute(XMFLOAT3(5.0f, 10.0f, 5.0f));
@@ -430,6 +456,8 @@ void Game::CreateBasicGeometry()
 	m_EntityManager->GetEntity(6)->GetTransform()->MoveAbsolute(XMFLOAT3(0.0f, 0.0f, 5.0f)); //move left and down
 	m_EntityManager->GetEntity(6)->GetTransform()->Rotate(XMFLOAT3(-1 * XM_PIDIV2, 0, 0));
 	m_EntityManager->GetEntity(6)->GetTransform()->Scale(20);//scale up a bunch to act as floor
+	lisa->GetTransform()->Scale(0.2f);
+	lisa->GetTransform()->MoveRelative(XMFLOAT3(0,0,-2));
 
 	//catapult
 	//if (catapult->GetVertexBuffer()) {
@@ -1499,7 +1527,6 @@ void Game::Draw(float deltaTime, float totalTime)
 	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
 		std::shared_ptr<GameEntity> entity = m_EntityManager->GetEntity(i);
 
-		//unbind slot 0 which is where we send the middle process tex
 		//unbind all slots
 		for (int j = 0; j < 9; j++) {
 			context->PSSetShaderResources(j, 1, pSRV);
@@ -1539,21 +1566,8 @@ void Game::Draw(float deltaTime, float totalTime)
 		entity->Draw();
 	}
 
-	//draw Lisa pmx model for testing
-	// Set buffers in the input assembler
-//once per object
-	UINT stride = sizeof(pmx::PmxVertex);
-	UINT offset = 0;
-	context->IASetVertexBuffers(0, 1, lisaVertBuf.GetAddressOf(), &stride, &offset);
-	context->IASetIndexBuffer(lisaIndexBuf.Get(), DXGI_FORMAT_R32_UINT, 0);
-
-	// Finally do the actual drawing
-	// Once per object
-	context->DrawIndexed(
-		lisa.index_count,     // The number of indices to use (we could draw a subset if we wanted)
-		0,     // Offset to the first index we want to use
-		0);    // Offset to add to each index when looking up vertices
-
+	
+	lisa->Draw();
 	//draw sky, after everthying else to reduce overdraw
 	sky->Draw(camera);
 

@@ -1,6 +1,3 @@
-//source is licened under CC0 1.0 - public domain
-//the creator does not endorse this use in any way
-//https://github.com/oguna/MMDFormats
 #include <utility>
 #include "Pmx.h"
 #ifndef __unix__

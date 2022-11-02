@@ -17,73 +17,132 @@ Mesh::Mesh(Vertex* verts, unsigned int numVerts, unsigned int* indices, unsigned
 	CreateBuffers(verts, numVerts, indices, device);
 }
 
-Mesh::Mesh(const char* path, Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> context)
+Mesh::Mesh(const char* path, Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, bool isPmx)
 {
 	this->context = context;
 
-	//from open asset importer https://assimp-docs.readthedocs.io/en/latest/usage/use_the_lib.html
-	// Create an instance of the Importer class
-	Assimp::Importer importer;
+	this->isPMX = isPmx;
 
-	// And have it read the given file with some example postprocessing
-	// Usually - if speed is not the most important aspect for you - you'll
-	// probably to request more postprocessing than we do in this example.
-	const aiScene* scene = importer.ReadFile(path,
-		aiProcess_CalcTangentSpace |
-		aiProcess_Triangulate |
-		aiProcess_JoinIdenticalVertices |
-		aiProcess_SortByPType |
-		aiProcess_MakeLeftHanded | //assimp imports in right hand space but directX uses left handed
-		aiProcess_FlipWindingOrder | //default is CCW, we want CW
-		aiProcess_FlipUVs //flip the uv order to match our file format
-	);
+	if (isPmx) {
+		std::ifstream stream = std::ifstream(path, std::ios_base::binary);
+		model.Read(&stream);
+		stream.close(); 
 
-	//// If the import failed, report it
-	if (nullptr == scene) {
-		//DoTheErrorLogging(importer.GetErrorString());
-		return;
+		D3D11_BUFFER_DESC vbd = {};
+		vbd.Usage = D3D11_USAGE_IMMUTABLE;
+		vbd.ByteWidth = sizeof(pmx::PmxVertex) * model.vertex_count;       // number of vertices in the buffer
+		vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER; // Tells DirectX this is a vertex buffer
+		vbd.CPUAccessFlags = 0;
+		vbd.MiscFlags = 0;
+		vbd.StructureByteStride = 0;
+
+		// Create the proper struct to hold the initial vertex data
+		// - This is how we put the initial data into the buffer
+		D3D11_SUBRESOURCE_DATA initialVertexData = {};
+		initialVertexData.pSysMem = &model.vertices[0];
+
+		// Actually create the buffer with the initial data
+		// - Once we do this, we'll NEVER CHANGE THE BUFFER AGAIN
+		device->CreateBuffer(&vbd, &initialVertexData, vertBuf.GetAddressOf());
+
+
+
+		// Create the INDEX BUFFER description 
+		D3D11_BUFFER_DESC ibd = {};
+		ibd.Usage = D3D11_USAGE_IMMUTABLE;
+		ibd.ByteWidth = sizeof(int) * model.index_count;	// number of indices in the buffer
+		ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;	// Tells DirectX this is an index buffer
+		ibd.CPUAccessFlags = 0;
+		ibd.MiscFlags = 0;
+		ibd.StructureByteStride = 0;
+
+		// Create the proper struct to hold the initial index data
+		// - This is how we put the initial data into the buffer
+		D3D11_SUBRESOURCE_DATA initialIndexData = {};
+		initialIndexData.pSysMem = &model.indices[0];
+
+		// Actually create the buffer with the initial data
+		// - Once we do this, we'll NEVER CHANGE THE BUFFER AGAIN
+		device->CreateBuffer(&ibd, &initialIndexData, indexBuf.GetAddressOf());
+
+		numIndices = model.index_count;
+
+		//copy verts to be more accessible
+		for (unsigned int i = 0; i < model.vertex_count; i++) {
+			Vertex vert = {};
+			//slight translation error here :)
+			vert.Position = XMFLOAT3(model.vertices[i].positon[0], model.vertices[i].positon[1], model.vertices[i].positon[2]);
+			vert.Normal = XMFLOAT3(model.vertices[i].normal[0], model.vertices[i].normal[1], model.vertices[i].normal[2]);
+			vert.UVCoord = XMFLOAT2(model.vertices[i].uv[0], model.vertices[i].uv[1]);
+			vert.Tangent = {}; //not using
+			 
+			m_verts.push_back(vert);
+		}
 	}
+	else {
+		//from open asset importer https://assimp-docs.readthedocs.io/en/latest/usage/use_the_lib.html
+		// Create an instance of the Importer class
+		Assimp::Importer importer;
 
-	// Now we can access the file's contents.
-	//DoTheSceneProcessing(scene);
-	std::vector<Vertex> verts;		// Verts we're assembling
-	std::vector<UINT> indices;		// Indices of these verts
-	int vertCounter = 0;			// Count of vertices
-	int indexCounter = 0;			// Count of indices
+		// And have it read the given file with some example postprocessing
+		// Usually - if speed is not the most important aspect for you - you'll
+		// probably to request more postprocessing than we do in this example.
+		const aiScene* scene = importer.ReadFile(path,
+			aiProcess_CalcTangentSpace |
+			aiProcess_Triangulate |
+			aiProcess_JoinIdenticalVertices |
+			aiProcess_SortByPType |
+			aiProcess_MakeLeftHanded | //assimp imports in right hand space but directX uses left handed
+			aiProcess_FlipWindingOrder | //default is CCW, we want CW
+			aiProcess_FlipUVs //flip the uv order to match our file format
+		);
 
-	//should only be one mesh
-	for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
-		aiMesh* aiMesh = scene->mMeshes[i];
-		//aiVector3D* aiVecs = scene->mMeshes[i]->mVertices;
-		//aiVector3D** aiTexs = scene->mMeshes[i]->mTextureCoords;
-		for (unsigned int j = 0; j < scene->mMeshes[i]->mNumVertices; j++) {
-			Vertex temp = {};
-			temp.Position = XMFLOAT3(aiMesh->mVertices[j].x, aiMesh->mVertices[j].y, aiMesh->mVertices[j].z);
-			//effectively 2d array, first index is what number of texcoords (upto 8) second is this specific one for this specific vert
-			temp.UVCoord = XMFLOAT2(aiMesh->mTextureCoords[0][j].x, aiMesh->mTextureCoords[0][j].y);
-			temp.Normal = XMFLOAT3(aiMesh->mNormals[j].x, aiMesh->mNormals[j].y, aiMesh->mNormals[j].z);
-			temp.Tangent = XMFLOAT3(aiMesh->mTangents[j].x, aiMesh->mTangents[j].y, aiMesh->mTangents[j].z);
-			verts.push_back(temp);
-			vertCounter++;
-			//positions.push_back(XMFLOAT3(aiMesh->mVertices[j].x, aiMesh->mVertices[j].y, aiMesh->mVertices[j].z));
-			//uvs.push_back(XMFLOAT2(aiMesh->mTextureCoords[0][j].x, aiMesh->mTextureCoords[0][j].y));
-			//normals.push_back(XMFLOAT3(aiMesh->mNormals[j].x, aiMesh->mNormals[j].y, aiMesh->mNormals[j].z));
-			//tangents.push_back(XMFLOAT3(aiMesh->mTangents[j].x, aiMesh->mTangents[j].y, aiMesh->mTangents[j].z));
+		//// If the import failed, report it
+		if (nullptr == scene) {
+			//DoTheErrorLogging(importer.GetErrorString());
+			return;
 		}
 
-		//figure out how many faces there are on the mesh
-		for (unsigned int j = 0; j < scene->mMeshes[i]->mNumFaces; j++) {
-			aiFace aiFace = scene->mMeshes[i]->mFaces[j];
-			//add each indice to the list
-			for (unsigned int k = 0;k < aiFace.mNumIndices; k++) {
+		// Now we can access the file's contents.
+		//DoTheSceneProcessing(scene);
+		std::vector<Vertex> verts;		// Verts we're assembling
+		std::vector<UINT> indices;		// Indices of these verts
+		int vertCounter = 0;			// Count of vertices
+		int indexCounter = 0;			// Count of indices
 
-				indexCounter++;
-				indices.push_back(aiFace.mIndices[k]);
+		//should only be one mesh
+		for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
+			aiMesh* aiMesh = scene->mMeshes[i];
+			//aiVector3D* aiVecs = scene->mMeshes[i]->mVertices;
+			//aiVector3D** aiTexs = scene->mMeshes[i]->mTextureCoords;
+			for (unsigned int j = 0; j < scene->mMeshes[i]->mNumVertices; j++) {
+				Vertex temp = {};
+				temp.Position = XMFLOAT3(aiMesh->mVertices[j].x, aiMesh->mVertices[j].y, aiMesh->mVertices[j].z);
+				//effectively 2d array, first index is what number of texcoords (upto 8) second is this specific one for this specific vert
+				temp.UVCoord = XMFLOAT2(aiMesh->mTextureCoords[0][j].x, aiMesh->mTextureCoords[0][j].y);
+				temp.Normal = XMFLOAT3(aiMesh->mNormals[j].x, aiMesh->mNormals[j].y, aiMesh->mNormals[j].z);
+				temp.Tangent = XMFLOAT3(aiMesh->mTangents[j].x, aiMesh->mTangents[j].y, aiMesh->mTangents[j].z);
+				verts.push_back(temp);
+				vertCounter++;
+				//positions.push_back(XMFLOAT3(aiMesh->mVertices[j].x, aiMesh->mVertices[j].y, aiMesh->mVertices[j].z));
+				//uvs.push_back(XMFLOAT2(aiMesh->mTextureCoords[0][j].x, aiMesh->mTextureCoords[0][j].y));
+				//normals.push_back(XMFLOAT3(aiMesh->mNormals[j].x, aiMesh->mNormals[j].y, aiMesh->mNormals[j].z));
+				//tangents.push_back(XMFLOAT3(aiMesh->mTangents[j].x, aiMesh->mTangents[j].y, aiMesh->mTangents[j].z));
+			}
+
+			//figure out how many faces there are on the mesh
+			for (unsigned int j = 0; j < scene->mMeshes[i]->mNumFaces; j++) {
+				aiFace aiFace = scene->mMeshes[i]->mFaces[j];
+				//add each indice to the list
+				for (unsigned int k = 0; k < aiFace.mNumIndices; k++) {
+
+					indexCounter++;
+					indices.push_back(aiFace.mIndices[k]);
+				}
 			}
 		}
-	}
-	// We're done. Everything will be cleaned up by the importer destructor
-	//return true;
+		// We're done. Everything will be cleaned up by the importer destructor
+		//return true;
 
 #pragma region ChrisMeshLoader
 
@@ -320,13 +379,14 @@ Mesh::Mesh(const char* path, Microsoft::WRL::ComPtr<ID3D11Device> device, Micros
 	//end provided code
 
 	//store number of indices
-	numIndices = indexCounter;
+		numIndices = indexCounter;
 
 
-	//CalculateTangents(&verts[0], vertCounter, &indices[0], indexCounter);
+		//CalculateTangents(&verts[0], vertCounter, &indices[0], indexCounter);
 
-	//pass verts and indices on to create buffer
-	Mesh::CreateBuffers(&verts[0], vertCounter, &indices[0], device);
+		//pass verts and indices on to create buffer
+		Mesh::CreateBuffers(&verts[0], vertCounter, &indices[0], device);
+	}
 }
 
 Mesh::~Mesh()
@@ -353,6 +413,9 @@ void Mesh::Draw()
 	// Set buffers in the input assembler
 	//once per object
 	UINT stride = sizeof(Vertex);
+	if (isPMX) {
+		stride = sizeof(pmx::PmxVertex);
+	}
 	UINT offset = 0;
 	context->IASetVertexBuffers(0, 1, vertBuf.GetAddressOf(), &stride, &offset);
 	context->IASetIndexBuffer(indexBuf.Get(), DXGI_FORMAT_R32_UINT, 0);
@@ -372,6 +435,11 @@ void Mesh::Draw(Microsoft::WRL::ComPtr<ID3D11RasterizerState> customRast)
 	this->Draw();
 
 	context->RSSetState(0);
+}
+
+bool Mesh::IsPMX()
+{
+	return isPMX;
 }
 
 //helper methods
