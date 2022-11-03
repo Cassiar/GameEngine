@@ -3,9 +3,11 @@
 #include "GameEntity.h"
 
 #include <memory>
+#include <PxConfig.h>
 #include <PxPhysicsAPI.h>
 
 #define PX_RELEASE(x)	if(x)	{ x->release(); x = NULL;	}
+#define PX_PHYSX_STATIC_LIB
 
 #ifdef DEBUG
 #define USE_PVD	 true;
@@ -15,7 +17,6 @@
 #ifndef USE_PVD
 #define USE_PVD  false;
 #endif // !USE_PVD
-
 
 class PhysXManager
 {
@@ -43,8 +44,8 @@ private:
 	DirectX::XMFLOAT3 m_gravity = { 0.0f,9.81f,0.0f };
 
 	void Init();
-	void CreateStack(const PxTransform& t, PxU32 size, PxReal halfExtent);
-	PxRigidDynamic* CreateDynamic(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity = PxVec3(0));
+	void CreateStack(const physx::PxTransform& t, physx::PxU32 size, physx::PxReal halfExtent);
+	physx::PxRigidDynamic* CreateDynamic(const physx::PxTransform& t, const physx::PxGeometry& geometry, const physx::PxVec3& velocity = physx::PxVec3(0));
 	
 public:
 	~PhysXManager();

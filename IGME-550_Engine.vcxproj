@@ -76,7 +76,7 @@
     <LibraryPath>$(ProjectDir)packages\AssimpNet.4.1.0\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LibraryPath>$(ProjectDir)packages\AssimpNet.4.1.0\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(ProjectDir)packages\AssimpNet.4.1.0\lib;$(SolutionDir)Vendor\PhysX\lib;$(LibraryPath)</LibraryPath>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)/Vendor/imgui-1.87;$(SolutionDir)Vendor/PhysX;</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -103,11 +103,13 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)/Vendor/imgui-1.87;%(AdditionalLibraryDirectories);$(SolutionDir)Vendor/PhysX</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(SolutionDir)Vendor/imgui-1.87;$(SolutionDir)Vendor/PhysX;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <Profile>true</Profile>
+      <AdditionalDependencies>SampleRenderer_static_64.lib;SampleBase_static_64.lib;SampleFramework_static_64.lib;SamplePlatform_static_64.lib;SamplesToolkit_static_64.lib;PhysXExtensions_static_64.lib;PhysXVehicle_static_64.lib;PhysXPvdSDK_static_64.lib;LowLevelDynamics_static_64.lib;PhysXCharacterKinematic_static_64.lib;SnippetRender_static_64.lib;SnippetUtils_static_64.lib;LowLevel_static_64.lib;LowLevelAABB_static_64.lib;SimulationController_static_64.lib;PhysXTask_static_64.lib;SceneQuery_static_64.lib;Samples_64.lib;PhysX_64.lib;PhysXCooking_64.lib;PhysXCommon_64.lib;PhysXFoundation_64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

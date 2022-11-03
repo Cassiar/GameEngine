@@ -7,6 +7,7 @@
 #include <memory> //for shared pointers
 #include <DirectXMath.h>
 
+#include "AssetManager.h"
 #include "Mesh.h"
 #include "Transform.h"
 #include "Camera.h"
@@ -18,7 +19,6 @@ class GameEntity
 {
 public:
 	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, bool isDebugSphere = false);
-	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<GameEntity> sphere, Microsoft::WRL::ComPtr<ID3D11Device> device);
 	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<RigidBody> rigidBody, std::shared_ptr<Collider> collider);
 	~GameEntity();
 

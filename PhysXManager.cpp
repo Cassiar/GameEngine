@@ -87,7 +87,7 @@ void PhysXManager::CreateStack(const PxTransform& t, PxU32 size, PxReal halfExte
 }
 
 
-PxRigidDynamic* PhysXManager::CreateDynamic(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity = PxVec3(0))
+PxRigidDynamic* PhysXManager::CreateDynamic(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity)
 {
 	PxRigidDynamic* dynamic = PxCreateDynamic(*m_physics, t, geometry, *m_materialTest, 10.0f);
 	dynamic->setAngularDamping(0.5f);

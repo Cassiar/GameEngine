@@ -111,6 +111,8 @@ public:
 	std::shared_ptr<SimpleVertexShader> MakeSimpleVertexShader(std::wstring csoName);
 	std::shared_ptr<SimplePixelShader> MakeSimplePixelShader(std::wstring csoName);
 
+	void MakeRasterizerState(D3D11_RASTERIZER_DESC rastDesc, Microsoft::WRL::ComPtr<ID3D11RasterizerState> rastLocation);
+
 	///------------------ Written by Chris Cascioli ------------------------------///
 	// Helpers for determining the actual path to the executable
 	std::string GetExePath();
