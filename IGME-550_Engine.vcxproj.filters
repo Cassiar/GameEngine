@@ -213,11 +213,5 @@
     <None Include="Structs.hlsli" />
     <None Include="HelperFuncs.hlsli" />
     <None Include="packages.config" />
-    <None Include="x64\Debug\PhysXGpu_64.dll" />
-    <None Include="x64\Debug\PhysX_64.dll" />
-    <None Include="x64\Debug\PhysXCommon_64.dll" />
-    <None Include="x64\Debug\PhysXCooking_64.dll" />
-    <None Include="x64\Debug\PhysXDevice64.dll" />
-    <None Include="x64\Debug\PhysXFoundation_64.dll" />
   </ItemGroup>
 </Project>
