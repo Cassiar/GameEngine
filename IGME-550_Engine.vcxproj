@@ -76,8 +76,8 @@
     <LibraryPath>$(ProjectDir)packages\AssimpNet.4.1.0\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LibraryPath>$(ProjectDir)packages\AssimpNet.4.1.0\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)/Vendor/imgui-1.87;$SolutionDir)/glm</IncludePath>
+    <LibraryPath>$(ProjectDir)packages\AssimpNet.4.1.0\lib;$(SolutionDir)glm;$(SolutionDir)Saba/Base;$(SolutionDir)Saba/Model/MMD;$(SolutionDir)Saba/Model/OBJ;$(SolutionDir)Saba/Model/XFile;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)/Vendor/imgui-1.87;$(SolutionDir)/glm;$(SolutionDir)Saba/Model/MMD;$(SolutionDir)Saba/Base;$(SolutionDir)Saba/Model/OBJ;$(SolutionDir)Saba/Model/XFile</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LibraryPath>$(ProjectDir)packages\AssimpNet.4.1.0\lib;$(LibraryPath)</LibraryPath>
@@ -102,12 +102,13 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)/Vendor/imgui-1.87;%(AdditionalLibraryDirectories);$(SolutionDir)/glm/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/Vendor/imgui-1.87;%(AdditionalLibraryDirectories);$(SolutionDir)glm;$(SolutionDir)Saba/Base;$(SolutionDir)Saba/Model/MMD;$(SolutionDir)Saba/Model/OBJ;$(SolutionDir)Saba/Model/XFile</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalLibraryDirectories>$(SolutionDir)/Vendor/imgui-1.87;$(SolutionDir)/Saba/;$(SolutionDir)/glm/;$(SolutionDir)/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)/Vendor/imgui-1.87;$(SolutionDir)/glm/;$(SolutionDir)/glm/lib/x64;$(SolutionDir)Saba/Model/MMD;$(SolutionDir)Saba/Model/OBJ;$(SolutionDir)Saba/Model/XFile;$(SolutionDir)Saba/Base;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <Profile>true</Profile>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;glew32.lib;freeglut.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

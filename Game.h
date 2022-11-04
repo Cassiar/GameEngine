@@ -10,7 +10,8 @@
 #include "SimpleShader.h"
 #include "Sky.h"
 #include "Transform.h"
-#include "Pmx.h" //to load and use pmx models
+//#include "Pmx.h" //to load and use pmx models
+//#include "Vmd.h" //load vmd files, animation specific to pmx models
 
 #include <DirectXMath.h>
 #include <memory> //for shared pointers
@@ -18,7 +19,18 @@
 #include <vector> //for vector
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
 
-//#include "Saba/Model/MMD/PMXModel.h"
+//#include "MMD/PMXModel.h"
+//#include <PMXModel.h>
+
+#include "Saba/Base/Path.h"
+#include "Saba/Base/File.h"
+#include "Saba/Base/UnicodeUtil.h"
+#include "Saba/Base/SabaTime.h"
+#include "Saba/Model/MMD/PMDModel.h"
+#include "Saba/Model/MMD/PMXModel.h"
+#include "Saba/Model/MMD/VMDFile.h"
+#include "Saba/Model/MMD/VMDAnimation.h"
+#include "Saba/Model/MMD/VMDCameraAnimation.h"
 
 //handles updating game logic and stores objects that are drawn
 class Game 
@@ -177,7 +189,8 @@ private:
 	float lightRaysExposure = 0.2f;
 	bool enableLightRays = false;
 
-	std::shared_ptr<GameEntity> lisa;
-	//saba::PMXModel sabaLisa;
+	//std::shared_ptr<GameEntity> lisa;
+	//std::vector<std::shared_ptr<vmd::VmdMotion>> animations;
+	std::shared_ptr<saba::PMXModel> sabaLisa;
 };
 

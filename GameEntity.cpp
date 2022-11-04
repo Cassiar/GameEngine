@@ -81,6 +81,24 @@ std::shared_ptr<Material> GameEntity::GetMaterial()
 	return material;
 }
 
+void GameEntity::AddAnimation(std::shared_ptr<vmd::VmdMotion> anim)
+{
+	this->anim = anim;
+	playAnim = false;
+	sample = 0;
+}
+
+void GameEntity::BeginAnimation()
+{
+	playAnim = true;
+}
+
+void GameEntity::EndAnimation()
+{
+	playAnim = false;
+	sample = 0;
+}
+
 void GameEntity::Draw()
 {
 	std::shared_ptr<SimpleVertexShader> vs = material->GetVertexShader();
@@ -128,6 +146,15 @@ void GameEntity::Update(float dt, std::vector<std::shared_ptr<GameEntity>>& coll
 	{
 		m_rigidBody->UpdateTransform(dt);
 	}
+
+	//update animation 
+	//if (playAnim) {
+	//	//update delta time
+	//	sample += dt;
+	//	vmd::VmdBoneFrame frame;
+	//	frame = anim->bone_frames[sample];
+	//	frame.
+	//}
 
 	// Implement a singleton collision manager allowing for ease of collision checks
 	if (m_collider)

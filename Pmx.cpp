@@ -5,6 +5,9 @@
 #else
 #include <unicode/ucnv.h>
 #endif
+//source is licened under CC0 1.0 - public domain
+//the creator does not endorse this use in any way
+//https://github.com/oguna/MMDFormats
 
 namespace pmx
 {

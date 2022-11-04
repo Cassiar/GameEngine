@@ -6,7 +6,9 @@
 #include <iostream>
 #include <fstream>
 #include <ostream>
-
+//source is licened under CC0 1.0 - public domain
+//the creator does not endorse this use in any way
+//https://github.com/oguna/MMDFormats
 namespace vmd
 {
 	/// ボーンフレーム
@@ -295,10 +297,12 @@ namespace vmd
 
 		bool SaveToFile(const std::u16string& filename)
 		{
-			std::ofstream stream(filename.c_str(), std::ios::binary);
-			auto result = SaveToStream(&stream);
-			stream.close();
-			return result;
+			//std::string streamName(filename.c_str());
+			//std::ofstream stream(streamName, std::ios::binary);
+			//auto result = SaveToStream(&stream);
+			//stream.close();
+			//return result;
+			throw std::exception("NotImplementedException");
 		}
 
 		bool SaveToStream(std::ofstream *stream)

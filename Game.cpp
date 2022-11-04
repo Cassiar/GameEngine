@@ -367,7 +367,9 @@ void Game::CreateBasicGeometry()
   
 	//toon meshes
 	toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/Tree.obj").c_str(), device, context));
-	toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), device, context, true));
+	//toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), device, context, true));
+	//animations.push_back(std::make_shared<vmd::VmdMotion>());
+	//animations[0]->LoadFromFile(GetFullPathTo("../../Assets/Anim/Female run.vmd").c_str());
 /*
 #pragma region Lisa
 		//Model source from GEnshinImpact
@@ -445,7 +447,7 @@ void Game::CreateBasicGeometry()
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(toonMeshes[0], toonMaterials[0], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
 	//lisa
 	//m_EntityManager->AddEntity(std::make_shared<GameEntity>(toonMeshes[1], toonMaterials[1], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
-	lisa = std::make_shared<GameEntity>(toonMeshes[1], toonMaterials[1], camera);
+	//lisa = std::make_shared<GameEntity>(toonMeshes[1], toonMaterials[1], camera);
 	//move objects so there isn't overlap
 	m_EntityManager->GetEntity(0)->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));
 	m_EntityManager->GetEntity(1)->GetTransform()->MoveAbsolute(XMFLOAT3(5.0f, 10.0f, 5.0f));
@@ -456,8 +458,8 @@ void Game::CreateBasicGeometry()
 	m_EntityManager->GetEntity(6)->GetTransform()->MoveAbsolute(XMFLOAT3(0.0f, 0.0f, 5.0f)); //move left and down
 	m_EntityManager->GetEntity(6)->GetTransform()->Rotate(XMFLOAT3(-1 * XM_PIDIV2, 0, 0));
 	m_EntityManager->GetEntity(6)->GetTransform()->Scale(20);//scale up a bunch to act as floor
-	lisa->GetTransform()->Scale(0.2f);
-	lisa->GetTransform()->MoveRelative(XMFLOAT3(0,0,-2));
+	//lisa->GetTransform()->Scale(0.2f);
+	//lisa->GetTransform()->MoveRelative(XMFLOAT3(0,0,-2));
 
 	//catapult
 	//if (catapult->GetVertexBuffer()) {
@@ -1567,7 +1569,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	}
 
 	
-	lisa->Draw();
+	//lisa->Draw();
 	//draw sky, after everthying else to reduce overdraw
 	sky->Draw(camera);
 

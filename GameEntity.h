@@ -13,6 +13,7 @@
 #include "Collider.h"
 #include "Material.h"
 #include "RigidBody.h"
+#include "Vmd.h"
 
 class GameEntity
 {
@@ -41,6 +42,11 @@ public:
 	bool ShouldDrawSphere() { return m_drawDebugSphere; }
 	void SetDrawSphere(bool drawDebugSphere) { m_drawDebugSphere = drawDebugSphere; }
 
+	void AddAnimation(std::shared_ptr<vmd::VmdMotion> anim);
+
+	void BeginAnimation();
+	void EndAnimation();
+
 	//will hold draw code
 	void Draw();
 	//Updates entity and checks for collisions
@@ -59,4 +65,8 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> m_debugRastState;
 	bool m_drawDebugSphere;
 	bool m_isDebugSphere;
+
+	std::shared_ptr<vmd::VmdMotion> anim;
+	bool playAnim;
+	float sample;
 };
