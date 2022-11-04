@@ -202,7 +202,7 @@ float3 PointToon(Light light, float3 normal, float3 cameraPos, float3 worldPos, 
 	float3 dirToCamera = normalize(cameraPos - worldPos);
 	float3 diffuse = Diffuse(normal, dirToLight);
 
-	float3 rampAmt = ramp.Sample(samplerState, diffuse.xy);
+	float3 rampAmt = ramp.Sample(samplerState, diffuse.xy).xyz;
 	float3 spec = 0;
 	if (specExponent > 0.05) {
 		spec = Phong(cameraPos, worldPos, -dirToLight, normal, specExponent) * roughness;

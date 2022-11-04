@@ -102,8 +102,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)/Vendor/imgui-1.87;%(AdditionalLibraryDirectories);$(SolutionDir)Vendor/PhysX</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)Vendor/imgui-1.87;$(SolutionDir)Vendor/PhysX;%(AdditionalLibraryDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -111,6 +110,9 @@
       <Profile>true</Profile>
       <AdditionalDependencies>SampleRenderer_static_64.lib;SampleBase_static_64.lib;SampleFramework_static_64.lib;SamplePlatform_static_64.lib;SamplesToolkit_static_64.lib;PhysXExtensions_static_64.lib;PhysXVehicle_static_64.lib;PhysXPvdSDK_static_64.lib;LowLevelDynamics_static_64.lib;PhysXCharacterKinematic_static_64.lib;SnippetRender_static_64.lib;SnippetUtils_static_64.lib;LowLevel_static_64.lib;LowLevelAABB_static_64.lib;SimulationController_static_64.lib;PhysXTask_static_64.lib;SceneQuery_static_64.lib;Samples_64.lib;PhysX_64.lib;PhysXCooking_64.lib;PhysXCommon_64.lib;PhysXFoundation_64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <FxCompile>
+      <ShaderModel>5.0</ShaderModel>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -291,6 +293,12 @@
     <None Include="HelperFuncs.hlsli" />
     <None Include="packages.config" />
     <None Include="Structs.hlsli" />
+    <None Include="x64\Debug\PhysXCommon_64.dll" />
+    <None Include="x64\Debug\PhysXCooking_64.dll" />
+    <None Include="x64\Debug\PhysXDevice64.dll" />
+    <None Include="x64\Debug\PhysXFoundation_64.dll" />
+    <None Include="x64\Debug\PhysXGpu_64.dll" />
+    <None Include="x64\Debug\PhysX_64.dll" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

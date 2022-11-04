@@ -773,7 +773,9 @@ bool SimpleVertexShader::CreateShader(Microsoft::WRL::ComPtr<ID3DBlob> shaderBlo
 
 	// Reflect shader info
 	Microsoft::WRL::ComPtr<ID3D11ShaderReflection> refl;
-	D3DReflect(
+	LPVOID bufferPoint = shaderBlob->GetBufferPointer();
+	SIZE_T bufferSize = shaderBlob->GetBufferSize();
+	HRESULT refResult = D3DReflect(
 		shaderBlob->GetBufferPointer(),
 		shaderBlob->GetBufferSize(),
 		IID_ID3D11ShaderReflection,
