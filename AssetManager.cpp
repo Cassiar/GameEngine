@@ -108,7 +108,7 @@ void AssetManager::InitTextures()
 // --------------------------------------------------------
 void AssetManager::InitShaders()
 {
-	//using Chirs's simple shader
+	//using Chris's simple shader
 	m_vertexShaders["vertexShader"]				= MakeSimpleVertexShader(L"VertexShader.cso");
 	m_vertexShaders["skyVertexShader"]			= MakeSimpleVertexShader(L"SkyVertexShader.cso");
 	m_vertexShaders["shadowVertexShader"]		= MakeSimpleVertexShader(L"ShadowVertexShader.cso");
