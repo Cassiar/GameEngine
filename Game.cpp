@@ -1,4 +1,4 @@
-#include "Game.h"
+﻿#include "Game.h"
 #include "Vertex.h"
 #include "Input.h"
 #include "BufferStructs.h"
@@ -143,15 +143,17 @@ void Game::Init()
 
 	//toon shader. for testing uses scifi panel
 	toonMaterials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, toonPixelShader));
+	toonMaterials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, toonPixelShader));
 
-	toonMaterials[0]->AddSampler("BasicSampler", basicSampler);
-	toonMaterials[0]->AddSampler("RampSampler", ppLightRaysSampler);
-	toonMaterials[0]->AddTextureSRV("AlbedoTexture", toonAlbedoMaps[0]);
-	toonMaterials[0]->AddTextureSRV("RoughnessTexture", toonRoughnessMaps[0]);
-	toonMaterials[0]->AddTextureSRV("AmbientTexture", toonAoMaps[0]);
-	toonMaterials[0]->AddTextureSRV("RampTexture", rampTexture);
-	toonMaterials[0]->AddTextureSRV("MetalnessTexture", toonMetalnessMaps[0]);
-
+	for (int i = 0; i < toonMaterials.size(); i++) {
+		toonMaterials[i]->AddSampler("BasicSampler", basicSampler);
+		toonMaterials[i]->AddSampler("RampSampler", ppLightRaysSampler);
+		toonMaterials[i]->AddTextureSRV("AlbedoTexture", toonAlbedoMaps[i]);
+		toonMaterials[i]->AddTextureSRV("RoughnessTexture", toonRoughnessMaps[i]);
+		toonMaterials[i]->AddTextureSRV("AmbientTexture", toonAoMaps[i]);
+		toonMaterials[i]->AddTextureSRV("RampTexture", rampTexture);
+		toonMaterials[i]->AddTextureSRV("MetalnessTexture", toonMetalnessMaps[i]);
+	}
 
 	//catapultMaterial->AddSampler("BasicSampler", basicSampler);
 	//catapultMaterial->AddTextureSRV("AlbedoTexture", catapultMaps[0]);
@@ -255,6 +257,19 @@ void Game::LoadTextures() {
 	CreateWICTextureFromFile(device.Get(), context.Get(),
 		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonMetalnessMaps[toonMetalnessMaps.size() - 1].GetAddressOf());
 
+	toonAlbedoMaps.push_back(nullptr);
+	toonRoughnessMaps.push_back(nullptr);
+	toonAoMaps.push_back(nullptr);
+	toonMetalnessMaps.push_back(nullptr);
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Toon/Lisa/Texture/服.png").c_str(), nullptr, toonAlbedoMaps[toonAlbedoMaps.size() - 1].GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonRoughnessMaps[toonRoughnessMaps.size() - 1].GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/allMetal.png").c_str(), nullptr, toonAoMaps[toonAoMaps.size() - 1].GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonMetalnessMaps[toonMetalnessMaps.size() - 1].GetAddressOf());
+
 	CreateWICTextureFromFile(device.Get(), context.Get(),
 		GetFullPathTo_Wide(L"../../Assets/Textures/Ramp_Texture.png").c_str(), nullptr, rampTexture.GetAddressOf());
 
@@ -344,9 +359,9 @@ void Game::CreateBasicGeometry()
 	//toon meshes
 	toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/Tree.obj").c_str(), device, context));
 
-	sabaLisa = std::make_shared<saba::PMXModel>();
-	sabaLisa->Load(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), GetFullPathTo("../../Assets/Toon/Lisa/Texture").c_str());
-
+	sabaLisa = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), GetFullPathTo("../../Assets/Toon/Lisa/Texture").c_str(), device, context);
+	//sabaLisa->Load(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), GetFullPathTo("../../Assets/Toon/Lisa/Texture").c_str());
+	sabaEntity = std::make_shared<GameEntity>(sabaLisa, toonMaterials[0], camera, device);
 	//std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
 
 	//create some entities
@@ -374,6 +389,8 @@ void Game::CreateBasicGeometry()
 	//toon pirate ship
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(toonMeshes[0], toonMaterials[0], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
 
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(sabaLisa, toonMaterials[1], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
+
 	//move objects so there isn't overlap
 	m_EntityManager->GetEntity(0)->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));
 	m_EntityManager->GetEntity(1)->GetTransform()->MoveAbsolute(XMFLOAT3(5.0f, 10.0f, 5.0f));
@@ -384,6 +401,9 @@ void Game::CreateBasicGeometry()
 	m_EntityManager->GetEntity(6)->GetTransform()->MoveAbsolute(XMFLOAT3(0.0f, 0.0f, 5.0f)); //move left and down
 	m_EntityManager->GetEntity(6)->GetTransform()->Rotate(XMFLOAT3(-1 * XM_PIDIV2, 0, 0));
 	m_EntityManager->GetEntity(6)->GetTransform()->Scale(20);//scale up a bunch to act as floor
+
+	m_EntityManager->GetEntity(9)->GetTransform()->MoveAbsolute(XMFLOAT3(0, 0, -5));
+	m_EntityManager->GetEntity(9)->GetTransform()->Rotate(XMFLOAT3(0, XM_PI, 0));//face toward starting pos
 
 	//catapult
 	//if (catapult->GetVertexBuffer()) {
@@ -1492,6 +1512,8 @@ void Game::Draw(float deltaTime, float totalTime)
 
 		entity->Draw();
 	}
+
+	//sabaEntity->Draw();
 
 	//draw sky, after everthying else to reduce overdraw
 	sky->Draw(camera);

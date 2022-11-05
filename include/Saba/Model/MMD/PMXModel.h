@@ -119,6 +119,7 @@ namespace saba
 		void SetParallelUpdateHint(uint32_t parallelCount) override;
 
 		bool Load(const std::string& filepath, const std::string& mmdDataDir);
+		void Draw();
 		void Destroy();
 
 		const glm::vec3& GetBBoxMin() const { return m_bboxMin; }

@@ -5,6 +5,7 @@
 #include <assimp/Importer.hpp>      // C++ importer interface
 #include <assimp/scene.h>           // Output data structure
 #include <assimp/postprocess.h>     // Post processing flags
+#include <Saba/Model/MMD/PMXModel.h>
 
 using namespace DirectX;
 
@@ -235,110 +236,113 @@ Mesh::Mesh(const char* path, Microsoft::WRL::ComPtr<ID3D11Device> device, Micros
 
 	//		// Flip the UV's since they're probably "upside down"
 	//		v1.UVCoord.y = 1.0f - v1.UVCoord.y;
-//		v2.UVCoord.y = 1.0f - v2.UVCoord.y;
-//		v3.UVCoord.y = 1.0f - v3.UVCoord.y;
+	//		v2.UVCoord.y = 1.0f - v2.UVCoord.y;
+	//		v3.UVCoord.y = 1.0f - v3.UVCoord.y;
 
-//		// Flip Z (LH vs. RH)
-//		v1.Position.z *= -1.0f;
-//		v2.Position.z *= -1.0f;
-//		v3.Position.z *= -1.0f;
+	//		// Flip Z (LH vs. RH)
+	//		v1.Position.z *= -1.0f;
+	//		v2.Position.z *= -1.0f;
+	//		v3.Position.z *= -1.0f;
 
-//		// Flip normal's Z
-//		v1.Normal.z *= -1.0f;
-//		v2.Normal.z *= -1.0f;
-//		v3.Normal.z *= -1.0f;
+	//		// Flip normal's Z
+	//		v1.Normal.z *= -1.0f;
+	//		v2.Normal.z *= -1.0f;
+	//		v3.Normal.z *= -1.0f;
 
-//		//attempt to add tangents and normal maps in assignment 8 
-//		//calculate tangents source: http://foundationsofgameenginedev.com/FGED2-sample.pdf
-//		/*
-//		XMFLOAT3 e1 = { v2.Position.x - v1.Position.x, v2.Position.y - v1.Position.y, v2.Position.z - v1.Position.z };
-//		XMFLOAT3 e2 = { v3.Position.x - v1.Position.x, v3.Position.y - v1.Position.y, v3.Position.z - v1.Position.z };
-//		//XMStoreFloat3(&e1, XMLoadFloat3(v2.Position) - XMLoadFloat3(v1.Position));
-//		float x1 = v2.UVCoord.x - v1.UVCoord.x;
-//		float x2 = v3.UVCoord.x - v1.UVCoord.x;
-//		float y1 = v2.UVCoord.y - v1.UVCoord.y;
-//		float y2 = v3.UVCoord.y - v1.UVCoord.y;
+	//		//attempt to add tangents and normal maps in assignment 8 
+	//		//calculate tangents source: http://foundationsofgameenginedev.com/FGED2-sample.pdf
+	//		/*
+	//		XMFLOAT3 e1 = { v2.Position.x - v1.Position.x, v2.Position.y - v1.Position.y, v2.Position.z - v1.Position.z };
+	//		XMFLOAT3 e2 = { v3.Position.x - v1.Position.x, v3.Position.y - v1.Position.y, v3.Position.z - v1.Position.z };
+	//		//XMStoreFloat3(&e1, XMLoadFloat3(v2.Position) - XMLoadFloat3(v1.Position));
+	//		float x1 = v2.UVCoord.x - v1.UVCoord.x;
+	//		float x2 = v3.UVCoord.x - v1.UVCoord.x;
+	//		float y1 = v2.UVCoord.y - v1.UVCoord.y;
+	//		float y2 = v3.UVCoord.y - v1.UVCoord.y;
 
-//		float r = 1.0f / (x1 * y2 - x2 * y1);
-//		XMFLOAT3 t = { (e1.x * y2 - e2.x * y1)* r, (e1.y * y2 - e2.y * y1)* r, (e1.z * y2 - e2.z * y1)* r };
-//		//XMFLOAT3 b = {};// { (e2.x * x1 - e1.x * x2)* r, (e2.y * x1 - e1.y * x2)* r, (e2.z * x1 - e1.z * x2)* r };
+	//		float r = 1.0f / (x1 * y2 - x2 * y1);
+	//		XMFLOAT3 t = { (e1.x * y2 - e2.x * y1)* r, (e1.y * y2 - e2.y * y1)* r, (e1.z * y2 - e2.z * y1)* r };
+	//		//XMFLOAT3 b = {};// { (e2.x * x1 - e1.x * x2)* r, (e2.y * x1 - e1.y * x2)* r, (e2.z * x1 - e1.z * x2)* r };
 
-//		v1.Tangent = t;
-//		v2.Tangent = t;
-//		v3.Tangent = t;
+	//		v1.Tangent = t;
+	//		v2.Tangent = t;
+	//		v3.Tangent = t;
 
-//		//v1.Bitangent = b;
-//		//v2.Bitangent = b;
-//		//v3.Bitangent = b;
-//		*/
+	//		//v1.Bitangent = b;
+	//		//v2.Bitangent = b;
+	//		//v3.Bitangent = b;
+	//		*/
 
-//		// Add the verts to the vector (flipping the winding order)
-//		verts.push_back(v1);
-//		verts.push_back(v3);
-//		verts.push_back(v2);
-//		vertCounter += 3;
+	//		// Add the verts to the vector (flipping the winding order)
+	//		verts.push_back(v1);
+	//		verts.push_back(v3);
+	//		verts.push_back(v2);
+	//		vertCounter += 3;
 
-//		// Add three more indices
-//		indices.push_back(indexCounter); indexCounter += 1;
-//		indices.push_back(indexCounter); indexCounter += 1;
-//		indices.push_back(indexCounter); indexCounter += 1;
+	//		// Add three more indices
+	//		indices.push_back(indexCounter); indexCounter += 1;
+	//		indices.push_back(indexCounter); indexCounter += 1;
+	//		indices.push_back(indexCounter); indexCounter += 1;
 
-//		// Was there a 4th face?
-//		// - 12 numbers read means 4 faces WITH uv's
-//		// - 8 numbers read means 4 faces WITHOUT uv's
-//		if (numbersRead == 12 || numbersRead == 8)
-//		{
-//			// Make the last vertex
-//			Vertex v4;
-//			v4.Position = positions[i[9] - 1];
-//			v4.UVCoord = uvs[i[10] - 1];
-//			v4.Normal = normals[i[11] - 1];
+	//		// Was there a 4th face?
+	//		// - 12 numbers read means 4 faces WITH uv's
+	//		// - 8 numbers read means 4 faces WITHOUT uv's
+	//		if (numbersRead == 12 || numbersRead == 8)
+	//		{
+	//			// Make the last vertex
+	//			Vertex v4;
+	//			v4.Position = positions[i[9] - 1];
+	//			v4.UVCoord = uvs[i[10] - 1];
+	//			v4.Normal = normals[i[11] - 1];
 
-//			// Flip the UV, Z pos and normal's Z
-//			v4.UVCoord.y = 1.0f - v4.UVCoord.y;
-//			v4.Position.z *= -1.0f;
-//			v4.Normal.z *= -1.0f;
+	//			// Flip the UV, Z pos and normal's Z
+	//			v4.UVCoord.y = 1.0f - v4.UVCoord.y;
+	//			v4.Position.z *= -1.0f;
+	//			v4.Normal.z *= -1.0f;
 
-//			// Add a whole triangle (flipping the winding order)
-//			verts.push_back(v1);
-//			verts.push_back(v4);
-//			verts.push_back(v3);
-//			vertCounter += 3;
+	//			// Add a whole triangle (flipping the winding order)
+	//			verts.push_back(v1);
+	//			verts.push_back(v4);
+	//			verts.push_back(v3);
+	//			vertCounter += 3;
 
-//			// Add three more indices
-//			indices.push_back(indexCounter); indexCounter += 1;
-//			indices.push_back(indexCounter); indexCounter += 1;
-//			indices.push_back(indexCounter); indexCounter += 1;
-//		}
-//	}
-//}
+	//			// Add three more indices
+	//			indices.push_back(indexCounter); indexCounter += 1;
+	//			indices.push_back(indexCounter); indexCounter += 1;
+	//			indices.push_back(indexCounter); indexCounter += 1;
+	//		}
+	//	}
+	//}
 
-//// Close the file and create the actual buffers
-//obj.close();
+	//// Close the file and create the actual buffers
+	//obj.close();
 
-#pragma endregion
-	//end provided code
+	#pragma endregion
+		//end provided code
 
-	//store number of indices
-numIndices = indexCounter;
+		//store number of indices
+	numIndices = indexCounter;
 
+	format = DXGI_FORMAT_R32_UINT;
+	//CalculateTangents(&verts[0], vertCounter, &indices[0], indexCounter);
 
-//CalculateTangents(&verts[0], vertCounter, &indices[0], indexCounter);
-
-//pass verts and indices on to create buffer
-Mesh::CreateBuffers(&verts[0], vertCounter, &indices[0], device);
+	//pass verts and indices on to create buffer
+	Mesh::CreateBuffers(&verts[0], vertCounter, &indices[0], device);
 }
 
 
-Mesh(const char* path, const char* texpath, Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> in_context) {
+Mesh::Mesh(const char* path, const char* texpath, Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> in_context) {
 	this->isPmx = false;
-	model->Load(path, textpath);
+	model = std::make_shared<saba::PMXModel>();
+	model->Load(path, texpath);
+
+	this->context = in_context;
 
 	//convert saba verts to our verts
 	for (int i = 0; i < model->GetVertexCount(); i++){
 		Vertex temp = {};
 		temp.Position = XMFLOAT3(model->GetPositions()[i][0], model->GetPositions()[i][1], model->GetPositions()[i][2]);
-		temp.Normals = XMFLOAT3(model->GetNormals()[i][0], model->GetNormals()[i][1], model->GetNormals()[i][2]);
+		temp.Normal = XMFLOAT3(model->GetNormals()[i][0], model->GetNormals()[i][1], model->GetNormals()[i][2]);
 		temp.UVCoord = XMFLOAT2(model->GetUVs()[i][0], model->GetUVs()[i][1]);
 		temp.Tangent = {};
 		m_verts.push_back(temp);
@@ -347,10 +351,10 @@ Mesh(const char* path, const char* texpath, Microsoft::WRL::ComPtr<ID3D11Device>
 
 	//create the buffers and send to GPU
 	D3D11_BUFFER_DESC vbd = {};
-	vbd.Usage = D3D11_USAGE_IMMUTABLE;
+	vbd.Usage = D3D11_USAGE_DYNAMIC;
 	vbd.ByteWidth = sizeof(Vertex) * model->GetVertexCount();       // number of vertices in the buffer
 	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER; // Tells DirectX this is a vertex buffer
-	vbd.CPUAccessFlags = 0;
+	vbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	vbd.MiscFlags = 0;
 	vbd.StructureByteStride = 0;
 
@@ -363,25 +367,34 @@ Mesh(const char* path, const char* texpath, Microsoft::WRL::ComPtr<ID3D11Device>
 	// - Once we do this, we'll NEVER CHANGE THE BUFFER AGAIN
 	device->CreateBuffer(&vbd, &initialVertexData, vertBuf.GetAddressOf());
 
-
-
 	// Create the INDEX BUFFER description 
 	D3D11_BUFFER_DESC ibd = {};
 	ibd.Usage = D3D11_USAGE_IMMUTABLE;
-	ibd.ByteWidth = sizeof(model->GetIndexElementSize()) * numIndices;	// number of indices in the buffer
-	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;	// Tells DirectX this is an index buffer
+	ibd.ByteWidth = UINT(model->GetIndexElementSize() * model->GetIndexCount());
+	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	ibd.CPUAccessFlags = 0;
-	ibd.MiscFlags = 0;
-	ibd.StructureByteStride = 0;
 
 	// Create the proper struct to hold the initial index data
 	// - This is how we put the initial data into the buffer
 	D3D11_SUBRESOURCE_DATA initialIndexData = {};
-	initialIndexData.pSysMem = &model->GetIndices();
+	initialIndexData.pSysMem = model->GetIndices();
 
 	// Actually create the buffer with the initial data
 	// - Once we do this, we'll NEVER CHANGE THE BUFFER AGAIN
 	device->CreateBuffer(&ibd, &initialIndexData, indexBuf.GetAddressOf());
+
+	if (model->GetIndexElementSize() == 1)
+	{
+		format = DXGI_FORMAT_R8_UINT;
+	}
+	else if (model->GetIndexElementSize()==2)
+	{
+		format = DXGI_FORMAT_R16_UINT;
+	}
+	else if (model->GetIndexElementSize() == 4)
+	{
+		format = DXGI_FORMAT_R32_UINT;
+	}
 }
 
 Mesh::~Mesh()
@@ -403,6 +416,10 @@ unsigned int Mesh::GetIndexCount()
     return numIndices;
 }
 
+std::shared_ptr<saba::PMXModel> GetModel() {
+	return model;
+}
+
 void Mesh::Draw()
 {	
 	// Set buffers in the input assembler
@@ -410,7 +427,14 @@ void Mesh::Draw()
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 	context->IASetVertexBuffers(0, 1, vertBuf.GetAddressOf(), &stride, &offset);
-	context->IASetIndexBuffer(indexBuf.Get(), DXGI_FORMAT_R32_UINT, 0);
+	//if (isPmx) {
+	//	context->IASetIndexBuffer(indexBuf.Get(), format, 0);
+	//	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//}
+	//else {
+	//	context->IASetIndexBuffer(indexBuf.Get(), DXGI_FORMAT_R32_UINT, 0);
+	//}
+	context->IASetIndexBuffer(indexBuf.Get(), format, 0);
 
 	// Finally do the actual drawing
 	// Once per object
@@ -427,6 +451,10 @@ void Mesh::Draw(Microsoft::WRL::ComPtr<ID3D11RasterizerState> customRast)
 	this->Draw();
 
 	context->RSSetState(0);
+}
+
+bool Mesh::IsPmx() {
+	return isPmx;
 }
 
 //helper methods

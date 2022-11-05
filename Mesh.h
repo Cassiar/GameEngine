@@ -26,6 +26,7 @@ private:
 
 	std::shared_ptr<saba::PMXModel> model;
 	bool isPmx;
+	DXGI_FORMAT format;
 
 	void CreateBuffers(Vertex* in_verts, unsigned int numVerts, unsigned int * in_indices, Microsoft::WRL::ComPtr<ID3D11Device> device);
 	void CalculateTangents(Vertex* verts, int numVerts, unsigned int* indices, int numIndices);
@@ -44,4 +45,6 @@ public:
 	unsigned int GetIndexCount();
 	void Draw();
 	void Draw(Microsoft::WRL::ComPtr<ID3D11RasterizerState> customRast);
+	bool IsPmx();
+	std::shared_ptr<saba::PMXModel> GetModel();
 };

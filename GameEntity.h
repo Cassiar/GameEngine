@@ -45,7 +45,9 @@ public:
 	void Draw();
 	//Updates entity and checks for collisions
 	void Update(float dt, std::vector<std::shared_ptr<GameEntity>>& collisionEntities);
+	void AddDeviceContext(Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> context);
 private:
+	void CreateSabaShaders();
 
 	std::shared_ptr<Mesh> mesh;
 	std::shared_ptr<Camera> camera;
@@ -59,4 +61,6 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> m_debugRastState;
 	bool m_drawDebugSphere;
 	bool m_isDebugSphere;
+	Microsoft::WRL::ComPtr<ID3D11Device> device;
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context;
 };

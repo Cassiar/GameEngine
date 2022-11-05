@@ -176,6 +176,7 @@ private:
 	float lightRaysExposure = 0.2f;
 	bool enableLightRays = false;
 
-	std::shared_ptr<saba::PMXModel> sabaLisa;
+	std::shared_ptr<Mesh> sabaLisa;
+	std::shared_ptr<GameEntity> sabaEntity;
 };
 
