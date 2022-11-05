@@ -344,6 +344,9 @@ void Game::CreateBasicGeometry()
 	//toon meshes
 	toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/Tree.obj").c_str(), device, context));
 
+	sabaLisa = std::make_shared<saba::PMXModel>();
+	sabaLisa->Load(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), GetFullPathTo("../../Assets/Toon/Lisa/Texture").c_str());
+
 	//std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
 
 	//create some entities

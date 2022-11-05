@@ -17,6 +17,8 @@
 #include <vector> //for vector
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
 
+#include <Saba/Model/MMD/PMXModel.h>
+
 //handles updating game logic and stores objects that are drawn
 class Game 
 	: public DXCore
@@ -173,5 +175,7 @@ private:
 	float lightRaysDecay = 0.98f;
 	float lightRaysExposure = 0.2f;
 	bool enableLightRays = false;
+
+	std::shared_ptr<saba::PMXModel> sabaLisa;
 };
 
