@@ -12,7 +12,31 @@
 // Needed for a helper function to read compiled shader files from the hard drive
 #pragma comment(lib, "d3dcompiler.lib")
 #include <d3dcompiler.h>
+struct MMDPixelShaderCB
+{
+	float		m_alpha;
+	glm::vec3	m_diffuse;
+	glm::vec3	m_ambient;
+	float		m_dummy1;
+	glm::vec3	m_specular;
+	float		m_specularPower;
+	glm::vec3	m_lightColor;
+	float		m_dummy2;
+	glm::vec3	m_lightDir;
+	float		m_dummy3;
 
+	glm::vec4	m_texMulFactor;
+	glm::vec4	m_texAddFactor;
+
+	glm::vec4	m_toonTexMulFactor;
+	glm::vec4	m_toonTexAddFactor;
+
+	glm::vec4	m_sphereTexMulFactor;
+	glm::vec4	m_sphereTexAddFactor;
+
+	glm::ivec4	m_textureModes;
+
+};
 // For the DirectX Math library
 using namespace DirectX;
 
@@ -177,6 +201,8 @@ void Game::Init()
 }
 
 void Game::LoadTextures() {
+
+	albedoMaps.reserve(8);
 	//make sure there's space for CreateWICTextureFromFile
 	albedoMaps.push_back(nullptr);
 	roughnessMaps.push_back(nullptr);
@@ -416,9 +442,13 @@ void Game::CreateBasicGeometry()
 	device->CreateBuffer(&ibd, &initialIndexData, lisaIndexBuf.GetAddressOf());
 #pragma endregion
 */
-//#pragma region SabaLisa
-//	sabaLisa.Load(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx"), GetFullPathTo("../../Assets/Toon/Lisa/"));
-//#pragma endregion
+#pragma region SabaLisa
+	lisaMesh = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), GetFullPathTo("../../Assets/Toon/Lisa/Texture").c_str(), device, context);
+	sabaLisa = std::make_shared<GameEntity>(
+		lisaMesh,
+		materials[0], camera, device);
+	//sabaLisa->Load(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx"), GetFullPathTo("../../Assets/Toon/Lisa/Textures"));
+#pragma endregion
 
 
 	//create some entities
@@ -1570,6 +1600,220 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	
 	//lisa->Draw();
+	//sabaLisa->Draw();	
+	/*
+#pragma region Saba 
+	XMFLOAT4X4 dxview = camera->GetViewMatrix();
+	const auto view = glm::mat4(
+		dxview.x
+	)
+	const auto& proj = camera->GetProjectionMatrix();
+	const auto& dxMat = glm::mat4(
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.5f, 0.0f,
+		0.0f, 0.0f, 0.5f, 1.0f
+	);
+
+	auto world = glm::mat4(1.0f);
+	auto wv = view * world;
+	auto wvp = dxMat * proj * view * world;
+	auto wvit = glm::mat3(view * world);
+	wvit = glm::inverse(wvit);
+	wvit = glm::transpose(wvit);
+
+	// Set viewport
+	D3D11_VIEWPORT vp;
+	vp.Width = float(width);
+	vp.Height = float(height);
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+	vp.TopLeftX = 0;
+	vp.TopLeftY = 0;
+	context->RSSetViewports(1, &vp);
+
+	size_t subMeshCount = sabaLisa->GetSubMeshCount();
+	for (size_t i = 0; i < subMeshCount; i++)
+	{
+		const auto& subMesh = sabaLisa->GetSubMeshes()[i];
+		const auto& mat = sabaLisa->GetMaterials()[subMesh.m_materialID];
+		const auto& mmdMat = sabaLisa->GetMaterials()[subMesh.m_materialID];
+
+		if (mat.m_alpha == 0)
+		{
+			continue;
+		}
+
+		// Pixel shader
+		context->PSSetShader(appContext.m_mmdPS.Get(), nullptr, 0);
+
+		MMDPixelShaderCB psCB;
+		psCB.m_alpha = mmdMat.m_alpha;
+		psCB.m_diffuse = mmdMat.m_diffuse;
+		psCB.m_ambient = mmdMat.m_ambient;
+		psCB.m_specular = mmdMat.m_specular;
+		psCB.m_specularPower = mmdMat.m_specularPower;
+
+		if (mat.m_texture != "")
+		{
+			psCB.m_texMulFactor = mmdMat.m_textureMulFactor;
+			psCB.m_texAddFactor = mmdMat.m_textureAddFactor;
+			ID3D11ShaderResourceView* views[] = { mat.m_texture.m_textureView.Get() };
+			ID3D11SamplerState* samplers[] = { appContext.m_textureSampler.Get() };
+			context->PSSetShaderResources(0, 1, views);
+			context->PSSetSamplers(0, 1, samplers);
+		}
+		else
+		{
+			psCB.m_textureModes.x = 0;
+			ID3D11ShaderResourceView* views[] = { appContext.m_dummyTextureView.Get() };
+			ID3D11SamplerState* samplers[] = { appContext.m_dummySampler.Get() };
+			m_context->PSSetShaderResources(0, 1, views);
+			m_context->PSSetSamplers(0, 1, samplers);
+		}
+
+		if (mat.m_toonTexture != "")
+		{
+			psCB.m_textureModes.y = 1;
+			psCB.m_toonTexMulFactor = mmdMat.m_toonTextureMulFactor;
+			psCB.m_toonTexAddFactor = mmdMat.m_toonTextureAddFactor;
+			ID3D11ShaderResourceView* views[] = { mat.m_toonTexture.m_textureView.Get() };
+			ID3D11SamplerState* samplers[] = { appContext.m_toonTextureSampler.Get() };
+			m_context->PSSetShaderResources(1, 1, views);
+			m_context->PSSetSamplers(1, 1, samplers);
+		}
+		else
+		{
+			psCB.m_textureModes.y = 0;
+			ID3D11ShaderResourceView* views[] = { appContext.m_dummyTextureView.Get() };
+			ID3D11SamplerState* samplers[] = { appContext.m_dummySampler.Get() };
+			m_context->PSSetShaderResources(1, 1, views);
+			m_context->PSSetSamplers(1, 1, samplers);
+		}
+
+		if (mat.m_spTexture != "")
+		{
+			if (mmdMat.m_spTextureMode == saba::MMDMaterial::SphereTextureMode::Mul)
+			{
+				psCB.m_textureModes.z = 1;
+			}
+			else if (mmdMat.m_spTextureMode == saba::MMDMaterial::SphereTextureMode::Add)
+			{
+				psCB.m_textureModes.z = 2;
+			}
+			psCB.m_sphereTexMulFactor = mmdMat.m_spTextureMulFactor;
+			psCB.m_sphereTexAddFactor = mmdMat.m_spTextureAddFactor;
+			ID3D11ShaderResourceView* views[] = { mat.m_spTexture.m_textureView.Get() };
+			ID3D11SamplerState* samplers[] = { appContext.m_sphereTextureSampler.Get() };
+			m_context->PSSetShaderResources(2, 1, views);
+			m_context->PSSetSamplers(2, 1, samplers);
+		}
+		else
+		{
+			psCB.m_textureModes.z = 0;
+			ID3D11ShaderResourceView* views[] = { appContext.m_dummyTextureView.Get() };
+			ID3D11SamplerState* samplers[] = { appContext.m_dummySampler.Get() };
+			m_context->PSSetShaderResources(2, 1, views);
+			m_context->PSSetSamplers(2, 1, samplers);
+		}
+
+		psCB.m_lightColor = appContext.m_lightColor;
+		glm::vec3 lightDir = appContext.m_lightDir;
+		glm::mat3 viewMat = glm::mat3(appContext.m_viewMat);
+		lightDir = viewMat * lightDir;
+		psCB.m_lightDir = lightDir;
+
+		m_context->UpdateSubresource(m_mmdPSConstantBuffer.Get(), 0, nullptr, &psCB, 0, 0);
+		ID3D11Buffer* pscbs[] = { m_mmdPSConstantBuffer.Get() };
+		m_context->PSSetConstantBuffers(1, 1, pscbs);
+
+		if (mmdMat.m_bothFace)
+		{
+			m_context->RSSetState(appContext.m_mmdBothFaceRS.Get());
+		}
+		else
+		{
+			m_context->RSSetState(appContext.m_mmdFrontFaceRS.Get());
+		}
+
+		m_context->OMSetBlendState(appContext.m_mmdBlendState.Get(), nullptr, 0xffffffff);
+
+		m_context->DrawIndexed(subMesh.m_vertexCount, subMesh.m_beginIndex, 0);
+	}
+
+	{
+		ID3D11ShaderResourceView* views[] = { nullptr, nullptr, nullptr };
+		ID3D11SamplerState* samplers[] = { nullptr, nullptr, nullptr };
+		m_context->PSSetShaderResources(0, 3, views);
+		m_context->PSSetSamplers(0, 3, samplers);
+	}
+
+	// Draw edge
+
+	// Setup input assembler
+	{
+		m_context->IASetInputLayout(appContext.m_mmdEdgeInputLayout.Get());
+	}
+
+	// Setup vertex shader (VSData)
+	{
+		MMDEdgeVertexShaderCB vsCB;
+		vsCB.m_wv = wv;
+		vsCB.m_wvp = wvp;
+		vsCB.m_screenSize = glm::vec2(float(appContext.m_screenWidth), float(appContext.m_screenHeight));
+		m_context->UpdateSubresource(m_mmdEdgeVSConstantBuffer.Get(), 0, nullptr, &vsCB, 0, 0);
+
+		// Vertex shader
+		m_context->VSSetShader(appContext.m_mmdEdgeVS.Get(), nullptr, 0);
+		ID3D11Buffer* cbs[] = { m_mmdEdgeVSConstantBuffer.Get() };
+		m_context->VSSetConstantBuffers(0, 1, cbs);
+	}
+
+	for (size_t i = 0; i < subMeshCount; i++)
+	{
+		const auto& subMesh = m_mmdModel->GetSubMeshes()[i];
+		const auto& mat = m_materials[subMesh.m_materialID];
+		const auto& mmdMat = mat.m_mmdMat;
+
+		if (!mmdMat.m_edgeFlag)
+		{
+			continue;
+		}
+		if (mmdMat.m_alpha == 0.0f)
+		{
+			continue;
+		}
+
+		// Edge size constant buffer
+		{
+			MMDEdgeSizeVertexShaderCB vsCB;
+			vsCB.m_edgeSize = mmdMat.m_edgeSize;
+			m_context->UpdateSubresource(m_mmdEdgeSizeVSConstantBuffer.Get(), 0, nullptr, &vsCB, 0, 0);
+
+			ID3D11Buffer* cbs[] = { m_mmdEdgeSizeVSConstantBuffer.Get() };
+			m_context->VSSetConstantBuffers(1, 1, cbs);
+		}
+
+		// Pixel shader
+		m_context->PSSetShader(appContext.m_mmdEdgePS.Get(), nullptr, 0);
+		{
+			MMDEdgePixelShaderCB psCB;
+			psCB.m_edgeColor = mmdMat.m_edgeColor;
+			m_context->UpdateSubresource(m_mmdEdgePSConstantBuffer.Get(), 0, nullptr, &psCB, 0, 0);
+
+			ID3D11Buffer* pscbs[] = { m_mmdEdgePSConstantBuffer.Get() };
+			m_context->PSSetConstantBuffers(2, 1, pscbs);
+		}
+
+		m_context->RSSetState(appContext.m_mmdEdgeRS.Get());
+
+		m_context->OMSetBlendState(appContext.m_mmdEdgeBlendState.Get(), nullptr, 0xffffffff);
+
+		m_context->DrawIndexed(subMesh.m_vertexCount, subMesh.m_beginIndex, 0);
+	}
+
+#pragma endregion
+*/
 	//draw sky, after everthying else to reduce overdraw
 	sky->Draw(camera);
 

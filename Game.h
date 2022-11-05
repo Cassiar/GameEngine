@@ -20,17 +20,17 @@
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
 
 //#include "MMD/PMXModel.h"
-//#include <PMXModel.h>
+#include "PMXModel.h"
 
-#include "Saba/Base/Path.h"
-#include "Saba/Base/File.h"
-#include "Saba/Base/UnicodeUtil.h"
-#include "Saba/Base/SabaTime.h"
-#include "Saba/Model/MMD/PMDModel.h"
-#include "Saba/Model/MMD/PMXModel.h"
-#include "Saba/Model/MMD/VMDFile.h"
-#include "Saba/Model/MMD/VMDAnimation.h"
-#include "Saba/Model/MMD/VMDCameraAnimation.h"
+//#include "Saba/Base/Path.h"
+//#include "Saba/Base/File.h"
+//#include "Saba/Base/UnicodeUtil.h"
+//#include "Saba/Base/SabaTime.h"
+//#include "Saba/Model/MMD/PMDModel.h"
+////#include "Saba/Model/MMD/PMXModel.h"
+//#include "Saba/Model/MMD/VMDFile.h"
+//#include "Saba/Model/MMD/VMDAnimation.h"
+//#include "Saba/Model/MMD/VMDCameraAnimation.h"
 
 //handles updating game logic and stores objects that are drawn
 class Game 
@@ -191,6 +191,9 @@ private:
 
 	//std::shared_ptr<GameEntity> lisa;
 	//std::vector<std::shared_ptr<vmd::VmdMotion>> animations;
-	std::shared_ptr<saba::PMXModel> sabaLisa;
+	std::shared_ptr<Mesh> lisaMesh;
+	std::shared_ptr<GameEntity> sabaLisa;
+	Microsoft::WRL::ComPtr<ID3D11Buffer> sabaVerBuf;
+	Microsoft::WRL::ComPtr<ID3D11Buffer> sabaIndBuf;
 };
 

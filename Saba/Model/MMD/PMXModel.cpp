@@ -9,16 +9,16 @@
 #include "PMXFile.h"
 #include "MMDPhysics.h"
 
-#include <Saba/Base/Path.h>
-#include <Saba/Base/File.h>
-#include <Saba/Base/Log.h>
-#include <Saba/Base/Singleton.h>
+#include "Path.h"
+#include "File.h"
+#include "Log.h"
+#include "Singleton.h"
 
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtx/matrix_decompose.hpp"
-#include "glm/gtx/quaternion.hpp"
-#include "glm/gtx/dual_quaternion.hpp"
+#include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
+#include <gtx/matrix_decompose.hpp>
+#include <gtx/quaternion.hpp>
+#include <gtx/dual_quaternion.hpp>
 #include <map>
 #include <limits>
 #include <algorithm>
