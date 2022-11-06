@@ -18,6 +18,7 @@ class GameEntity
 {
 public:
 	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, bool isDebugSphere = false);
+	GameEntity(std::shared_ptr <Mesh> in_mesh, std::shared_ptr<Camera> in_camera, Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> context);
 	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<GameEntity> sphere, Microsoft::WRL::ComPtr<ID3D11Device> device);
 	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<RigidBody> rigidBody, std::shared_ptr<Collider> collider);
 	~GameEntity();
@@ -43,11 +44,11 @@ public:
 
 	//will hold draw code
 	void Draw();
+	void DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, DirectX::XMFLOAT4X4 projection, DirectX::XMFLOAT3 m_lightColor, DirectX::XMFLOAT3 m_lightDir, float m_screenWidth, float m_screenHeight);
 	//Updates entity and checks for collisions
 	void Update(float dt, std::vector<std::shared_ptr<GameEntity>>& collisionEntities);
-	void AddDeviceContext(Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> context);
 private:
-	void CreateSabaShaders();
+	bool CreateSabaShaders();
 
 	std::shared_ptr<Mesh> mesh;
 	std::shared_ptr<Camera> camera;

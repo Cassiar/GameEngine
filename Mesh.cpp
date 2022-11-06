@@ -416,7 +416,7 @@ unsigned int Mesh::GetIndexCount()
     return numIndices;
 }
 
-std::shared_ptr<saba::PMXModel> GetModel() {
+std::shared_ptr<saba::PMXModel> Mesh::GetModel() {
 	return model;
 }
 
