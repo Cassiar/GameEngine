@@ -139,8 +139,9 @@ void Game::CreateBasicGeometry()
 		zMax = currPos.z > zMax ? currPos.z : zMax;
 		zMin = currPos.z < zMin ? currPos.z : zMin;
 	}
-
-	Collider::SetDebugSphereMeshRadius(powf((xMax-xMin) / 2, 2) + powf((yMax - yMin) / 2, 2) + powf((zMax - zMin) / 2, 2));
+	float temp = powf((zMax - zMin) / 2.0f, 2);
+	float radius = sqrtf(powf((xMax - xMin) / 2.0f, 2) + powf((yMax - yMin) / 2.0f, 2) + powf((zMax - zMin) / 2.0f, 2));
+	Collider::SetDebugSphereMeshRadius(radius);
   
 	std::shared_ptr<SimpleVertexShader> vertexShader = m_AssetManager->GetVertexShader("vertexShader");
 	std::shared_ptr<SimplePixelShader> debugPixelShader = m_AssetManager->GetPixelShader("debugPixelShader");
@@ -898,11 +899,17 @@ void Game::CreateGui(float deltaTime) {
 				ImGui::Checkbox("   ", &drawSphere);
 				currEntity->SetDrawSphere(drawSphere);
 
+				bool drawCube = currEntity->ShouldDrawCube();
+				ImGui::Text("Draw Bounding Cube: ");
+				ImGui::SameLine();
+				ImGui::Checkbox("    ", &drawCube);
+				currEntity->SetDrawCube(drawCube);
+
 				//Allows for control over position of entities
 				DirectX::XMFLOAT3 position = entityTransform->GetPosition();
 				ImGui::Text("Position: ");
 				ImGui::SameLine();
-				ImGui::DragFloat3("", &position.x, .5f, -D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX);
+				ImGui::DragFloat3("", &position.x, .05f, -D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX);
 				entityTransform->SetPosition(position);
 
 				//Allows for control over rotation of entities

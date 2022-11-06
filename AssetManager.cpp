@@ -341,7 +341,7 @@ std::shared_ptr<SimplePixelShader> AssetManager::MakeSimplePixelShader(std::wstr
 	return std::make_shared<SimplePixelShader>(m_device, m_context, GetFullPathTo_Wide(csoName).c_str());
 }
 
-void AssetManager::MakeRasterizerState(D3D11_RASTERIZER_DESC rastDesc, Microsoft::WRL::ComPtr<ID3D11RasterizerState> rastLocation) {
+void AssetManager::MakeRasterizerState(D3D11_RASTERIZER_DESC rastDesc, Microsoft::WRL::ComPtr<ID3D11RasterizerState>& rastLocation) {
 	m_device->CreateRasterizerState(&rastDesc, rastLocation.GetAddressOf());
 }
 

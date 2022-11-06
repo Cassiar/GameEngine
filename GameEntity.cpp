@@ -3,8 +3,9 @@
 #include "BufferStructs.h"
 
 bool g_drawDebugSpheresDefault = true;
+bool g_drawDebugCubesDefault = true;
 
-GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, bool isDebugSphere)
+GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, bool isDebugEntity)
 {
 	mesh = in_mesh;
 	material = in_material;
@@ -12,15 +13,19 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 	transform = Transform();
 
 	m_rigidBody = std::make_shared<RigidBody>(&transform);
-	m_collider = std::make_shared<Collider>(in_mesh, &transform);
 
-	if (!isDebugSphere) {
+	if (!isDebugEntity) {
 		std::shared_ptr<AssetManager> assetManager = AssetManager::GetInstance();
 		std::shared_ptr<Material> debugMat = std::make_shared<Material>(DirectX::XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f,
 			assetManager->GetVertexShader("vertexShader"),
 			assetManager->GetPixelShader("debugPixelShader"));
 
+		std::shared_ptr<Material> debugMat2 = std::make_shared<Material>(DirectX::XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f,
+			assetManager->GetVertexShader("vertexShader"),
+			assetManager->GetPixelShader("debugPixelShader"));
+
 		m_sphere = std::make_shared<GameEntity>(assetManager->GetMesh(3), debugMat, in_camera, true);
+		m_cube = std::make_shared<GameEntity>(assetManager->GetMesh(0), debugMat2, in_camera, true);
 
 		//create rasterizer state
 		D3D11_RASTERIZER_DESC wireFrameRastDesc = {};
@@ -31,14 +36,23 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 		Microsoft::WRL::ComPtr<ID3D11RasterizerState> rast;
 		assetManager->MakeRasterizerState(wireFrameRastDesc, rast);
 		m_sphere->SetDebugRast(rast);
+		m_cube->SetDebugRast(rast);
+
+		transform.AddChild(m_sphere->GetTransform());
+		transform.AddChild(m_cube->GetTransform());
+
+		m_collider = std::make_shared<Collider>(in_mesh, &transform, m_sphere->GetTransform(), m_cube->GetTransform());
 	}
 	else
 	{
 		m_sphere = nullptr;
+		m_cube = nullptr;
+		m_collider = std::make_shared<Collider>(in_mesh, &transform);
 	}
 
 	m_drawDebugSphere = g_drawDebugSpheresDefault;
-	m_isDebugSphere = isDebugSphere;
+	m_drawDebugSphere = g_drawDebugCubesDefault;
+	m_isDebugEntity = isDebugEntity;
 }
 
 GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<RigidBody> rigidBody, std::shared_ptr<Collider> collider) 
@@ -107,8 +121,10 @@ void GameEntity::Draw()
 	}
 
 	if (m_drawDebugSphere && m_sphere) {
-		//m_sphere->GetTransform()->SetScale(1.5f, 1.5f, 1.5f);
 		m_sphere->Draw();
+	}
+	if (m_drawDebugCube && m_cube) {
+		m_cube->Draw();
 	}
 }
 
@@ -122,24 +138,41 @@ void GameEntity::Update(float dt, std::vector<std::shared_ptr<GameEntity>>& coll
 	// Implement a singleton collision manager allowing for ease of collision checks
 	if (m_collider)
 	{
+		bool sphereColliding = false;
 		bool colliding = false;
 		for (auto& entity : collisionEntities)
 		{
-			if (entity.get() != this && m_collider->CheckForCollision(entity->GetCollider())) {
-				colliding = true;
-				break;
+
+			if (entity.get() != this) {
+				sphereColliding = m_collider->CheckSphereColliding(entity->GetCollider());
+
+				// Only really for debug purposes tho so this should be preprocessored out
+				if (sphereColliding && m_collider->CheckForCollision(entity->GetCollider(), true)) {
+					colliding = true;
+					break;
+				}
 			}
 		}
 
 		//Debug collision code
 		if (m_sphere) {
-			if (colliding)
+			if (sphereColliding)
 			{
 				m_sphere->GetMaterial()->SetColorTint(DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f));
 			}
 			else
 			{
 				m_sphere->GetMaterial()->SetColorTint(DirectX::XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f));
+			}
+		}
+		if (m_cube) {
+			if (colliding)
+			{
+				m_cube->GetMaterial()->SetColorTint(DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f));
+			}
+			else
+			{
+				m_cube->GetMaterial()->SetColorTint(DirectX::XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f));
 			}
 		}
 	}

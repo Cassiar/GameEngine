@@ -6,7 +6,8 @@ Collider::Collider(std::shared_ptr<Mesh> colliderMesh, Transform* parentTransfor
 	: m_objectMesh(colliderMesh),
 	m_pointsDirty(true),
 	m_halvesDirty(true),
-	m_sphere(nullptr)
+	m_sphere(nullptr),
+	m_cube(nullptr)
 {
 	m_transform = Transform();
 	parentTransform->AddChild(&m_transform);
@@ -14,11 +15,12 @@ Collider::Collider(std::shared_ptr<Mesh> colliderMesh, Transform* parentTransfor
 	CalcCenterPoint();
 }
 
-Collider::Collider(std::shared_ptr<Mesh> colliderMesh, Transform* parentTransform, Transform* sphere)
+Collider::Collider(std::shared_ptr<Mesh> colliderMesh, Transform* parentTransform, Transform* sphere, Transform* cube)
 	: m_objectMesh(colliderMesh),
 	m_pointsDirty(true),
 	m_halvesDirty(true),
-	m_sphere(sphere)
+	m_sphere(sphere),
+	m_cube(cube)
 {
 	m_transform = Transform();
 	parentTransform->AddChild(&m_transform);
@@ -110,19 +112,33 @@ void Collider::CalcCenterPoint() {
 	XMFLOAT3 parentPos = m_transform.GetParent()->GetPosition();
 	XMFLOAT3 thisPos = m_transform.GetPosition();
 	m_centerPoint = XMFLOAT3(parentPos.x + thisPos.x, parentPos.y + thisPos.y, parentPos.z + thisPos.z);
+	XMFLOAT3 maxPoint = XMFLOAT3(m_maxPoint.x + thisPos.x, m_maxPoint.y + thisPos.y, m_maxPoint.z + thisPos.z);
 
-
-	m_preCheckRadiusSquared = pow(m_maxPoint.x - m_centerPoint.x, 2.0f) + pow(m_maxPoint.y - m_centerPoint.y, 2.0f) + pow(m_maxPoint.z - m_centerPoint.z, 2.0f);
+	m_preCheckRadiusSquared = powf(maxPoint.x - m_centerPoint.x, 2.0f) + powf(maxPoint.y - m_centerPoint.y, 2.0f) + powf(maxPoint.z - m_centerPoint.z, 2.0f);
 
 	if (m_sphere)
 	{
-		float scale = sqrt(m_preCheckRadiusSquared);// -1 / m_debugSphereMeshRadius;//sqrt(m_preCheckRadiusSquared) / sqrt(m_debugSphereMeshRadius);
-		m_sphere->SetScale(XMFLOAT3(scale, scale, scale));
-		m_sphere->SetPosition(m_centerPoint);
+		float scale = sqrtf(m_preCheckRadiusSquared);
+		XMFLOAT3 parentScale = m_sphere->GetParent()->GetScale();
+		m_sphere->SetScale(1.0f, 1.0f, 1.0f);
+		m_sphere->Scale(scale / parentScale.x, scale / parentScale.y, scale / parentScale.z);
+	}
+
+	if (m_cube) {
+		m_cube->SetScale(XMFLOAT3(m_halfWidth, m_halfHeight, m_halfDepth));
 	}
 }
 
-bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
+bool Collider::CheckForCollision(const std::shared_ptr<Collider> other, bool overrideSphereCheck /* Default = false */) {
+	if (!overrideSphereCheck && !CheckSphereColliding(other))
+	{
+		return false;
+	}
+
+	return !CheckSATCollision(other);//true;// CheckGJKCollision(other);
+}
+
+bool Collider::CheckSphereColliding(const std::shared_ptr<Collider> other) {
 	//Should be subject to change not a great position to mark this
 	m_pointsDirty = m_transform.IsWorldDirty();
 	m_halvesDirty = m_pointsDirty;
@@ -132,11 +148,11 @@ bool Collider::CheckForCollision(const std::shared_ptr<Collider> other) {
 	other->CalcCenterPoint();
 
 	float centerSquareDist = pow(m_centerPoint.x - other->m_centerPoint.x, 2.0f) + pow(m_centerPoint.y - other->m_centerPoint.y, 2.0f) + pow(m_centerPoint.z - other->m_centerPoint.z, 2.0f);
-	if (m_preCheckRadiusSquared + other->m_preCheckRadiusSquared <= centerSquareDist) {
-		//return false;
+	if (centerSquareDist <=  (m_preCheckRadiusSquared + other->m_preCheckRadiusSquared)) {
+		return true;
 	}
 
-	return !CheckSATCollision(other);//true;// CheckGJKCollision(other);
+	return false;
 }
 
 #pragma region SAT collision

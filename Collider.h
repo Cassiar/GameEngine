@@ -64,15 +64,17 @@ private:
 	bool DoSimplex(std::vector<DirectX::XMVECTOR>& supports, DirectX::XMVECTOR& direction);
 
 	Transform* m_sphere;
+	Transform* m_cube;
 
 public:
 	Collider(std::shared_ptr<Mesh> colliderMesh, Transform* parentTransform);
-	Collider(std::shared_ptr<Mesh> colliderMesh, Transform* parentTransform, Transform* sphere);
+	Collider(std::shared_ptr<Mesh> colliderMesh, Transform* parentTransform, Transform* sphere, Transform* cube);
 	~Collider();
 
 	std::shared_ptr<Mesh> GetCollisionMesh() { return m_objectMesh; }
 
-	bool CheckForCollision(const std::shared_ptr<Collider> other);
+	bool CheckForCollision(const std::shared_ptr<Collider> other, bool overrideSphereCheck = false);
+	bool CheckSphereColliding(const std::shared_ptr<Collider> other);
 	void MakePointsDirty() { m_pointsDirty = true; }
 	void MakeHalvesDirty() { m_pointsDirty = true; }
 
