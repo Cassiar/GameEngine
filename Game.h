@@ -13,6 +13,8 @@
 #include "Transform.h"
 
 #include <DirectXMath.h>
+#include <fstream>
+#include <iostream>
 #include <memory> //for shared pointers
 #include <unordered_map> //to avoid searching in ImGui debug sphere drawing
 #include <vector> //for vector
@@ -61,6 +63,9 @@ private:
 	
 	//helper function to reduce repitition in shadow map funcs
 	void PassShadowObjs();
+
+	void SaveScene();
+	void ReadScene(std::wstring path);
 
 	DirectX::XMFLOAT3 ambientTerm;
 

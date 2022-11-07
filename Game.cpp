@@ -48,6 +48,9 @@ Game::Game(HINSTANCE hInstance)
 	camera->GetViewMatrix();
 	ambientTerm = XMFLOAT3(0.0f, 0.0f, 0.0f); //sky red-ish to match sun peaking over planet
 
+	//SaveScene();
+	//ReadScene(L"wow");
+
 	CreateLights();
 }
 
@@ -1326,4 +1329,34 @@ void PassShadowObjs() {
 		entity->GetMesh()->Draw();
 	}
 	*/
+}
+
+void Game::SaveScene() {
+	std::ofstream wStream("Test.ncscn", std::ios::out | std::ios::binary);
+	if (!wStream) {
+		std::cout << "Cannot open file!" << std::endl;
+	}
+
+	wStream.write((char*) "Temp\0", sizeof(char[5]));
+
+	wStream.close();
+	if (!wStream.good()) {
+		std::cout << "Error occurred at writing time!" << std::endl;
+	}
+}
+
+void Game::ReadScene(std::wstring path) {
+	std::ifstream rStream("Test.ncscn", std::ios::out | std::ios::binary);
+	if (!rStream) {
+		std::cout << "Cannot open file!" << std::endl;
+	}
+	char* temp = new char[5];
+	rStream.read((char*)&temp[0], sizeof(char[5]));
+	rStream.close();
+	if (!rStream.good()) {
+		std::cout << "Error occurred at reading time!" << std::endl;
+	}
+
+	std::cout << temp << " success!" << std::endl;
+	delete[] temp;
 }
