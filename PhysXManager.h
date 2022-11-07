@@ -16,7 +16,7 @@
 #endif // DEBUG
 
 #ifndef USE_PVD
-#define USE_PVD  true;
+#define USE_PVD  false;
 #define PVD_HOST "127.0.0.1"
 #endif // !USE_PVD
 

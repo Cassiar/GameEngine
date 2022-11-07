@@ -2,7 +2,7 @@
 
 #include "BufferStructs.h"
 
-bool g_drawDebugSpheresDefault = true;
+bool g_drawDebugSpheresDefault = false;
 bool g_drawDebugCubesDefault = true;
 
 using namespace physx;
@@ -39,7 +39,6 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 		m_cube->SetDebugRast(rast);
 
 		transform.AddChild(m_sphere->GetTransform());
-		//transform.AddChild(m_cube->GetTransform());
 
 		m_collider = std::make_shared<Collider>(in_mesh, &transform, m_sphere->GetTransform(), m_cube->GetTransform());
 	}
@@ -55,16 +54,20 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 		// Assumes dynamic. If User wants static they can pass it in
 		std::shared_ptr<PhysXManager> instance = PhysXManager::GetInstance();
 		DirectX::XMFLOAT3 halves = m_collider->GetHalfWidths();
-		m_rigidBody = instance->CreateDynamic(PxTransform(0, 40, 0), PxBoxGeometry(halves.x,halves.y,halves.z));
+		m_rigidBody = instance->CreateDynamic(PxTransform(0, 30, 0), PxBoxGeometry(halves.x,halves.y,halves.z));
+	}
+	else if(!hasPhysics)
+	{
+		m_rigidBody = nullptr;
 	}
 
 	m_drawDebugSphere = g_drawDebugSpheresDefault;
-	m_drawDebugSphere = g_drawDebugCubesDefault;
+	m_drawDebugCube = g_drawDebugCubesDefault;
 	m_isDebugEntity = isDebugEntity;
 }
 
 GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<PxRigidActor> rigidBody) 
-	: GameEntity(in_mesh, in_material, in_camera, false)
+	: GameEntity(in_mesh, in_material, in_camera, false, false)
 {
 	m_rigidBody = rigidBody;
 }

@@ -73,9 +73,8 @@ std::shared_ptr<PxRigidDynamic> PhysXManager::CreateDynamic(const PxTransform& t
 	// Sets a custom destructor that might cause a mem leak. PhysX destructors are private so this is the only way to utilize smart pointers
 	// I could use raw pointers, but I feel that using raw pointers on objects that are referenced outside of this class will go against our current
 	// coding conventions. If this ends up causing performance issues having the bonus Lambda then we can rotate to using raw pointers
-	std::shared_ptr<PxRigidDynamic> dynamic(PxCreateDynamic(*m_physics, t, geometry, *m_materialTest, 10.0f), [=](PxRigidDynamic* f)
-		{
-			
+	std::shared_ptr<PxRigidDynamic> dynamic(PxCreateDynamic(*m_physics, t, geometry, *m_materialTest, 10.0f), [](PxRigidDynamic* f) { 
+		//PX_RELEASE(f); 
 		});;
 
 	dynamic->setAngularDamping(0.5f);
@@ -86,9 +85,9 @@ std::shared_ptr<PxRigidDynamic> PhysXManager::CreateDynamic(const PxTransform& t
 
 std::shared_ptr<PxRigidStatic> PhysXManager::CreateStatic(const PxTransform& t, const PxGeometry& geometry)
 {
-	std::shared_ptr<PxRigidStatic> rigidStatic(PxCreateStatic(*m_physics, t, geometry, *m_materialTest), [=](PxRigidStatic* f)
+	std::shared_ptr<PxRigidStatic> rigidStatic(PxCreateStatic(*m_physics, t, geometry, *m_materialTest), [](PxRigidStatic* f)
 	{
-
+		//PX_RELEASE(f);
 	});;
 
 	m_scene->addActor(*rigidStatic);

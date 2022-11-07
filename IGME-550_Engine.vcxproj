@@ -78,6 +78,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LibraryPath>$(ProjectDir)packages\AssimpNet.4.1.0\lib;$(SolutionDir)Vendor\PhysX\lib;$(LibraryPath)</LibraryPath>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)/Vendor/imgui-1.87;$(SolutionDir)Vendor/PhysX;</IncludePath>
+    <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LibraryPath>$(ProjectDir)packages\AssimpNet.4.1.0\lib;$(LibraryPath)</LibraryPath>

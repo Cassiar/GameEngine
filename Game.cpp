@@ -42,7 +42,7 @@ Game::Game(HINSTANCE hInstance)
 	printf("Console window created successfully.  Feel free to printf() here.\n");
 #endif
 	printf("%i, %i", this->width, this->height);
-	camera = std::make_shared<Camera>(XMFLOAT3(0.0f, 5.0f, -5.0f), (float)this->width / this->height, XM_PIDIV4, 0.1f, 1000.0f);
+	camera = std::make_shared<Camera>(XMFLOAT3(0.0f, 6.5f, -15), (float)this->width / this->height, XM_PIDIV4, 0.1f, 1000.0f);
 	camera->GetTransform()->Rotate(XMFLOAT3(XM_PIDIV4, 0, 0));
 	camera->UpdateViewMatrix();
 	camera->GetViewMatrix();
