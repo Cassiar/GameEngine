@@ -116,15 +116,18 @@ void Collider::CalcCenterPoint() {
 
 	m_preCheckRadiusSquared = powf(maxPoint.x - m_centerPoint.x, 2.0f) + powf(maxPoint.y - m_centerPoint.y, 2.0f) + powf(maxPoint.z - m_centerPoint.z, 2.0f);
 
+	
 	if (m_sphere)
 	{
-		float scale = sqrtf(m_preCheckRadiusSquared);
 		XMFLOAT3 parentScale = m_sphere->GetParent()->GetScale();
-		m_sphere->SetScale(1.0f, 1.0f, 1.0f);
-		m_sphere->Scale(scale / parentScale.x, scale / parentScale.y, scale / parentScale.z);
+		float scale = sqrtf(m_preCheckRadiusSquared);
+		
+		//m_sphere->SetScale(1.0f, 1.0f, 1.0f);
+		m_sphere->SetScale(scale / parentScale.x, scale / parentScale.y, scale / parentScale.z);
 	}
 
-	if (m_cube) {
+	if (m_cube && m_sphere) {
+		m_cube->SetPosition(m_sphere->GetParent()->GetPosition());
 		m_cube->SetScale(XMFLOAT3(m_halfWidth, m_halfHeight, m_halfDepth));
 	}
 }

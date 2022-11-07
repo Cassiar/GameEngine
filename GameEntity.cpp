@@ -39,7 +39,7 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 		m_cube->SetDebugRast(rast);
 
 		transform.AddChild(m_sphere->GetTransform());
-		transform.AddChild(m_cube->GetTransform());
+		//transform.AddChild(m_cube->GetTransform());
 
 		m_collider = std::make_shared<Collider>(in_mesh, &transform, m_sphere->GetTransform(), m_cube->GetTransform());
 	}
