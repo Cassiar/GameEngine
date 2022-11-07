@@ -1,6 +1,8 @@
 #pragma once
 
 #include <DirectXMath.h>
+#include <PxConfig.h>
+#include <PxPhysicsAPI.h>
 #include <vector>
 
 class Transform
@@ -60,6 +62,7 @@ public:
 	void SetScale(float x, float y, float z);
 	void SetScale(DirectX::XMFLOAT3 newScale);
 	void SetTransformsFromMatrix(DirectX::XMFLOAT4X4 newWorldMatrix);
+	void SetTransformsFromPhysX(physx::PxTransform newTransform);
 
 	DirectX::XMFLOAT3 GetPosition() const { return m_v3Position; }
 	DirectX::XMFLOAT3 GetEulerAngles() const { return m_v3EulerAngles; }

@@ -4,7 +4,10 @@ using namespace physx;
 
 std::shared_ptr<PhysXManager> PhysXManager::s_instance;
 
-PhysXManager::PhysXManager() {}
+PhysXManager::PhysXManager() 
+{ 
+	Init(); 
+}
 
 PhysXManager::~PhysXManager()
 {
@@ -58,42 +61,38 @@ void PhysXManager::Init()
 
 	m_materialTest = m_physics->createMaterial(0.5f, 0.5f, 0.6f);
 
-	PxRigidStatic* groundPlane = PxCreatePlane(*m_physics, PxPlane(0, 1, 0, 0), *m_materialTest);
-	m_scene->addActor(*groundPlane);
+	//PxRigidStatic* groundPlane = PxCreatePlane(*m_physics, PxPlane(0, 1, 0, 0), *m_materialTest);
+	//m_scene->addActor(*groundPlane);
 
-	for (PxU32 i = 0; i < 5; i++)
-		CreateStack(PxTransform(PxVec3(0, 0, stackZ -= 10.0f)), 10, 2.0f);
-
-	CreateDynamic(PxTransform(PxVec3(0, 40, 100)), PxSphereGeometry(10), PxVec3(0, -50, -100));
+	//CreateDynamic(PxTransform(PxVec3(0, 40, 100)), PxSphereGeometry(10), PxVec3(0, -50, -100));
 
 }
 
-
-void PhysXManager::CreateStack(const PxTransform& t, PxU32 size, PxReal halfExtent)
+std::shared_ptr<PxRigidDynamic> PhysXManager::CreateDynamic(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity)
 {
-	PxShape* shape = m_physics->createShape(PxBoxGeometry(halfExtent, halfExtent, halfExtent), *m_materialTest);
-	for (PxU32 i = 0; i < size; i++)
-	{
-		for (PxU32 j = 0; j < size - i; j++)
+	// Sets a custom destructor that might cause a mem leak. PhysX destructors are private so this is the only way to utilize smart pointers
+	// I could use raw pointers, but I feel that using raw pointers on objects that are referenced outside of this class will go against our current
+	// coding conventions. If this ends up causing performance issues having the bonus Lambda then we can rotate to using raw pointers
+	std::shared_ptr<PxRigidDynamic> dynamic(PxCreateDynamic(*m_physics, t, geometry, *m_materialTest, 10.0f), [=](PxRigidDynamic* f)
 		{
-			PxTransform localTm(PxVec3(PxReal(j * 2) - PxReal(size - i), PxReal(i * 2 + 1), 0) * halfExtent);
-			PxRigidDynamic* body = m_physics->createRigidDynamic(t.transform(localTm));
-			body->attachShape(*shape);
-			PxRigidBodyExt::updateMassAndInertia(*body, 10.0f);
-			m_scene->addActor(*body);
-		}
-	}
-	shape->release();
-}
+			
+		});;
 
-
-PxRigidDynamic* PhysXManager::CreateDynamic(const PxTransform& t, const PxGeometry& geometry, const PxVec3& velocity)
-{
-	PxRigidDynamic* dynamic = PxCreateDynamic(*m_physics, t, geometry, *m_materialTest, 10.0f);
 	dynamic->setAngularDamping(0.5f);
 	dynamic->setLinearVelocity(velocity);
 	m_scene->addActor(*dynamic);
 	return dynamic;
+}
+
+std::shared_ptr<PxRigidStatic> PhysXManager::CreateStatic(const PxTransform& t, const PxGeometry& geometry)
+{
+	std::shared_ptr<PxRigidStatic> rigidStatic(PxCreateStatic(*m_physics, t, geometry, *m_materialTest), [=](PxRigidStatic* f)
+	{
+
+	});;
+
+	m_scene->addActor(*rigidStatic);
+	return rigidStatic;
 }
 
 std::shared_ptr<PhysXManager> PhysXManager::GetInstance()
@@ -108,6 +107,6 @@ std::shared_ptr<PhysXManager> PhysXManager::GetInstance()
 
 void PhysXManager::UpdatePhysics(float deltaTime, bool interactive)
 {
-	m_scene->simulate(deltaTime);
+	m_scene->simulate(deltaTime);//FIXED_UPDATE_TIME);
 	m_scene->fetchResults(true);
 }

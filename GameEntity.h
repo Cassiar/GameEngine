@@ -13,13 +13,13 @@
 #include "Camera.h"
 #include "Collider.h"
 #include "Material.h"
-#include "RigidBody.h"
+#include "PhysXManager.h"
 
 class GameEntity
 {
 public:
-	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, bool isDebugEntity = false);
-	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<RigidBody> rigidBody, std::shared_ptr<Collider> collider);
+	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, bool hasPhysics = false, bool isDebugEntity = false);
+	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<physx::PxRigidActor> rigidBody);
 	~GameEntity();
 
 	//get pointer to mesh
@@ -55,7 +55,8 @@ private:
 	Transform transform;
 	std::shared_ptr<Material> material;
 
-	std::shared_ptr<RigidBody> m_rigidBody;
+	//Generic so that we can declare it as either a PxRigidDynamic or a PxRigidStatic
+	std::shared_ptr<physx::PxRigidActor> m_rigidBody;
 	std::shared_ptr<Collider> m_collider;
 
 	std::shared_ptr<GameEntity> m_sphere;

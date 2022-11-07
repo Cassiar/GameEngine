@@ -78,6 +78,8 @@ public:
 	void MakePointsDirty() { m_pointsDirty = true; }
 	void MakeHalvesDirty() { m_pointsDirty = true; }
 
+	DirectX::XMFLOAT3 GetHalfWidths() { return DirectX::XMFLOAT3(m_halfWidth, m_halfHeight, m_halfDepth); }
+
 	void static SetDebugSphereMeshRadius(float newRadius) { m_debugSphereMeshRadius = newRadius; }
 };
 

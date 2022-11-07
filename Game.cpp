@@ -15,6 +15,7 @@
 
 // For the DirectX Math library
 using namespace DirectX;
+using namespace physx;
 
 float Collider::m_debugSphereMeshRadius;
 
@@ -92,6 +93,8 @@ void Game::Init()
 	AssetManager::InitializeSingleton(device, context);
 	m_AssetManager = AssetManager::GetInstance();
 
+	m_PhysicsManager = PhysXManager::GetInstance();
+
 	//load create the shapes and skybox
 	CreateBasicGeometry();
 
@@ -105,83 +108,22 @@ void Game::Init()
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
-// --------------------------------------------------------
-// Creates the geometry we're going to draw - a single triangle for now
-// --------------------------------------------------------
 void Game::CreateBasicGeometry()
 {
 	std::vector<std::shared_ptr<Mesh>> meshes = m_AssetManager->GetMeshes();
 	std::vector<std::shared_ptr<Material>> materials = m_AssetManager->GetMaterials();
-
-	std::vector<Vertex> verts = meshes[3]->GetVerticies();
-
-	XMFLOAT4 currPos = XMFLOAT4(verts[0].Position.x, verts[0].Position.y, verts[0].Position.z, 1.0f);
-
-	//Inefficient could probs be better done through a compute shader
-	float xMax = currPos.x;
-	float xMin = currPos.x;
-
-	float yMax = currPos.y;
-	float yMin = currPos.y;
-
-	float zMax = currPos.z;
-	float zMin = currPos.z;
-	for (int i = 1; i < verts.size(); i++)
-	{
-		currPos = XMFLOAT4(verts[i].Position.x, verts[i].Position.y, verts[i].Position.z, 1.0f);
-
-		xMax = currPos.x > xMax ? currPos.x : xMax;
-		xMin = currPos.x < xMin ? currPos.x : xMin;
-
-		yMax = currPos.y > yMax ? currPos.y : yMax;
-		yMin = currPos.y < yMin ? currPos.y : yMin;
-
-		zMax = currPos.z > zMax ? currPos.z : zMax;
-		zMin = currPos.z < zMin ? currPos.z : zMin;
-	}
-	float temp = powf((zMax - zMin) / 2.0f, 2);
-	float radius = sqrtf(powf((xMax - xMin) / 2.0f, 2) + powf((yMax - yMin) / 2.0f, 2) + powf((zMax - zMin) / 2.0f, 2));
-	Collider::SetDebugSphereMeshRadius(radius);
   
 	std::shared_ptr<SimpleVertexShader> vertexShader = m_AssetManager->GetVertexShader("vertexShader");
 	std::shared_ptr<SimplePixelShader> debugPixelShader = m_AssetManager->GetPixelShader("debugPixelShader");
 
 	//create some entities
 	//cube direectly in front of camera
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[0], materials[0], camera));
-	//sphere to left of cube															   
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[3], materials[3], camera));
-	//helix to right																	   
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[3], camera));
-	//helix below cube																	   
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[2], materials[2], camera));
-	//cylinder one behind cube															   
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[1], camera));
-	//cylinder above cube																   
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[1], materials[1], camera));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[0], materials[0], camera, true));
 
-	//m_EntityManager->GetEntity(2)->GetTransform()->AddChild(m_EntityManager->GetEntity(5)->GetTransform());
-
-	//big plane to act as floor
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[4], materials[2], camera));
-
-	//sphere to match direction light position
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[3], materials[0], camera));
-
-	//toon pirate ship
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(m_AssetManager->GetToonMesh(0), m_AssetManager->GetToonMaterial(0), camera));
-
-	//move objects so there isn't overlap
-	m_EntityManager->GetEntity(0)->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));
-	m_EntityManager->GetEntity(1)->GetTransform()->MoveAbsolute(XMFLOAT3(5.0f, 10.0f, 5.0f));
-	m_EntityManager->GetEntity(2)->GetTransform()->MoveAbsolute(XMFLOAT3(7.0f, 3.0f, 3.0f));
-	m_EntityManager->GetEntity(3)->GetTransform()->MoveAbsolute(XMFLOAT3(0.0f, 0.0f, -5.0f));
-	m_EntityManager->GetEntity(4)->GetTransform()->MoveAbsolute(XMFLOAT3(4.0f, 0.0f, -4.0f));
-	m_EntityManager->GetEntity(5)->GetTransform()->MoveAbsolute(XMFLOAT3(2.5f, 0.0f, -2.5f));
-	m_EntityManager->GetEntity(6)->GetTransform()->MoveAbsolute(XMFLOAT3(0.0f, 0.0f, 5.0f)); //move left and down
-	m_EntityManager->GetEntity(6)->GetTransform()->Rotate(XMFLOAT3(-1 * XM_PIDIV2, 0, 0));
-	m_EntityManager->GetEntity(6)->GetTransform()->Scale(20);//scale up a bunch to act as floor
-
+	//Ground plane
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[4], materials[0], camera, m_PhysicsManager->CreateStatic(PxTransform(PxVec3(0, -10, 0)), PxBoxGeometry(20, .05, 20))));
+	
+	m_EntityManager->GetEntity(1)->GetTransform()->SetScale(20.0f, 1.0f, 20.0f);
 
 	//create sky obj
 	sky = std::make_shared<Sky>(meshes[0], m_AssetManager->GetSampler("basicSampler"), m_AssetManager->GetSRV(SkyBox, 0), device, context, m_AssetManager->GetVertexShader("skyVertexShader"), m_AssetManager->GetPixelShader("skyPixelShader"));
@@ -1160,19 +1102,9 @@ void Game::Update(float deltaTime, float totalTime)
 	}
 
 	//make objects move, scale, or rotate
-	m_EntityManager->GetEntity(0)->GetTransform()->MoveRelative(XMFLOAT3(-sin(totalTime * 2.0f) * 0.25f, 0, 0));
-	m_EntityManager->GetEntity(1)->GetTransform()->MoveRelative(XMFLOAT3(0, sin(totalTime) * 0.25f, 0));
-
-	m_EntityManager->GetEntity(2)->GetTransform()->Rotate(XMFLOAT3(0, 0, deltaTime * 0.5f));
-	m_EntityManager->GetEntity(3)->GetTransform()->Rotate(XMFLOAT3(0, deltaTime * 0.5f, 0));
-	m_EntityManager->GetEntity(4)->GetTransform()->Rotate(XMFLOAT3(deltaTime * 0.5f, 0, 0));
-
+	//m_EntityManager->GetEntity(0)->GetTransform()->MoveRelative(XMFLOAT3(-sin(totalTime * 2.0f) * 0.25f, 0, 0));
 	m_EntityManager->UpdateEntities(deltaTime);
-
-	m_EntityManager->GetEntity(7)->GetTransform()->SetPosition(lights[0].Position);
-
-	//rotate pirate ship around
-	m_EntityManager->GetEntity(8)->GetTransform()->Rotate(XMFLOAT3(0, deltaTime * 0.5f, 0));
+	m_PhysicsManager->UpdatePhysics(deltaTime);
 
 	CreateGui(deltaTime);
 

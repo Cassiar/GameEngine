@@ -79,6 +79,7 @@ private:
 
 	std::shared_ptr<EntityManager> m_EntityManager;
 	std::shared_ptr<AssetManager> m_AssetManager;
+	std::shared_ptr<PhysXManager> m_PhysicsManager;
 
 	std::shared_ptr<Camera> camera;
 

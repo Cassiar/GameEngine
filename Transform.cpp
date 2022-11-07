@@ -1,6 +1,7 @@
 #include "Transform.h"
 
 using namespace DirectX;
+using namespace physx;
 
 Transform::Transform()
 {
@@ -140,6 +141,27 @@ void Transform::SetTransformsFromMatrix(DirectX::XMFLOAT4X4 newWorldMatrix)
 
 	XMStoreFloat3(&m_v3Position, position);
 	XMStoreFloat3(&m_v3Scale, scale);
+
+	m_bRecalcWorld = true;
+	m_bRecalcNormals = true;
+	MarkChildrenDirty();
+}
+
+void Transform::SetTransformsFromPhysX(PxTransform newTransform)
+{
+	PxVec3 pos = newTransform.p;
+	PxQuat rot = newTransform.q;
+
+	m_v3Position = XMFLOAT3(pos.x, pos.y, pos.z);
+	
+	m_v4RotationQuat.x = rot.x;
+	m_v4RotationQuat.y = rot.y;
+	m_v4RotationQuat.z = rot.z; 
+	m_v4RotationQuat.w = rot.w;
+	m_v3EulerAngles = QuatToEuler(m_v4RotationQuat);
+
+	// nshields TODO - Doesn't currently update the scale, but I don't think this is a big deal for the moment
+	// XMStoreFloat3(&m_v3Scale, scale);
 
 	m_bRecalcWorld = true;
 	m_bRecalcNormals = true;

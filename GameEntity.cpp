@@ -5,14 +5,14 @@
 bool g_drawDebugSpheresDefault = true;
 bool g_drawDebugCubesDefault = true;
 
-GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, bool isDebugEntity)
+using namespace physx;
+
+GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, bool hasPhysics, bool isDebugEntity)
 {
 	mesh = in_mesh;
 	material = in_material;
 	camera = in_camera;
 	transform = Transform();
-
-	m_rigidBody = std::make_shared<RigidBody>(&transform);
 
 	if (!isDebugEntity) {
 		std::shared_ptr<AssetManager> assetManager = AssetManager::GetInstance();
@@ -24,8 +24,8 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 			assetManager->GetVertexShader("vertexShader"),
 			assetManager->GetPixelShader("debugPixelShader"));
 
-		m_sphere = std::make_shared<GameEntity>(assetManager->GetMesh(3), debugMat, in_camera, true);
-		m_cube = std::make_shared<GameEntity>(assetManager->GetMesh(0), debugMat2, in_camera, true);
+		m_sphere = std::make_shared<GameEntity>(assetManager->GetMesh(3), debugMat, in_camera, false, true);
+		m_cube = std::make_shared<GameEntity>(assetManager->GetMesh(0), debugMat2, in_camera, false, true);
 
 		//create rasterizer state
 		D3D11_RASTERIZER_DESC wireFrameRastDesc = {};
@@ -50,16 +50,23 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 		m_collider = std::make_shared<Collider>(in_mesh, &transform);
 	}
 
+	if (hasPhysics && !m_rigidBody)
+	{
+		// Assumes dynamic. If User wants static they can pass it in
+		std::shared_ptr<PhysXManager> instance = PhysXManager::GetInstance();
+		DirectX::XMFLOAT3 halves = m_collider->GetHalfWidths();
+		m_rigidBody = instance->CreateDynamic(PxTransform(0, 40, 0), PxBoxGeometry(halves.x,halves.y,halves.z));
+	}
+
 	m_drawDebugSphere = g_drawDebugSpheresDefault;
 	m_drawDebugSphere = g_drawDebugCubesDefault;
 	m_isDebugEntity = isDebugEntity;
 }
 
-GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<RigidBody> rigidBody, std::shared_ptr<Collider> collider) 
+GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<PxRigidActor> rigidBody) 
 	: GameEntity(in_mesh, in_material, in_camera, false)
 {
 	m_rigidBody = rigidBody;
-	m_collider = collider;
 }
 
 GameEntity::~GameEntity()
@@ -132,7 +139,7 @@ void GameEntity::Update(float dt, std::vector<std::shared_ptr<GameEntity>>& coll
 {
 	if (m_rigidBody)
 	{
-		m_rigidBody->UpdateTransform(dt);
+		transform.SetTransformsFromPhysX(m_rigidBody->getGlobalPose());
 	}
 
 	// Implement a singleton collision manager allowing for ease of collision checks

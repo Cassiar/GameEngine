@@ -8,6 +8,7 @@
 
 #define PX_RELEASE(x)	if(x)	{ x->release(); x = NULL;	}
 #define PX_PHYSX_STATIC_LIB
+#define FIXED_UPDATE_TIME 1.0f / 60.0f
 
 #ifdef DEBUG
 #define USE_PVD	 true;
@@ -15,7 +16,8 @@
 #endif // DEBUG
 
 #ifndef USE_PVD
-#define USE_PVD  false;
+#define USE_PVD  true;
+#define PVD_HOST "127.0.0.1"
 #endif // !USE_PVD
 
 class PhysXManager
@@ -41,11 +43,9 @@ private:
 #endif //  USE_PVD
 
 	physx::PxReal stackZ = 10.0f;
-	DirectX::XMFLOAT3 m_gravity = { 0.0f,9.81f,0.0f };
+	DirectX::XMFLOAT3 m_gravity = { 0.0f, -5.0f, 0.0f };
 
 	void Init();
-	void CreateStack(const physx::PxTransform& t, physx::PxU32 size, physx::PxReal halfExtent);
-	physx::PxRigidDynamic* CreateDynamic(const physx::PxTransform& t, const physx::PxGeometry& geometry, const physx::PxVec3& velocity = physx::PxVec3(0));
 	
 public:
 	~PhysXManager();
@@ -53,5 +53,8 @@ public:
 	static std::shared_ptr<PhysXManager> GetInstance();
 
 	void UpdatePhysics(float deltaTime, bool interactive = false);
+
+	std::shared_ptr<physx::PxRigidDynamic> CreateDynamic(const physx::PxTransform& t, const physx::PxGeometry& geometry, const physx::PxVec3& velocity = physx::PxVec3(0));
+	std::shared_ptr<physx::PxRigidStatic> CreateStatic(const physx::PxTransform& t, const physx::PxGeometry& geometry);
 };
 
