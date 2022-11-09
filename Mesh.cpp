@@ -13,6 +13,7 @@ Mesh::Mesh(Vertex* verts, unsigned int numVerts, unsigned int* indices, unsigned
 {
     this->numIndices = numIndices;
     this->context = context;
+	this->isPmx = false;
 	
 	CalculateTangents(verts, numVerts, indices, numIndices);
 	CreateBuffers(verts, numVerts, indices, device);
@@ -20,6 +21,7 @@ Mesh::Mesh(Vertex* verts, unsigned int numVerts, unsigned int* indices, unsigned
 
 Mesh::Mesh(const char* path, Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> context)
 {
+	this->isPmx = false;
 	this->context = context;
 
 	//from open asset importer https://assimp-docs.readthedocs.io/en/latest/usage/use_the_lib.html
@@ -332,7 +334,7 @@ Mesh::Mesh(const char* path, Microsoft::WRL::ComPtr<ID3D11Device> device, Micros
 
 
 Mesh::Mesh(const char* path, const char* texpath, Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> in_context) {
-	this->isPmx = false;
+	this->isPmx = true;
 	model = std::make_shared<saba::PMXModel>();
 	model->Load(path, texpath);
 
@@ -436,12 +438,32 @@ void Mesh::Draw()
 	//}
 	context->IASetIndexBuffer(indexBuf.Get(), format, 0);
 
-	// Finally do the actual drawing
-	// Once per object
-	context->DrawIndexed(
-		numIndices,     // The number of indices to use (we could draw a subset if we wanted)
-		0,     // Offset to the first index we want to use
-		0);    // Offset to add to each index when looking up vertices
+	if (isPmx) {
+		size_t numSubMeshes = model->GetSubMeshCount();
+		for (int i = 0; i < numSubMeshes; i++) {
+			const auto& subMesh = model->GetSubMeshes()[i];	
+			UINT stride = sizeof(Vertex);
+			UINT offset = 0;
+			context->IASetVertexBuffers(0, 1, vertBuf.GetAddressOf(), &stride, &offset);
+			//if (isPmx) {
+			//	context->IASetIndexBuffer(indexBuf.Get(), format, 0);
+			//	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			//}
+			//else {
+			//	context->IASetIndexBuffer(indexBuf.Get(), DXGI_FORMAT_R32_UINT, 0);
+			//}
+			context->IASetIndexBuffer(indexBuf.Get(), format, 0);
+			// Finally do the actual drawing
+			// Once per object
+			context->DrawIndexed(
+				subMesh.m_vertexCount,     // The number of indices to use (we could draw a subset if we wanted)
+				subMesh.m_beginIndex,     // Offset to the first index we want to use
+				0);    // Offset to add to each index when looking up vertices
+		}
+	}
+	else {
+		context->DrawIndexed(numIndices, 0, 0);
+	}
 }
 
 void Mesh::Draw(Microsoft::WRL::ComPtr<ID3D11RasterizerState> customRast)
@@ -455,6 +477,10 @@ void Mesh::Draw(Microsoft::WRL::ComPtr<ID3D11RasterizerState> customRast)
 
 bool Mesh::IsPmx() {
 	return isPmx;
+}
+
+DXGI_FORMAT Mesh::GetFormat() {
+	return format;
 }
 
 //helper methods

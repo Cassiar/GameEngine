@@ -327,9 +327,11 @@ void Game::CreateBasicGeometry()
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/sphere.obj").c_str(), device, context));
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/quad.obj").c_str(), device, context));
   
-	std::vector<Vertex> verts = meshes[3]->GetVerticies();
+	//std::vector<Vertex> verts = meshes[3]->GetVerticies();
 
 	XMFLOAT4 currPos = XMFLOAT4(verts[0].Position.x, verts[0].Position.y, verts[0].Position.z, 1.0f);
+
+
 
 	//Inefficient could probs be better done through a compute shader
 	float xMax = currPos.x;
@@ -389,7 +391,7 @@ void Game::CreateBasicGeometry()
 	//toon pirate ship
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(toonMeshes[0], toonMaterials[0], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
 
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(sabaLisa, toonMaterials[1], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(sabaLisa, camera, device, context, vertexShader, toonPixelShader));
 
 	//move objects so there isn't overlap
 	m_EntityManager->GetEntity(0)->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));
@@ -1478,39 +1480,47 @@ void Game::Draw(float deltaTime, float totalTime)
 		for (int j = 0; j < 9; j++) {
 			context->PSSetShaderResources(j, 1, pSRV);
 		}
-		
-		std::shared_ptr<SimpleVertexShader> vs = entity->GetMaterial()->GetVertexShader();
-		//send shadow info to vertex shader
-		vs->SetMatrix4x4("lightView", shadowViewMat);
-		//vs->SetData("lightView", &sh)
-		vs->SetMatrix4x4("lightProj", shadowProjMat);
-		vs->SetMatrix4x4("spotLightView", spotShadowViewMat);
-		vs->SetMatrix4x4("spotLightProj", spotShadowProjMat);
-		/*for (int j = 0; j < lights.size(); j++) {
-			if (lights[j].Type == LIGHT_TYPE_POINT) {
-				lightPoses[j] = lights[j].Position;
-			}
-		}*/
 
-		//vs->SetData("lightPoses", &lightPoses[0], sizeof(XMFLOAT3) * (int)lightPoses.size());
+		if (entity->GetMesh()->IsPmx()) {
+			entity->DrawPMX(entity->GetTransform()->GetWorldMatrix(), camera->GetViewMatrix(), camera->GetProjectionMatrix(), 
+				lights[0].Color, lights[0].Direction, 
+				backBufferRTV, depthStencilView, width, height);
+		}
+		else {
 
-		std::shared_ptr<SimplePixelShader> ps = entity->GetMaterial()->GetPixelShader();
-		//send light data to shaders
-		ps->SetInt("numLights", static_cast<int>(lights.size()));
-		ps->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
-		ps->SetShaderResourceView("ShadowMap", shadowSRV);
-		ps->SetShaderResourceView("ShadowBox1", shadowBoxSRVs[0]);
-		ps->SetShaderResourceView("ShadowBox2", shadowBoxSRVs[1]);
-		//ps->SetShaderResourceView("ShadowBox", &shadowBoxSRVs[0]);// , sizeof(shadowBoxSRVs)* (int)shadowBoxSRVs.size());
-		//context->PSSetShaderResources(7, 1, &shadowBoxSRVs[0]);
-		//context->PSSetShaderResources(8, 1, &shadowBoxSRVs[1]);
-		ps->SetShaderResourceView("ShadowSpotMap", shadowSpotSRV);
+			std::shared_ptr<SimpleVertexShader> vs = entity->GetMaterial()->GetVertexShader();
+			//send shadow info to vertex shader
+			vs->SetMatrix4x4("lightView", shadowViewMat);
+			//vs->SetData("lightView", &sh)
+			vs->SetMatrix4x4("lightProj", shadowProjMat);
+			vs->SetMatrix4x4("spotLightView", spotShadowViewMat);
+			vs->SetMatrix4x4("spotLightProj", spotShadowProjMat);
+			/*for (int j = 0; j < lights.size(); j++) {
+				if (lights[j].Type == LIGHT_TYPE_POINT) {
+					lightPoses[j] = lights[j].Position;
+				}
+			}*/
 
-		ps->SetFloat3("ambientTerm", ambientTerm);
-		ps->SetSamplerState("ShadowSampler", shadowSampler);
-		entity->GetMaterial()->PrepareMaterial();
+			//vs->SetData("lightPoses", &lightPoses[0], sizeof(XMFLOAT3) * (int)lightPoses.size());
 
-		entity->Draw();
+			std::shared_ptr<SimplePixelShader> ps = entity->GetMaterial()->GetPixelShader();
+			//send light data to shaders
+			ps->SetInt("numLights", static_cast<int>(lights.size()));
+			ps->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
+			ps->SetShaderResourceView("ShadowMap", shadowSRV);
+			ps->SetShaderResourceView("ShadowBox1", shadowBoxSRVs[0]);
+			ps->SetShaderResourceView("ShadowBox2", shadowBoxSRVs[1]);
+			//ps->SetShaderResourceView("ShadowBox", &shadowBoxSRVs[0]);// , sizeof(shadowBoxSRVs)* (int)shadowBoxSRVs.size());
+			//context->PSSetShaderResources(7, 1, &shadowBoxSRVs[0]);
+			//context->PSSetShaderResources(8, 1, &shadowBoxSRVs[1]);
+			ps->SetShaderResourceView("ShadowSpotMap", shadowSpotSRV);
+
+			ps->SetFloat3("ambientTerm", ambientTerm);
+			ps->SetSamplerState("ShadowSampler", shadowSampler);
+			entity->GetMaterial()->PrepareMaterial();
+
+			entity->Draw();
+		}
 	}
 
 	//sabaEntity->Draw();

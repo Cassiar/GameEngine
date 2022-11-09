@@ -46,5 +46,6 @@ public:
 	void Draw();
 	void Draw(Microsoft::WRL::ComPtr<ID3D11RasterizerState> customRast);
 	bool IsPmx();
+	DXGI_FORMAT GetFormat();
 	std::shared_ptr<saba::PMXModel> GetModel();
 };

@@ -18,6 +18,7 @@
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
 
 #include <Saba/Model/MMD/PMXModel.h>
+#include <Saba/Model/MMD/VMDFile.h>
 
 //handles updating game logic and stores objects that are drawn
 class Game 
@@ -178,5 +179,6 @@ private:
 
 	std::shared_ptr<Mesh> sabaLisa;
 	std::shared_ptr<GameEntity> sabaEntity;
+	std::shared_ptr<VMDFile> anim;
 };
 
