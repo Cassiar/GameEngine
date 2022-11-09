@@ -109,18 +109,18 @@ void AssetManager::InitTextures()
 void AssetManager::InitShaders()
 {
 	//using Chris's simple shader
-	m_vertexShaders["vertexShader"]				= MakeSimpleVertexShader(L"VertexShader.cso");
-	m_vertexShaders["skyVertexShader"]			= MakeSimpleVertexShader(L"SkyVertexShader.cso");
-	m_vertexShaders["shadowVertexShader"]		= MakeSimpleVertexShader(L"ShadowVertexShader.cso");
-	m_vertexShaders["ppLightRaysVertexShader"]	= MakeSimpleVertexShader(L"PostProcessLightRaysVertexShader.cso");
+	AddVertShaderToMap("vertexShader",				"VertexShader.cso");
+	AddVertShaderToMap("skyVertexShader",			"SkyVertexShader.cso");
+	AddVertShaderToMap("shadowVertexShader",		"ShadowVertexShader.cso");
+	AddVertShaderToMap("ppLightRaysVertexShader",	"PostProcessLightRaysVertexShader.cso");
 
-	m_pixelShaders["pixelShader"]				= MakeSimplePixelShader(L"PixelShader.cso");
-	m_pixelShaders["debugPixelShader"]			= MakeSimplePixelShader(L"DebugColorShader.cso");
-	m_pixelShaders["skyPixelShader"]			= MakeSimplePixelShader(L"SkyPixelShader.cso");
-	m_pixelShaders["shadowPixelShader"]			= MakeSimplePixelShader(L"ShadowPixelShader.cso");
-	m_pixelShaders["toonPixelShader"]			= MakeSimplePixelShader(L"ToonPixelShader.cso");
-	m_pixelShaders["ppLightRaysPixelShader"]	= MakeSimplePixelShader(L"PostProcessLightRaysPixelShader.cso");
-	m_pixelShaders["a5PixelShader"]				= MakeSimplePixelShader(L"A5CustomPS.cso");
+	AddPixelShaderToMap("pixelShader",				"PixelShader.cso");
+	AddPixelShaderToMap("debugPixelShader",			"DebugColorShader.cso");
+	AddPixelShaderToMap("skyPixelShader",			"SkyPixelShader.cso");
+	AddPixelShaderToMap("shadowPixelShader",		"ShadowPixelShader.cso");
+	AddPixelShaderToMap("toonPixelShader",			"ToonPixelShader.cso");
+	AddPixelShaderToMap("ppLightRaysPixelShader",	"PostProcessLightRaysPixelShader.cso");
+	AddPixelShaderToMap("a5PixelShader",			"A5CustomPS.cso");
 }
 
 void AssetManager::InitMeshes()
@@ -341,9 +341,21 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::GetSRV(SRVMaps ma
 	return m_srvMaps[map][srvIndex];
 }
 
+void AssetManager::AddVertShaderToMap(std::string key, std::string filename)
+{
+	m_vertexShaders[key] = MakeSimpleVertexShader(StringToWide(filename));
+	m_vertShaderCsoNames[key] = filename;
+}
+
 std::shared_ptr<SimpleVertexShader> AssetManager::MakeSimpleVertexShader(std::wstring csoName)
 {
 	return std::make_shared<SimpleVertexShader>(m_device, m_context, GetFullPathTo_Wide(csoName).c_str());
+}
+
+void AssetManager::AddPixelShaderToMap(std::string key, std::string filename)
+{
+	m_pixelShaders[key] = MakeSimpleVertexShader(StringToWide(filename));
+	m_pixelShaderCsoNames[key] = filename;
 }
 
 std::shared_ptr<SimplePixelShader> AssetManager::MakeSimplePixelShader(std::wstring csoName)
@@ -380,6 +392,8 @@ std::shared_ptr<Material> AssetManager::ReadMaterialFromFile(std::wstring path) 
 
 	//std::cout << temp << " success!" << std::endl;
 	delete[] readC;
+
+	return m_materials[0];
 }
 
 ///------------------ Written by Chris Cascioli ------------------------------///

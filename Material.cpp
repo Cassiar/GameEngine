@@ -35,9 +35,10 @@ std::shared_ptr<SimpleVertexShader> Material::GetVertexShader()
     return vs;
 }
 
-void Material::SetVertexShader(std::shared_ptr<SimpleVertexShader> in_vs)
+void Material::SetVertexShader(std::shared_ptr<SimpleVertexShader> in_vs, std::string filename)
 {
     vs = in_vs;
+    vsFileName = filename;
 }
 
 std::shared_ptr<SimplePixelShader> Material::GetPixelShader()
@@ -45,9 +46,10 @@ std::shared_ptr<SimplePixelShader> Material::GetPixelShader()
     return ps;
 }
 
-void Material::SetPixelShader(std::shared_ptr<SimplePixelShader> in_ps)
+void Material::SetPixelShader(std::shared_ptr<SimplePixelShader> in_ps, std::string filename)
 {
     ps = in_ps;
+    psFileName = filename;
 }
 
 void Material::AddTextureSRV(std::string name, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv, std::string filename)

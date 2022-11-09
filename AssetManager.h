@@ -35,7 +35,10 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_context;
 
 	std::unordered_map<std::string, std::shared_ptr<SimpleVertexShader>> m_vertexShaders;
+	std::unordered_map<std::string, std::string> m_vertShaderCsoNames;
+
 	std::unordered_map<std::string, std::shared_ptr<SimplePixelShader>> m_pixelShaders;
+	std::unordered_map<std::string, std::string> m_pixelShaderCsoNames;
 
 	std::unordered_map<SRVMaps, std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>> m_srvMaps;
 	std::unordered_map<SRVMaps, std::vector<std::string>> m_srvFileNames;
@@ -111,7 +114,10 @@ public:
 	//void AddSRVToMap(SRVMaps mapTypeName, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srvToAdd);
 	void AddSRVToMap(SRVMaps mapTypeName, std::wstring srvPath);
 
+	void AddVertShaderToMap(std::string key, std::string filename);
 	std::shared_ptr<SimpleVertexShader> MakeSimpleVertexShader(std::wstring csoName);
+
+	void AddPixelShaderToMap(std::string key, std::string filename);
 	std::shared_ptr<SimplePixelShader> MakeSimplePixelShader(std::wstring csoName);
 
 	void MakeRasterizerState(D3D11_RASTERIZER_DESC rastDesc, Microsoft::WRL::ComPtr<ID3D11RasterizerState>& rastLocation);

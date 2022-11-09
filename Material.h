@@ -10,6 +10,15 @@
 
 #include "SimpleShader.h"
 
+struct SerialStruct {
+	DirectX::XMFLOAT4 colorTint;
+	float roughness;
+	std::vector<std::string> srvFileNames = std::vector<std::string>();
+	std::string vsFileName;
+	std::string psFileName;
+	std::vector<D3D11_SAMPLER_DESC> sampDescs = std::vector<D3D11_SAMPLER_DESC>();
+};
+
 class Material : Serializable
 {
 public:
@@ -29,13 +38,11 @@ public:
 
 	//get a reference to the simple vertex shader
 	std::shared_ptr<SimpleVertexShader> GetVertexShader();
-	//change the vertex shader
-	void SetVertexShader(std::shared_ptr<SimpleVertexShader> in_vs);
+	void SetVertexShader(std::shared_ptr<SimpleVertexShader> in_vs, std::string filename);
 	
 	//get a reference to the simple pixel shader
 	std::shared_ptr<SimplePixelShader> GetPixelShader();
-	//change the pixel shader
-	void SetPixelShader(std::shared_ptr<SimplePixelShader> in_ps);
+	void SetPixelShader(std::shared_ptr<SimplePixelShader> in_ps, std::string filename);
 
 	//add a texture SRV, name = name in hash table, srv = actual srv
 	void AddTextureSRV(std::string name, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv, std::string fileName);
@@ -51,7 +58,9 @@ private:
 	//value between 0 and 1, 1 'perfectly' matte, 0 'perflectly' reflective.
 	float roughness;
 	std::shared_ptr<SimpleVertexShader> vs;
+	std::string vsFileName;
 	std::shared_ptr<SimplePixelShader> ps;
+	std::string psFileName;
 
 	//storing the textures and samplers for a material
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> textureSRVs;
