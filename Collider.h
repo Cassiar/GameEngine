@@ -57,7 +57,7 @@ private:
 	void CalcHalfDimensions();
 	void CalcCenterPoint();
 
-	bool CheckSATCollision(const std::shared_ptr<Collider> other);
+	int CheckSATCollision(const std::shared_ptr<Collider> other);
 
 	bool CheckGJKCollision(const std::shared_ptr<Collider> other);
 	DirectX::XMVECTOR CalcSupport(const DirectX::XMVECTOR& direction);

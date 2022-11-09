@@ -103,13 +103,13 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Vendor/imgui-1.87;$(SolutionDir)Vendor/PhysX;%(AdditionalLibraryDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Vendor/imgui-1.87;$(SolutionDir)Vendor/PhysX;$(SolutionDir)include;%(AdditionalLibraryDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(SolutionDir)Vendor/imgui-1.87;$(SolutionDir)Vendor/PhysX;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <Profile>true</Profile>
-      <AdditionalDependencies>PhysXExtensions_static_64.lib;PhysXVehicle_static_64.lib;PhysXPvdSDK_static_64.lib;LowLevelDynamics_static_64.lib;PhysXCharacterKinematic_static_64.lib;LowLevel_static_64.lib;LowLevelAABB_static_64.lib;SimulationController_static_64.lib;PhysXTask_static_64.lib;SceneQuery_static_64.lib;PhysX_64.lib;PhysXCooking_64.lib;PhysXCommon_64.lib;PhysXFoundation_64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>PhysXExtensions_static_64.lib;PhysXVehicle_static_64.lib;PhysXPvdSDK_static_64.lib;LowLevelDynamics_static_64.lib;PhysXCharacterKinematic_static_64.lib;LowLevel_static_64.lib;LowLevelAABB_static_64.lib;SimulationController_static_64.lib;PhysXTask_static_64.lib;SceneQuery_static_64.lib;PhysX_64.lib;PhysXCooking_64.lib;PhysXCommon_64.lib;PhysXFoundation_64.lib;Saba/Saba.lib;Bullet/BulletDynamics_Debug.lib;Bullet/BulletCollision_Debug.lib;Bullet/LinearMath_Debug.lib;Bullet/BulletSoftBody_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>

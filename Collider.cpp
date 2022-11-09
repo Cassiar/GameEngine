@@ -161,7 +161,7 @@ bool Collider::CheckSphereColliding(const std::shared_ptr<Collider> other) {
 #pragma region SAT collision
 
 // Code edited and re-used from an old DSA2 project which I believe referenced a book that I can't seem to find the name of TODO: Cite the book here
-bool Collider::CheckSATCollision(const std::shared_ptr<Collider> other) {
+int Collider::CheckSATCollision(const std::shared_ptr<Collider> other) {
 	//XMVECTOR thisUp = XMLoadFloat3( &(m_transform.GetParent()->GetUp()));
 	//XMVECTOR thisForward = XMLoadFloat3( &(m_transform.GetParent()->GetUp()));
 	//XMVECTOR thisRight = XMLoadFloat3( &(m_transform.GetParent()->GetUp()));
@@ -183,7 +183,7 @@ bool Collider::CheckSATCollision(const std::shared_ptr<Collider> other) {
 
 	// Compute translation vector t
 	XMVECTOR vecT = XMLoadFloat3(&other->m_centerPoint) - XMLoadFloat3(&m_centerPoint);
-	// Bring translation into a’s coordinate frame
+	// Bring translation into aï¿½s coordinate frame
 	XMFLOAT3 tempDot;
 	XMStoreFloat(&tempDot.x, XMVector3Dot(vecT, aU.r[0]));
 	XMStoreFloat(&tempDot.y, XMVector3Dot(vecT, aU.r[1]));

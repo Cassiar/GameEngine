@@ -20,6 +20,10 @@
 #include <vector> //for vector
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
 
+#include <Saba/Model/MMD/PMXModel.h>
+#include <Saba/Model/MMD/VMDAnimation.h>
+#include <Saba/Model/MMD/VMDFile.h>
+
 //handles updating game logic and stores objects that are drawn
 class Game 
 	: public DXCore
@@ -119,10 +123,17 @@ private:
 	DirectX::XMFLOAT4X4 spotShadowProjMat;
 
 	//variables to control light rays effect
-	float lightRaysDensity = 1.0f;
+	float lightRaysDensity = 0.25f;
 	float lightRaysWeight = 0.2f;
 	float lightRaysDecay = 0.98f;
 	float lightRaysExposure = 0.2f;
 	bool enableLightRays = false;
+
+	std::shared_ptr<Mesh> sabaLisa;
+	std::shared_ptr<GameEntity> sabaEntity;
+	std::shared_ptr<saba::VMDFile> animFile;
+	std::shared_ptr<saba::VMDAnimation> anim;
+	float animTime = 0;
+	double saveTime = 0;
 };
 

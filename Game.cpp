@@ -1,4 +1,4 @@
-#include "Game.h"
+﻿#include "Game.h"
 #include "Vertex.h"
 #include "Input.h"
 #include "BufferStructs.h"
@@ -8,6 +8,8 @@
 #include "imgui_impl_win32.h"
 
 #include "WICTextureLoader.h" //loading textures, in DirectX namespace
+
+#include <Saba/Base/Time.h>
 
 // Needed for a helper function to read compiled shader files from the hard drive
 #pragma comment(lib, "d3dcompiler.lib")
@@ -118,7 +120,37 @@ void Game::CreateBasicGeometry()
   
 	std::shared_ptr<SimpleVertexShader> vertexShader = m_AssetManager->GetVertexShader("vertexShader");
 	std::shared_ptr<SimplePixelShader> debugPixelShader = m_AssetManager->GetPixelShader("debugPixelShader");
+	//toon meshes
+	toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/Tree.obj").c_str(), device, context));
 
+	toonAlbedoMaps.push_back(nullptr);
+	toonRoughnessMaps.push_back(nullptr);
+	toonAoMaps.push_back(nullptr);
+	toonMetalnessMaps.push_back(nullptr);
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Toon/Lisa/Texture/服.png").c_str(), nullptr, toonAlbedoMaps[toonAlbedoMaps.size() - 1].GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonRoughnessMaps[toonRoughnessMaps.size() - 1].GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/allMetal.png").c_str(), nullptr, toonAoMaps[toonAoMaps.size() - 1].GetAddressOf());
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonMetalnessMaps[toonMetalnessMaps.size() - 1].GetAddressOf());
+
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		GetFullPathTo_Wide(L"../../Assets/Textures/Ramp_Texture.png").c_str(), nullptr, rampTexture.GetAddressOf());
+
+	sabaLisa = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), GetFullPathTo("../../Assets/Toon/Lisa/Texture").c_str(), device, context);
+	//sabaLisa->Load(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), GetFullPathTo("../../Assets/Toon/Lisa/Texture").c_str());
+	sabaEntity = std::make_shared<GameEntity>(sabaLisa, toonMaterials[0], camera, device);
+	//std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
+		
+	//load animation file
+	animFile = std::make_shared<saba::VMDFile>();
+	saba::ReadVMDFile(animFile.get(), GetFullPathTo("../../Assets/Anim/Male_run_in_place_lisa.vmd").c_str());
+	anim = std::make_shared<saba::VMDAnimation>();
+	sabaLisa->GetModel()->InitializeAnimation();
+	anim->Create(sabaLisa->GetModel());
+	anim->Add(*animFile.get());
 	//create some entities
 	//cube direectly in front of camera
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[0], materials[0], camera, true));
@@ -127,6 +159,11 @@ void Game::CreateBasicGeometry()
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[4], materials[0], camera, m_PhysicsManager->CreateStatic(PxTransform(PxVec3(0, -10, 0)), PxBoxGeometry(20, .05, 20))));
 	
 	m_EntityManager->GetEntity(1)->GetTransform()->SetScale(20.0f, 1.0f, 20.0f);
+
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(sabaLisa, camera, device, context, vertexShader, toonPixelShader));
+
+	m_EntityManager->GetEntity(2)->GetTransform()->MoveAbsolute(XMFLOAT3(0, 0, -5));
+	m_EntityManager->GetEntity(2)->GetTransform()->Rotate(XMFLOAT3(0, XM_PI, 0));//face toward starting pos
 
 	//create sky obj
 	sky = std::make_shared<Sky>(meshes[0], m_AssetManager->GetSampler("basicSampler"), m_AssetManager->GetSRV(SkyBox, 0), device, context, m_AssetManager->GetVertexShader("skyVertexShader"), m_AssetManager->GetPixelShader("skyPixelShader"));
@@ -432,8 +469,8 @@ void Game::RenderPointShadowMap(DirectX::XMFLOAT3 pos, int index, float range, f
 	for (int i = 0; i < m_EntityManager->NumEntities(); i++) {
 		DirectX::XMFLOAT3 ePos = m_EntityManager->GetEntity(i)->GetTransform()->GetPosition();
 		//get square dist cause faster
-		float squareDist = pow(pos.x - ePos.x, 2) + pow(pos.y - ePos.y, 2) + pow(pos.z - ePos.z, 2);
-		if (squareDist < pow(farZ, 2)) {
+		float squareDist = powf(pos.x - ePos.x, 2) + powf(pos.y - ePos.y, 2) + powf(pos.z - ePos.z, 2);
+		if (squareDist < powf(farZ, 2)) {
 			renderableEntities.push_back(m_EntityManager->GetEntity(i));
 		}
 	}
@@ -1128,7 +1165,39 @@ void Game::CreateMaterialGUI(float deltaTime) {
 // --------------------------------------------------------
 void Game::Update(float deltaTime, float totalTime)
 {
-	
+	double time = saba::GetTime();
+	double elapsed = time - saveTime;
+	if (elapsed > 1.0 / 30.0)
+	{
+		elapsed = 1.0 / 30.0;
+	}
+	saveTime = time;
+	animTime += float(elapsed);
+	std::shared_ptr<saba::PMXModel> tempModel = sabaLisa->GetModel();
+	tempModel->BeginAnimation();
+	tempModel->UpdateAllAnimation(anim.get(), animTime * 30.0f, elapsed);
+	tempModel->EndAnimation();
+	tempModel->Update();
+	size_t vtxCount = tempModel->GetVertexCount();
+	HRESULT hr;
+	D3D11_MAPPED_SUBRESOURCE mapRes;
+	hr = context->Map(sabaLisa->GetVertexBuffer().Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapRes);
+	if (FAILED(hr))
+	{
+		return;
+	}
+	Vertex* vertices = (Vertex*)mapRes.pData;
+	const glm::vec3* positions = tempModel->GetUpdatePositions();
+	const glm::vec3* normals = tempModel->GetUpdateNormals();
+	const glm::vec2* uvs = tempModel->GetUpdateUVs();
+	for (size_t i = 0; i < vtxCount; i++)
+	{
+		vertices[i].Position = XMFLOAT3(positions[i][0], positions[i][1], positions[i][2]);
+		vertices[i].Normal = XMFLOAT3(normals[i][0], normals[i][1], normals[i][2]);
+		vertices[i].UVCoord = XMFLOAT2(uvs[i][0], uvs[i][1]);
+		vertices[i].Tangent = {};
+	}
+	context->Unmap(sabaLisa->GetVertexBuffer().Get(), 0);
 
 	// Example input checking: Quit if the escape key is pressed
 	if (Input::GetInstance().KeyDown(VK_ESCAPE)) {
@@ -1227,40 +1296,50 @@ void Game::Draw(float deltaTime, float totalTime)
 		for (int j = 0; j < 9; j++) {
 			context->PSSetShaderResources(j, 1, pSRV);
 		}
-		
-		std::shared_ptr<SimpleVertexShader> vs = entity->GetMaterial()->GetVertexShader();
-		//send shadow info to vertex shader
-		vs->SetMatrix4x4("lightView", shadowViewMat);
-		//vs->SetData("lightView", &sh)
-		vs->SetMatrix4x4("lightProj", shadowProjMat);
-		vs->SetMatrix4x4("spotLightView", spotShadowViewMat);
-		vs->SetMatrix4x4("spotLightProj", spotShadowProjMat);
-		/*for (int j = 0; j < lights.size(); j++) {
-			if (lights[j].Type == LIGHT_TYPE_POINT) {
-				lightPoses[j] = lights[j].Position;
-			}
-		}*/
 
-		//vs->SetData("lightPoses", &lightPoses[0], sizeof(XMFLOAT3) * (int)lightPoses.size());
+		if (entity->GetMesh()->IsPmx()) {
+			entity->DrawPMX(entity->GetTransform()->GetWorldMatrix(), camera->GetViewMatrix(), camera->GetProjectionMatrix(), 
+				lights[0].Color, lights[0].Direction, 
+				backBufferRTV, depthStencilView, width, height);
+		}
+		else {
 
-		std::shared_ptr<SimplePixelShader> ps = entity->GetMaterial()->GetPixelShader();
-		//send light data to shaders
-		ps->SetInt("numLights", static_cast<int>(lights.size()));
-		ps->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
-		ps->SetShaderResourceView("ShadowMap", shadowSRV);
-		ps->SetShaderResourceView("ShadowBox1", shadowBoxSRVs[0]);
-		ps->SetShaderResourceView("ShadowBox2", shadowBoxSRVs[1]);
-		//ps->SetShaderResourceView("ShadowBox", &shadowBoxSRVs[0]);// , sizeof(shadowBoxSRVs)* (int)shadowBoxSRVs.size());
-		//context->PSSetShaderResources(7, 1, &shadowBoxSRVs[0]);
-		//context->PSSetShaderResources(8, 1, &shadowBoxSRVs[1]);
-		ps->SetShaderResourceView("ShadowSpotMap", shadowSpotSRV);
+			std::shared_ptr<SimpleVertexShader> vs = entity->GetMaterial()->GetVertexShader();
+			//send shadow info to vertex shader
+			vs->SetMatrix4x4("lightView", shadowViewMat);
+			//vs->SetData("lightView", &sh)
+			vs->SetMatrix4x4("lightProj", shadowProjMat);
+			vs->SetMatrix4x4("spotLightView", spotShadowViewMat);
+			vs->SetMatrix4x4("spotLightProj", spotShadowProjMat);
+			/*for (int j = 0; j < lights.size(); j++) {
+				if (lights[j].Type == LIGHT_TYPE_POINT) {
+					lightPoses[j] = lights[j].Position;
+				}
+			}*/
 
-		ps->SetFloat3("ambientTerm", ambientTerm);
-		ps->SetSamplerState("ShadowSampler", shadowSampler);
-		entity->GetMaterial()->PrepareMaterial();
+			//vs->SetData("lightPoses", &lightPoses[0], sizeof(XMFLOAT3) * (int)lightPoses.size());
 
-		entity->Draw();
+			std::shared_ptr<SimplePixelShader> ps = entity->GetMaterial()->GetPixelShader();
+			//send light data to shaders
+			ps->SetInt("numLights", static_cast<int>(lights.size()));
+			ps->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
+			ps->SetShaderResourceView("ShadowMap", shadowSRV);
+			ps->SetShaderResourceView("ShadowBox1", shadowBoxSRVs[0]);
+			ps->SetShaderResourceView("ShadowBox2", shadowBoxSRVs[1]);
+			//ps->SetShaderResourceView("ShadowBox", &shadowBoxSRVs[0]);// , sizeof(shadowBoxSRVs)* (int)shadowBoxSRVs.size());
+			//context->PSSetShaderResources(7, 1, &shadowBoxSRVs[0]);
+			//context->PSSetShaderResources(8, 1, &shadowBoxSRVs[1]);
+			ps->SetShaderResourceView("ShadowSpotMap", shadowSpotSRV);
+
+			ps->SetFloat3("ambientTerm", ambientTerm);
+			ps->SetSamplerState("ShadowSampler", shadowSampler);
+			entity->GetMaterial()->PrepareMaterial();
+
+			entity->Draw();
+		}
 	}
+
+	//sabaEntity->Draw();
 
 	//draw sky, after everthying else to reduce overdraw
 	sky->Draw(camera);
@@ -1287,7 +1366,29 @@ void Game::Draw(float deltaTime, float totalTime)
 		Transform lightWorldMat = Transform();
 		lightWorldMat.MoveAbsolute(lights[0].Direction.x * -20, lights[0].Direction.y * -20, lights[0].Direction.z * -20);
 		//add rotation to mat
-		lightWorldMat.SetRotation(lights[0].Direction); //fix this, find rotation to point toward this direction
+		//lightWorldMat.SetRotation(lights[0].Direction); //fix this, find rotation to point toward this direction
+
+		//load camera transform because XMLoadFloat has to take a l-value
+		XMFLOAT3 cameraPos = camera->GetTransform()->GetPosition();
+		XMFLOAT3 cameraForward = camera->GetTransform()->GetForward();
+
+		//get dot product between camera forward vector and direction to sun
+		//lights[0] is sun
+		XMVECTOR dirToLight = XMLoadFloat3(&lights[0].Position) - XMLoadFloat3(&cameraPos);
+		float dot = 0;
+		XMStoreFloat(&dot, XMVector3Dot(XMVector3Normalize(dirToLight), XMVector3Normalize(XMLoadFloat3(&cameraForward))));
+
+
+		//printf("dot product: %f\n", dot);
+		//if the dot product is negative scale the density of the light rays by 1 - abs(dot)
+		//if it's positive don't scale density. ie dot = 1
+		if (dot < 0) {
+			dot = 0;
+		}
+
+		
+		float density = pow(lightRaysDensity, 1/(dot+0.001));
+		printf("scale amount : % f\n", density);
 
 		ppLightRaysVertexShader->SetMatrix4x4("world", lightWorldMat.GetWorldMatrix());
 		//ppLightRaysVertexShader->SetMatrix4x4("worldInverseTranspose", );
@@ -1301,7 +1402,7 @@ void Game::Draw(float deltaTime, float totalTime)
 		//float decay;
 		//float exposure;
 		ppLightRaysPixelShader->SetFloat3("lightColor", lights[0].Color);
-		ppLightRaysPixelShader->SetFloat("density", lightRaysDensity);
+		ppLightRaysPixelShader->SetFloat("density", density);
 		ppLightRaysPixelShader->SetFloat("weight", lightRaysWeight);
 		ppLightRaysPixelShader->SetFloat("decay", lightRaysDecay);
 		ppLightRaysPixelShader->SetFloat("exposure", lightRaysExposure);
