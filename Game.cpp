@@ -121,32 +121,21 @@ void Game::CreateBasicGeometry()
 	std::shared_ptr<SimpleVertexShader> vertexShader = m_AssetManager->GetVertexShader("vertexShader");
 	std::shared_ptr<SimplePixelShader> debugPixelShader = m_AssetManager->GetPixelShader("debugPixelShader");
 	//toon meshes
-	toonMeshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/Tree.obj").c_str(), device, context));
+	toonMeshes.push_back(std::make_shared<Mesh>(m_AssetManager->GetFullPathTo("../../Assets/Models/Tree.obj").c_str(), device, context));
 
-	toonAlbedoMaps.push_back(nullptr);
-	toonRoughnessMaps.push_back(nullptr);
-	toonAoMaps.push_back(nullptr);
-	toonMetalnessMaps.push_back(nullptr);
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Toon/Lisa/Texture/服.png").c_str(), nullptr, toonAlbedoMaps[toonAlbedoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonRoughnessMaps[toonRoughnessMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/allMetal.png").c_str(), nullptr, toonAoMaps[toonAoMaps.size() - 1].GetAddressOf());
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, toonMetalnessMaps[toonMetalnessMaps.size() - 1].GetAddressOf());
-
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		GetFullPathTo_Wide(L"../../Assets/Textures/Ramp_Texture.png").c_str(), nullptr, rampTexture.GetAddressOf());
-
-	sabaLisa = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), GetFullPathTo("../../Assets/Toon/Lisa/Texture").c_str(), device, context);
-	//sabaLisa->Load(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), GetFullPathTo("../../Assets/Toon/Lisa/Texture").c_str());
-	sabaEntity = std::make_shared<GameEntity>(sabaLisa, toonMaterials[0], camera, device);
+	m_AssetManager->AddSRVToMap(ToonAlbedo,		L"../../Assets/Toon/Lisa/Texture/服.png", true);
+	m_AssetManager->AddSRVToMap(ToonRoughness,	L"../../Assets/Textures/noMetal.png", true);
+	m_AssetManager->AddSRVToMap(ToonAO,			L"../../Assets/Textures/allMetal.png", true);
+	m_AssetManager->AddSRVToMap(ToonMetalness,	L"../../Assets/Textures/noMetal.png", true);
+	m_AssetManager->AddSRVToMap(SampleTexture,	L"../../Assets/Textures/Ramp_Texture.png", true);
+	
+	sabaLisa = std::make_shared<Mesh>(m_AssetManager->GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), m_AssetManager->GetFullPathTo("../../Assets/Toon/Lisa/Texture").c_str(), device, context);
+	sabaEntity = std::make_shared<GameEntity>(sabaLisa, m_AssetManager->GetToonMaterial(0), camera, device);
 	//std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
 		
 	//load animation file
 	animFile = std::make_shared<saba::VMDFile>();
-	saba::ReadVMDFile(animFile.get(), GetFullPathTo("../../Assets/Anim/Male_run_in_place_lisa.vmd").c_str());
+	saba::ReadVMDFile(animFile.get(), m_AssetManager->GetFullPathTo("../../Assets/Anim/Male_run_in_place_lisa.vmd").c_str());
 	anim = std::make_shared<saba::VMDAnimation>();
 	sabaLisa->GetModel()->InitializeAnimation();
 	anim->Create(sabaLisa->GetModel());
@@ -160,9 +149,9 @@ void Game::CreateBasicGeometry()
 	
 	m_EntityManager->GetEntity(1)->GetTransform()->SetScale(20.0f, 1.0f, 20.0f);
 
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(sabaLisa, camera, device, context, vertexShader, toonPixelShader));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(sabaLisa, camera, device, context, vertexShader, m_AssetManager->GetPixelShader("toonPixelShader")));
 
-	m_EntityManager->GetEntity(2)->GetTransform()->MoveAbsolute(XMFLOAT3(0, 0, -5));
+	m_EntityManager->GetEntity(2)->GetTransform()->MoveAbsolute(XMFLOAT3(20, 0, 20));
 	m_EntityManager->GetEntity(2)->GetTransform()->Rotate(XMFLOAT3(0, XM_PI, 0));//face toward starting pos
 
 	//create sky obj

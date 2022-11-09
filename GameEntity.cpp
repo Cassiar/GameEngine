@@ -394,11 +394,12 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Camera> in
 	device = in_device;
 	context = in_context;
 
-	m_rigidBody = std::make_shared<RigidBody>(&transform);
+	m_rigidBody = nullptr; //std::make_shared<physx::PxRigidActor>(&transform);
 	m_collider = std::make_shared<Collider>(in_mesh, &transform);
 	m_sphere = nullptr;
 	m_drawDebugSphere = g_drawDebugSpheresDefault;
-	m_isDebugSphere = false;
+	m_drawDebugCube = g_drawDebugCubesDefault;
+	m_isDebugEntity = false;
 
 	if (mesh->IsPmx()) {
 		SabaSetup();
@@ -449,14 +450,15 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Camera> in
 			DirectX::CreateWICTextureFromFile(device.Get(), context.Get(),
 				widePath.c_str(), nullptr, albedo.GetAddressOf());
 
+			std::shared_ptr<AssetManager> manager = AssetManager::GetInstance();
 			materials.push_back(std::make_shared<Material>(DirectX::XMFLOAT4(1.0, 1.0, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));
 			materials[i]->AddSampler("BasicSampler", basicSampler);
 			materials[i]->AddSampler("RampSampler", rampSampler);
-			materials[i]->AddTextureSRV("AlbedoTexture", albedo);
-			materials[i]->AddTextureSRV("RoughnessTexture", zero);
-			materials[i]->AddTextureSRV("AmbientTexture", one);
-			materials[i]->AddTextureSRV("RampTexture", rampTexture);
-			materials[i]->AddTextureSRV("MetalnessTexture", zero);
+			materials[i]->AddTextureSRV("AlbedoTexture", albedo, manager->WideToString(widePath));
+			materials[i]->AddTextureSRV("RoughnessTexture", zero, manager->WideToString(L"../../Assets/Textures/noMetal.png"));
+			materials[i]->AddTextureSRV("AmbientTexture", one, manager->WideToString(L"../../Assets/Textures/allMetal.png"));
+			materials[i]->AddTextureSRV("RampTexture", rampTexture, manager->WideToString(L"../../Assets/Textures/Ramp_Texture.png"));
+			materials[i]->AddTextureSRV("MetalnessTexture", zero, manager->WideToString(L"../../Assets/Textures/noMetal.png"));
 		}		
 	}
 }

@@ -106,6 +106,6 @@ std::shared_ptr<PhysXManager> PhysXManager::GetInstance()
 
 void PhysXManager::UpdatePhysics(float deltaTime, bool interactive)
 {
-	m_scene->simulate(deltaTime);//FIXED_UPDATE_TIME);
+	m_scene->simulate(FIXED_UPDATE_TIME);//FIXED_UPDATE_TIME);
 	m_scene->fetchResults(true);
 }

@@ -330,7 +330,7 @@ std::shared_ptr<Mesh> AssetManager::LoadMesh(std::string meshPath, bool customLo
 //	m_srvMaps[mapTypeName].push_back(srvToAdd);
 //}
 
-void AssetManager::AddSRVToMap(SRVMaps mapTypeName, std::wstring srvPath)
+void AssetManager::AddSRVToMap(SRVMaps mapTypeName, std::wstring srvPath, bool customPath /* Default = false */)
 {
 	m_srvMaps[mapTypeName].push_back(LoadSRV(srvPath));
 	m_srvFileNames[mapTypeName].push_back(WideToString(srvPath));
@@ -354,7 +354,7 @@ std::shared_ptr<SimpleVertexShader> AssetManager::MakeSimpleVertexShader(std::ws
 
 void AssetManager::AddPixelShaderToMap(std::string key, std::string filename)
 {
-	m_pixelShaders[key] = MakeSimpleVertexShader(StringToWide(filename));
+	m_pixelShaders[key] = MakeSimplePixelShader(StringToWide(filename));
 	m_pixelShaderCsoNames[key] = filename;
 }
 

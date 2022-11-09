@@ -112,7 +112,7 @@ public:
 	std::shared_ptr<Mesh> LoadMesh(std::string meshPath, bool customLocation = false);
 
 	//void AddSRVToMap(SRVMaps mapTypeName, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srvToAdd);
-	void AddSRVToMap(SRVMaps mapTypeName, std::wstring srvPath);
+	void AddSRVToMap(SRVMaps mapTypeName, std::wstring srvPath, bool customPath = false);
 
 	void AddVertShaderToMap(std::string key, std::string filename);
 	std::shared_ptr<SimpleVertexShader> MakeSimpleVertexShader(std::wstring csoName);
