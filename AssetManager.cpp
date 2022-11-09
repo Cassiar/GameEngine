@@ -380,6 +380,8 @@ std::shared_ptr<Material> AssetManager::ReadMaterialFromFile(std::wstring path) 
 
 	//std::cout << temp << " success!" << std::endl;
 	delete[] readC;
+
+	return m_materials[0];
 }
 
 ///------------------ Written by Chris Cascioli ------------------------------///
