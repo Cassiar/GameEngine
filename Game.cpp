@@ -313,6 +313,10 @@ void Game::LoadShaders()
 
 	//catapultPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"CatapultPixelShader.cso").c_str());
 	a5PixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"A5CustomPS.cso").c_str());
+
+	//mmd shaders, from saba
+	mmdVertexShader = std::make_shared<SimpleVertexShader>(device, context, GetFullPathTo_Wide(L"MMDVertexShader.cso").c_str());
+	mmdPixelShader = std::make_shared<SimplePixelShader>(device, context, GetFullPathTo_Wide(L"MMDPixelShader.cso").c_str());
 }
 
 
@@ -399,7 +403,7 @@ void Game::CreateBasicGeometry()
 	//toon pirate ship
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(toonMeshes[0], toonMaterials[0], camera, std::make_shared<GameEntity>(meshes[3], std::make_shared<Material>(XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f, vertexShader, debugPixelShader), camera, true), device));
 
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(sabaLisa, camera, device, context, vertexShader, toonPixelShader));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(sabaLisa, camera, device, context, mmdVertexShader, mmdPixelShader));
 
 	//move objects so there isn't overlap
 	m_EntityManager->GetEntity(0)->GetTransform()->MoveAbsolute(XMFLOAT3(-2.5f, 0, 2.5f));

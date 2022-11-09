@@ -184,5 +184,9 @@ private:
 	std::shared_ptr<saba::VMDAnimation> anim;
 	float animTime = 0;
 	double saveTime = 0;
+	
+	//copies of saba shaders
+	std::shared_ptr<SimpleVertexShader> mmdVertexShader;
+	std::shared_ptr<SimplePixelShader> mmdPixelShader;
 };
 
