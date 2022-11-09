@@ -74,6 +74,7 @@ protected:
 
 	// Helper function for allocating a console window
 	void CreateConsoleWindow(int bufferLines, int bufferColumns, int windowLines, int windowColumns);
+	virtual void Save() { }
 
 private:
 	// Timing related data

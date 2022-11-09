@@ -458,6 +458,8 @@ HRESULT DXCore::Run()
 		}
 	}
 
+	Save();
+
 	// We'll end up here once we get a WM_QUIT message,
 	// which usually comes from the user closing the window
 	return (HRESULT)msg.wParam;

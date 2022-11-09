@@ -68,6 +68,10 @@ private:
 	//helper function to reduce repitition in shadow map funcs
 	void PassShadowObjs();
 
+	void Save() override;
+
+	void WriteToFile(std::string name, std::string writeString);
+
 	void SaveScene();
 	void ReadScene(std::wstring path);
 

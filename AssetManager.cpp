@@ -57,39 +57,39 @@ void AssetManager::Init(Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::
 
 void AssetManager::InitTextures()
 {
-	AddSRVToMap(Albedo,	LoadSRV(L"Medieval_Floor_Albedo.tif"));
-	AddSRVToMap(Roughness, LoadSRV(L"Medieval_Floor_Roughness.tif"));
-	AddSRVToMap(AO,		LoadSRV(L"Medieval_Floor_AO.tif"));
-	AddSRVToMap(Normal,	LoadSRV(L"Medieval_Floor_Normal.tif"));
-	AddSRVToMap(Metalness, LoadSRV(L"noMetal.png"));
+	AddSRVToMap(Albedo,		L"Medieval_Floor_Albedo.tif");
+	AddSRVToMap(Roughness,	L"Medieval_Floor_Roughness.tif");
+	AddSRVToMap(AO,			L"Medieval_Floor_AO.tif");
+	AddSRVToMap(Normal,		L"Medieval_Floor_Normal.tif");
+	AddSRVToMap(Metalness,	L"noMetal.png");
 
-	AddSRVToMap(Albedo,	LoadSRV(L"SciFi_Panel_Albedo.tif"));
-	AddSRVToMap(Roughness, LoadSRV(L"SciFi_Panel_Roughness.tif"));
-	AddSRVToMap(AO,		LoadSRV(L"SciFi_Panel_AO.tif"));
-	AddSRVToMap(Normal,	LoadSRV(L"SciFi_Panel_Normal.tif"));
-	AddSRVToMap(Metalness, LoadSRV(L"SciFi_Panel_Metalness.tif"));
+	AddSRVToMap(Albedo,		L"SciFi_Panel_Albedo.tif");
+	AddSRVToMap(Roughness,	L"SciFi_Panel_Roughness.tif");
+	AddSRVToMap(AO,			L"SciFi_Panel_AO.tif");
+	AddSRVToMap(Normal,		L"SciFi_Panel_Normal.tif");
+	AddSRVToMap(Metalness,	L"SciFi_Panel_Metalness.tif");
 
-	AddSRVToMap(Albedo,	LoadSRV(L"Brick_Wall_Albedo.tif"));
-	AddSRVToMap(Roughness, LoadSRV(L"Brick_Wall_Roughness.tif"));
-	AddSRVToMap(AO,		LoadSRV(L"Brick_Wall_AO.tif"));
-	AddSRVToMap(Normal,	LoadSRV(L"Brick_Wall_Normal.tif"));
-	AddSRVToMap(Metalness, LoadSRV(L"noMetal.png"));
+	AddSRVToMap(Albedo,		L"Brick_Wall_Albedo.tif");
+	AddSRVToMap(Roughness,	L"Brick_Wall_Roughness.tif");
+	AddSRVToMap(AO,			L"Brick_Wall_AO.tif");
+	AddSRVToMap(Normal,		L"Brick_Wall_Normal.tif");
+	AddSRVToMap(Metalness,	L"noMetal.png");
 
-	AddSRVToMap(Albedo,	LoadSRV(L"Bronze_Albedo.tif"));
-	AddSRVToMap(Roughness, LoadSRV(L"Bronze_Roughness.tif"));
-	AddSRVToMap(AO,		LoadSRV(L"Bronze_AO.tif"));
-	AddSRVToMap(Normal,	LoadSRV(L"Bronze_Normal.tif"));
-	AddSRVToMap(Metalness, LoadSRV(L"Bronze_Metallic.tif"));
+	AddSRVToMap(Albedo,		L"Bronze_Albedo.tif");
+	AddSRVToMap(Roughness,	L"Bronze_Roughness.tif");
+	AddSRVToMap(AO,			L"Bronze_AO.tif");
+	AddSRVToMap(Normal,		L"Bronze_Normal.tif");
+	AddSRVToMap(Metalness,	L"Bronze_Metallic.tif");
 
-	AddSRVToMap(ToonAlbedo,	LoadSRV(L"Tree_Albedo.tif"));
-	AddSRVToMap(ToonRoughness, LoadSRV(L"noMetal.png"));
-	AddSRVToMap(ToonAO,		LoadSRV(L"allMetal.png"));
-	AddSRVToMap(ToonMetalness,	LoadSRV(L"noMetal.png"));
+	AddSRVToMap(ToonAlbedo,		L"Tree_Albedo.tif");
+	AddSRVToMap(ToonRoughness,	L"noMetal.png");
+	AddSRVToMap(ToonAO,			L"allMetal.png");
+	AddSRVToMap(ToonMetalness,	L"noMetal.png");
 
-	AddSRVToMap(SampleTexture, LoadSRV(L"Ramp_Texture.png"));
+	AddSRVToMap(SampleTexture, L"Ramp_Texture.png");
 
 	//load cube map
-	AddSRVToMap(SkyBox, CreateCubemap(
+	m_srvMaps[SkyBox].push_back(CreateCubemap(
 							GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_right.png").c_str(),
 							GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_left.png").c_str(),
 							GetFullPathTo_Wide(L"../../Assets/Textures/Sky/planet_up.png").c_str(),
@@ -176,11 +176,11 @@ void AssetManager::InitMaterials()
 	//add textures to each material
 	for (unsigned int i = 0; i < m_materials.size(); i++) {
 		m_materials[i]->AddSampler("BasicSampler",			m_samplers["basicSampler"]);
-		m_materials[i]->AddTextureSRV("AlbedoTexture",		m_srvMaps[Albedo][i]);
-		m_materials[i]->AddTextureSRV("RoughnessTexture",	m_srvMaps[Roughness][i]);
-		m_materials[i]->AddTextureSRV("AmbientTexture",		m_srvMaps[AO][i]);
-		m_materials[i]->AddTextureSRV("NormalTexture",		m_srvMaps[Normal][i]);
-		m_materials[i]->AddTextureSRV("MetalnessTexture",	m_srvMaps[Metalness][i]);
+		m_materials[i]->AddTextureSRV("AlbedoTexture",		m_srvMaps[Albedo][i],		m_srvFileNames[Albedo][i]);
+		m_materials[i]->AddTextureSRV("RoughnessTexture",	m_srvMaps[Roughness][i],	m_srvFileNames[Roughness][i]);
+		m_materials[i]->AddTextureSRV("AmbientTexture",		m_srvMaps[AO][i],			m_srvFileNames[AO][i]);
+		m_materials[i]->AddTextureSRV("NormalTexture",		m_srvMaps[Normal][i],		m_srvFileNames[Normal][i]);
+		m_materials[i]->AddTextureSRV("MetalnessTexture",	m_srvMaps[Metalness][i],	m_srvFileNames[Metalness][i]);
 	}
 
 	//toon shader. for testing uses scifi panel
@@ -188,11 +188,11 @@ void AssetManager::InitMaterials()
 
 	m_toonMaterials[0]->AddSampler("BasicSampler",			m_samplers["basicSampler"]);
 	m_toonMaterials[0]->AddSampler("RampSampler",			m_samplers["ppLightRaysSampler"]);
-	m_toonMaterials[0]->AddTextureSRV("AlbedoTexture",		m_srvMaps[ToonAlbedo][0]);
-	m_toonMaterials[0]->AddTextureSRV("RoughnessTexture",	m_srvMaps[ToonRoughness][0]);
-	m_toonMaterials[0]->AddTextureSRV("AmbientTexture",		m_srvMaps[ToonAO][0]);
-	m_toonMaterials[0]->AddTextureSRV("RampTexture",		m_srvMaps[SampleTexture][0]);
-	m_toonMaterials[0]->AddTextureSRV("MetalnessTexture",	m_srvMaps[ToonMetalness][0]);
+	m_toonMaterials[0]->AddTextureSRV("AlbedoTexture",		m_srvMaps[ToonAlbedo][0],		m_srvFileNames[ToonAlbedo][0]);
+	m_toonMaterials[0]->AddTextureSRV("RoughnessTexture",	m_srvMaps[ToonRoughness][0],	m_srvFileNames[ToonRoughness][0]);
+	m_toonMaterials[0]->AddTextureSRV("AmbientTexture",		m_srvMaps[ToonAO][0],			m_srvFileNames[ToonAO][0]);
+	m_toonMaterials[0]->AddTextureSRV("RampTexture",		m_srvMaps[SampleTexture][0],	m_srvFileNames[SampleTexture][0]);
+	m_toonMaterials[0]->AddTextureSRV("MetalnessTexture",	m_srvMaps[ToonMetalness][0],	m_srvFileNames[ToonMetalness][0]);
 }
 
 
@@ -298,7 +298,7 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::CreateCubemap(
 Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::LoadSRV(std::wstring texturePath, bool customLocation /*Default = false*/)
 {
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> texture;
-	texture = LoadSRV(texturePath, texture);
+	texture = LoadSRV(texturePath, texture, customLocation);
 
 	return texture;
 }
@@ -321,9 +321,19 @@ std::shared_ptr<Mesh> AssetManager::LoadMesh(std::string meshPath, bool customLo
 	return std::make_shared<Mesh>(GetFullPathTo(path).c_str(), m_device, m_context);
 }
 
-void AssetManager::AddSRVToMap(SRVMaps mapTypeName, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srvToAdd)
+//void AssetManager::AddSRVToMap(SRVMaps mapTypeName, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srvToAdd)
+//{//Deprecated func should be removed outside of this case
+//	if (mapTypeName != SkyBox)
+//	{
+//		return;
+//	}
+//	m_srvMaps[mapTypeName].push_back(srvToAdd);
+//}
+
+void AssetManager::AddSRVToMap(SRVMaps mapTypeName, std::wstring srvPath)
 {
-	m_srvMaps[mapTypeName].push_back(srvToAdd);
+	m_srvMaps[mapTypeName].push_back(LoadSRV(srvPath));
+	m_srvFileNames[mapTypeName].push_back(WideToString(srvPath));
 }
 
 Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> AssetManager::GetSRV(SRVMaps map, int srvIndex)
@@ -345,6 +355,32 @@ void AssetManager::MakeRasterizerState(D3D11_RASTERIZER_DESC rastDesc, Microsoft
 	m_device->CreateRasterizerState(&rastDesc, rastLocation.GetAddressOf());
 }
 
+
+std::shared_ptr<Material> AssetManager::ReadMaterialFromFile(std::wstring path) {
+	std::ifstream rStream(path, std::ios::in | std::ios::binary);
+	if (!rStream) {
+		//std::cout << "Cannot open file!" << std::endl;
+	}
+	std::vector<TypeKey> types = std::vector<TypeKey>();
+	char* readC = new char[1024];
+	rStream.read(readC, sizeof(char));
+
+	int readCount = readC[0] - '0';
+	for (int i = 0; i < readCount; i++)
+	{
+		rStream.read(readC, sizeof(char));
+		types.push_back(static_cast<TypeKey>(readC[0] - '0'));
+	}
+
+
+	rStream.close();
+	if (!rStream.good()) {
+		//std::cout << "Error occurred at reading time!" << std::endl;
+	}
+
+	//std::cout << temp << " success!" << std::endl;
+	delete[] readC;
+}
 
 ///------------------ Written by Chris Cascioli ------------------------------///
 
@@ -406,6 +442,22 @@ std::wstring AssetManager::GetExePath_Wide()
 
 	// Create a wstring for it and return
 	return std::wstring(widePath);
+}
+
+std::wstring AssetManager::StringToWide(std::string str) {
+	wchar_t wide[1024] = {};
+	mbstowcs_s(0, wide, str.c_str(), 1024);
+
+	// Create a wstring for it and return
+	return std::wstring(wide);
+}
+
+std::string AssetManager::WideToString(std::wstring str) {
+	char reg[1024] = {};
+	wcstombs_s(0, reg, str.c_str(), 1024);
+
+	// Create a wstring for it and return
+	return std::string(reg);
 }
 
 

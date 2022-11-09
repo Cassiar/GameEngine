@@ -3,11 +3,14 @@
 //can be shared between game entities. 
 #pragma once
 
+#include "Serializable.h"
+
 #include <memory> //for shared pointers
 #include <unordered_map> //for hash tables (basically dictionaries)
 
 #include "SimpleShader.h"
-class Material
+
+class Material : Serializable
 {
 public:
 	//create a materal. Must have color tint vertex and pixel shaders
@@ -35,12 +38,14 @@ public:
 	void SetPixelShader(std::shared_ptr<SimplePixelShader> in_ps);
 
 	//add a texture SRV, name = name in hash table, srv = actual srv
-	void AddTextureSRV(std::string name, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv);
+	void AddTextureSRV(std::string name, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv, std::string fileName);
 	//add a sampler state, name = name in hash table, sampler = actual sampler
 	void AddSampler(std::string name, Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler);
 
 	//prepare a material for drawing. Sets up any material only items (e.g. srvs)
 	void PrepareMaterial();
+
+	std::string SerializeToString();
 private:
 	DirectX::XMFLOAT4 colorTint;
 	//value between 0 and 1, 1 'perfectly' matte, 0 'perflectly' reflective.
@@ -50,6 +55,7 @@ private:
 
 	//storing the textures and samplers for a material
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> textureSRVs;
+	std::unordered_map<std::string, std::string> textureFiles;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D11SamplerState>> samplers;
 };
 

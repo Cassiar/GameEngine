@@ -5,6 +5,7 @@
 #include "Mesh.h"
 #include "SimpleShader.h"
 
+#include <fstream>
 #include <WICTextureLoader.h>
 
 enum SRVMaps
@@ -37,6 +38,7 @@ private:
 	std::unordered_map<std::string, std::shared_ptr<SimplePixelShader>> m_pixelShaders;
 
 	std::unordered_map<SRVMaps, std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>> m_srvMaps;
+	std::unordered_map<SRVMaps, std::vector<std::string>> m_srvFileNames;
 
 	//Needs to be either deleted or moved into m_PixelShaders
 	//std::shared_ptr<SimplePixelShader> watercolorPixelShader;
@@ -106,17 +108,24 @@ public:
 
 	std::shared_ptr<Mesh> LoadMesh(std::string meshPath, bool customLocation = false);
 
-	void AddSRVToMap(SRVMaps mapTypeName, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srvToAdd);
+	//void AddSRVToMap(SRVMaps mapTypeName, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srvToAdd);
+	void AddSRVToMap(SRVMaps mapTypeName, std::wstring srvPath);
 
 	std::shared_ptr<SimpleVertexShader> MakeSimpleVertexShader(std::wstring csoName);
 	std::shared_ptr<SimplePixelShader> MakeSimplePixelShader(std::wstring csoName);
 
 	void MakeRasterizerState(D3D11_RASTERIZER_DESC rastDesc, Microsoft::WRL::ComPtr<ID3D11RasterizerState>& rastLocation);
 
+	std::shared_ptr<Material> ReadMaterialFromFile(std::wstring path);
+
 	///------------------ Written by Chris Cascioli ------------------------------///
 	// Helpers for determining the actual path to the executable
 	std::string GetExePath();
 	std::wstring GetExePath_Wide();
+
+	//Max string length to convert is 1024
+	std::wstring StringToWide(std::string str);
+	std::string WideToString(std::wstring str);
 
 	std::string GetFullPathTo(std::string relativeFilePath);
 	std::wstring GetFullPathTo_Wide(std::wstring relativeFilePath);

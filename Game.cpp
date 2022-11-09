@@ -1363,6 +1363,23 @@ void PassShadowObjs() {
 	*/
 }
 
+void Game::Save() {
+	WriteToFile("TestFile.txt", m_AssetManager->GetMaterial(0)->SerializeToString());
+}
+
+void Game::WriteToFile(std::string name, std::string writeString) {
+	std::ofstream wStream(name, std::ios::out);
+	if (!wStream) {
+		std::cout << "Cannot open " << name << "" << std::endl;
+	}
+
+	wStream.write(writeString.c_str(), sizeof(char) * writeString.length());
+
+	wStream.close();
+	if (!wStream.good()) {
+		std::cout << "Error occurred at write time" << std::endl;
+	}
+}
 void Game::SaveScene() {
 	std::ofstream wStream("Test.ncscn", std::ios::out | std::ios::binary);
 	if (!wStream) {

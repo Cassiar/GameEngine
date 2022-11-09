@@ -50,9 +50,10 @@ void Material::SetPixelShader(std::shared_ptr<SimplePixelShader> in_ps)
     ps = in_ps;
 }
 
-void Material::AddTextureSRV(std::string name, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv)
+void Material::AddTextureSRV(std::string name, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv, std::string filename)
 {
     textureSRVs.insert({ name, srv });
+    textureFiles.insert({ name, filename });
 }
 
 void Material::AddSampler(std::string name, Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler)
@@ -74,4 +75,29 @@ void Material::PrepareMaterial()
     for (auto& s : samplers) {
         ps->SetSamplerState(s.first.c_str(), s.second);
     }
+}
+
+std::string Material::SerializeToString()
+{
+    ClearSerial();
+
+    Write(Vec4, std::to_string(colorTint.x) + "\n" 
+        + std::to_string(colorTint.y) + "\n" 
+        + std::to_string(colorTint.z) + "\n" 
+        + std::to_string(colorTint.w));
+
+    Write(Float, std::to_string(roughness));
+
+    for (auto& t : textureFiles) {
+        Write(MatTex, t.first + "\n" + t.second);
+    }
+
+    //for (auto& s : samplers) {
+    //    D3D11_SAMPLER_DESC desc;
+    //    s.second.Get()->GetDesc(&desc);
+    //
+    //    Write(Sampler, s.first + "\n" + s.second.);
+    //}
+
+    return GetFull();
 }
