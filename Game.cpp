@@ -9,6 +9,8 @@
 
 #include "WICTextureLoader.h" //loading textures, in DirectX namespace
 
+#include <Saba/Base/Time.h>
+
 // Needed for a helper function to read compiled shader files from the hard drive
 #pragma comment(lib, "d3dcompiler.lib")
 #include <d3dcompiler.h>
@@ -326,12 +328,10 @@ void Game::CreateBasicGeometry()
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/helix.obj").c_str(), device, context));
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/sphere.obj").c_str(), device, context));
 	meshes.push_back(std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/quad.obj").c_str(), device, context));
-  
-	//std::vector<Vertex> verts = meshes[3]->GetVerticies();
+
+	std::vector<Vertex> verts = meshes[3]->GetVerticies();
 
 	XMFLOAT4 currPos = XMFLOAT4(verts[0].Position.x, verts[0].Position.y, verts[0].Position.z, 1.0f);
-
-
 
 	//Inefficient could probs be better done through a compute shader
 	float xMax = currPos.x;
@@ -365,6 +365,14 @@ void Game::CreateBasicGeometry()
 	//sabaLisa->Load(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), GetFullPathTo("../../Assets/Toon/Lisa/Texture").c_str());
 	sabaEntity = std::make_shared<GameEntity>(sabaLisa, toonMaterials[0], camera, device);
 	//std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
+		
+	//load animation file
+	animFile = std::make_shared<saba::VMDFile>();
+	saba::ReadVMDFile(animFile.get(), GetFullPathTo("../../Assets/Anim/Male_run_in_place_lisa.vmd").c_str());
+	anim = std::make_shared<saba::VMDAnimation>();
+	sabaLisa->GetModel()->InitializeAnimation();
+	anim->Create(sabaLisa->GetModel());
+	anim->Add(*animFile.get());
 
 	//create some entities
 	//cube direectly in front of camera
@@ -1372,7 +1380,39 @@ void Game::CreateGui(float deltaTime) {
 // --------------------------------------------------------
 void Game::Update(float deltaTime, float totalTime)
 {
-	
+	double time = saba::GetTime();
+	double elapsed = time - saveTime;
+	if (elapsed > 1.0 / 30.0)
+	{
+		elapsed = 1.0 / 30.0;
+	}
+	saveTime = time;
+	animTime += float(elapsed);
+	std::shared_ptr<saba::PMXModel> tempModel = sabaLisa->GetModel();
+	tempModel->BeginAnimation();
+	tempModel->UpdateAllAnimation(anim.get(), animTime * 30.0f, elapsed);
+	tempModel->EndAnimation();
+	tempModel->Update();
+	size_t vtxCount = tempModel->GetVertexCount();
+	HRESULT hr;
+	D3D11_MAPPED_SUBRESOURCE mapRes;
+	hr = context->Map(sabaLisa->GetVertexBuffer().Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapRes);
+	if (FAILED(hr))
+	{
+		return;
+	}
+	Vertex* vertices = (Vertex*)mapRes.pData;
+	const glm::vec3* positions = tempModel->GetUpdatePositions();
+	const glm::vec3* normals = tempModel->GetUpdateNormals();
+	const glm::vec2* uvs = tempModel->GetUpdateUVs();
+	for (size_t i = 0; i < vtxCount; i++)
+	{
+		vertices[i].Position = XMFLOAT3(positions[i][0], positions[i][1], positions[i][2]);
+		vertices[i].Normal = XMFLOAT3(normals[i][0], normals[i][1], normals[i][2]);
+		vertices[i].UVCoord = XMFLOAT2(uvs[i][0], uvs[i][1]);
+		vertices[i].Tangent = {};
+	}
+	context->Unmap(sabaLisa->GetVertexBuffer().Get(), 0);
 
 	// Example input checking: Quit if the escape key is pressed
 	if (Input::GetInstance().KeyDown(VK_ESCAPE)) {
