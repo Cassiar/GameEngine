@@ -17,14 +17,14 @@
 
 class GameEntity
 {
-
-
-
 public:
 	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, bool hasPhysics = false, bool isDebugEntity = false);
 	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<physx::PxRigidActor> rigidBody);
 	GameEntity(std::shared_ptr <Mesh> in_mesh, std::shared_ptr<Camera> in_camera, Microsoft::WRL::ComPtr<ID3D11Device> in_device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> in_context,
-		std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<SimplePixelShader> pixelShader);
+		std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<SimplePixelShader> pixelShader,
+		std::shared_ptr<SimpleVertexShader> edgeVertexShader, std::shared_ptr<SimplePixelShader> edgePixelShader);
+	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<GameEntity> sphere, Microsoft::WRL::ComPtr<ID3D11Device> device);
+	GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, std::shared_ptr<RigidBody> rigidBody, std::shared_ptr<Collider> collider);
 	~GameEntity();
 
 	//get pointer to mesh
@@ -74,6 +74,7 @@ private:
 	Texture GetTexture(const std::string& texturePath);
 
 	std::vector<std::shared_ptr<Material>> materials;
+	std::vector<std::shared_ptr<Material>> edgeMaterials;
 
 	std::shared_ptr<Mesh> mesh;
 	std::shared_ptr<Camera> camera;

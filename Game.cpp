@@ -134,12 +134,13 @@ void Game::CreateBasicGeometry()
 	//std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
 		
 	//load animation file
-	animFile = std::make_shared<saba::VMDFile>();
-	saba::ReadVMDFile(animFile.get(), m_AssetManager->GetFullPathTo("../../Assets/Anim/Male_run_in_place_lisa.vmd").c_str());
-	anim = std::make_shared<saba::VMDAnimation>();
-	sabaLisa->GetModel()->InitializeAnimation();
-	anim->Create(sabaLisa->GetModel());
-	anim->Add(*animFile.get());
+	//animFile = std::make_shared<saba::VMDFile>();
+	//saba::ReadVMDFile(animFile.get(), GetFullPathTo("../../Assets/Anim/Male_run_in_place_lisa.vmd").c_str());
+	//anim = std::make_shared<saba::VMDAnimation>();
+	//sabaLisa->GetModel()->InitializeAnimation();
+	//anim->Create(sabaLisa->GetModel());
+	//anim->Add(*animFile.get());
+
 	//create some entities
 	//cube direectly in front of camera
 	m_EntityManager->AddEntity(std::make_shared<GameEntity>(meshes[0], materials[0], camera, true));
@@ -1154,7 +1155,7 @@ void Game::CreateMaterialGUI(float deltaTime) {
 // --------------------------------------------------------
 void Game::Update(float deltaTime, float totalTime)
 {
-	double time = saba::GetTime();
+	/*double time = saba::GetTime();
 	double elapsed = time - saveTime;
 	if (elapsed > 1.0 / 30.0)
 	{
@@ -1186,7 +1187,7 @@ void Game::Update(float deltaTime, float totalTime)
 		vertices[i].UVCoord = XMFLOAT2(uvs[i][0], uvs[i][1]);
 		vertices[i].Tangent = {};
 	}
-	context->Unmap(sabaLisa->GetVertexBuffer().Get(), 0);
+	context->Unmap(sabaLisa->GetVertexBuffer().Get(), 0);*/
 
 	// Example input checking: Quit if the escape key is pressed
 	if (Input::GetInstance().KeyDown(VK_ESCAPE)) {
