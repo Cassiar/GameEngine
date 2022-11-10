@@ -471,9 +471,9 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Camera> in
 			materials[i]->AddSampler("TexSampler", m_textureSampler);
 			materials[i]->AddSampler("ToonTexSampler", m_toonTextureSampler);
 			materials[i]->AddSampler("SphereTexSampler", m_sphereTextureSampler);
-			materials[i]->AddTextureSRV("Tex", albedo);
-			materials[i]->AddTextureSRV("ToonTex", albedo);
-			materials[i]->AddTextureSRV("SphereTex", albedo);
+			materials[i]->AddTextureSRV("Tex", albedo, manager->WideToString(widePath));
+			materials[i]->AddTextureSRV("ToonTex", albedo, manager->WideToString(widePath));
+			materials[i]->AddTextureSRV("SphereTex", albedo, manager->WideToString(widePath));
 		}		
 	}
 }

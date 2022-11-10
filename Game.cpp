@@ -130,7 +130,7 @@ void Game::CreateBasicGeometry()
 	m_AssetManager->AddSRVToMap(SampleTexture,	L"../../Assets/Textures/Ramp_Texture.png", true);
 	
 	sabaLisa = std::make_shared<Mesh>(m_AssetManager->GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), m_AssetManager->GetFullPathTo("../../Assets/Toon/Lisa/Texture").c_str(), device, context);
-	sabaEntity = std::make_shared<GameEntity>(sabaLisa, m_AssetManager->GetToonMaterial(0), camera, device);
+	//sabaEntity = std::make_shared<GameEntity>(sabaLisa, m_AssetManager->GetToonMaterial(0), camera, device);
 	//std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
 		
 	//load animation file
@@ -150,7 +150,9 @@ void Game::CreateBasicGeometry()
 	
 	m_EntityManager->GetEntity(1)->GetTransform()->SetScale(20.0f, 1.0f, 20.0f);
 
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(sabaLisa, camera, device, context, vertexShader, m_AssetManager->GetPixelShader("toonPixelShader")));
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(sabaLisa, camera, device, context, 
+		m_AssetManager->GetVertexShader("mmdVertexShader"), m_AssetManager->GetPixelShader("mmdPixelShader"),
+		m_AssetManager->GetVertexShader("mmdEdgeVertexShader"), m_AssetManager->GetPixelShader("mmdEdgePixelShader")));
 
 	m_EntityManager->GetEntity(2)->GetTransform()->MoveAbsolute(XMFLOAT3(20, 0, 20));
 	m_EntityManager->GetEntity(2)->GetTransform()->Rotate(XMFLOAT3(0, XM_PI, 0));//face toward starting pos
