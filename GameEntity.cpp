@@ -372,7 +372,8 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 }
 
 GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Camera> in_camera, Microsoft::WRL::ComPtr<ID3D11Device> in_device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> in_context,
-	std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<SimplePixelShader> pixelShader) {
+	std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<SimplePixelShader> pixelShader,
+	std::shared_ptr<SimpleVertexShader> edgeVertexShader, std::shared_ptr<SimplePixelShader> edgePixelShader) {
 	mesh = in_mesh;
 	camera = in_camera;
 	transform = Transform();
@@ -440,6 +441,7 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Camera> in
 			//sampler ToonTexSampler : register(s1);
 			//sampler SphereTexSampler : register(s2);
 			materials.push_back(std::make_shared<Material>(DirectX::XMFLOAT4(1.0, 1.0, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));
+			edgeMaterials.push_back(std::make_shared<Material>(DirectX::XMFLOAT4(1.0, 1.0, 1.0f, 1.0f), 0.5f, edgeVertexShader, edgePixelShader));
 			materials[i]->AddSampler("TexSampler", m_textureSampler);
 			materials[i]->AddSampler("ToonTexSampler", m_toonTextureSampler);
 			materials[i]->AddSampler("SphereTexSampler", m_sphereTextureSampler);
@@ -1470,21 +1472,21 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		context->DrawIndexed(subMesh.m_vertexCount, subMesh.m_beginIndex, 0);
 	}
 	
-	//{
-	//	ID3D11ShaderResourceView* views[] = { nullptr, nullptr, nullptr };
-	//	ID3D11SamplerState* samplers[] = { nullptr, nullptr, nullptr };
-	//	context->PSSetShaderResources(0, 3, views);
-	//	context->PSSetSamplers(0, 3, samplers);
-	//}
+	{
+		ID3D11ShaderResourceView* views[] = { nullptr, nullptr, nullptr };
+		ID3D11SamplerState* samplers[] = { nullptr, nullptr, nullptr };
+		context->PSSetShaderResources(0, 3, views);
+		context->PSSetSamplers(0, 3, samplers);
+	}
 
-	//// Draw edge
+	// Draw edge
 
-	//// Setup input assembler
-	//{
-	//	context->IASetInputLayout(m_mmdEdgeInputLayout.Get());
-	//}
+	// Setup input assembler
+	{
+		context->IASetInputLayout(m_mmdEdgeInputLayout.Get());
+	}
 
-	//// Setup vertex shader (VSData)
+	// Setup vertex shader (VSData)
 	//{
 	//	MMDEdgeVertexShaderCB vsCB;
 	//	vsCB.m_wv = wv;
@@ -1498,48 +1500,64 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 	//	context->VSSetConstantBuffers(0, 1, cbs);
 	//}
 
-	//for (size_t i = 0; i < subMeshCount; i++)
-	//{
-	//	const auto& subMesh = mesh->GetModel()->GetSubMeshes()[i];
-	//	const auto& mat = m_materials[subMesh.m_materialID];
-	//	const auto& mmdMat = mat.m_mmdMat;
+	for (size_t i = 0; i < subMeshCount; i++)
+	{
+		const auto& subMesh = mesh->GetModel()->GetSubMeshes()[i];
+		const auto& mat = m_materials[subMesh.m_materialID];
+		const auto& mmdMat = mat.m_mmdMat;
 
-	//	if (!mmdMat.m_edgeFlag)
-	//	{
-	//		continue;
-	//	}
-	//	if (mmdMat.m_alpha == 0.0f)
-	//	{
-	//		continue;
-	//	}
+		if (!mmdMat.m_edgeFlag)
+		{
+			continue;
+		}
+		if (mmdMat.m_alpha == 0.0f)
+		{
+			continue;
+		}
 
-	//	// Edge size constant buffer
-	//	{
-	//		MMDEdgeSizeVertexShaderCB vsCB;
-	//		vsCB.m_edgeSize = mmdMat.m_edgeSize;
-	//		context->UpdateSubresource(m_mmdEdgeSizeVSConstantBuffer.Get(), 0, nullptr, &vsCB, 0, 0);
+		//set vertex shader
+		std::shared_ptr<SimpleVertexShader> vs = materials[subMesh.m_materialID]->GetVertexShader();
+		std::shared_ptr<SimplePixelShader> ps = materials[subMesh.m_materialID]->GetPixelShader();
 
-	//		ID3D11Buffer* cbs[] = { m_mmdEdgeSizeVSConstantBuffer.Get() };
-	//		context->VSSetConstantBuffers(1, 1, cbs);
-	//	}
+		vs->SetShader();
+		vs->SetMatrix4x4("WV", wv);
+		vs->SetMatrix4x4("WVP", wvp);
+		vs->SetFloat2("ScreenSize", DirectX::XMFLOAT2(m_screenWidth, m_screenHeight));
+		vs->SetFloat("EdgeSize", mmdMat.m_edgeSize);
 
-	//	// Pixel shader
-	//	context->PSSetShader(m_mmdEdgePS.Get(), nullptr, 0);
-	//	{
-	//		MMDEdgePixelShaderCB psCB;
-	//		psCB.m_edgeColor = mmdMat.m_edgeColor;
-	//		context->UpdateSubresource(m_mmdEdgePSConstantBuffer.Get(), 0, nullptr, &psCB, 0, 0);
+		// Pixel shader
+		//context->PSSetShader(m_mmdPS.Get(), nullptr, 0);
 
-	//		ID3D11Buffer* pscbs[] = { m_mmdEdgePSConstantBuffer.Get() };
-	//		context->PSSetConstantBuffers(2, 1, pscbs);
-	//	}
+		ps->SetShader();
 
-	//	context->RSSetState(m_mmdEdgeRS.Get());
+		// Edge size constant buffer
+		//{
+		//	MMDEdgeSizeVertexShaderCB vsCB;
+		//	vsCB.m_edgeSize = mmdMat.m_edgeSize;
+		//	context->UpdateSubresource(m_mmdEdgeSizeVSConstantBuffer.Get(), 0, nullptr, &vsCB, 0, 0);
 
-	//	context->OMSetBlendState(m_mmdEdgeBlendState.Get(), nullptr, 0xffffffff);
+		//	ID3D11Buffer* cbs[] = { m_mmdEdgeSizeVSConstantBuffer.Get() };
+		//	context->VSSetConstantBuffers(1, 1, cbs);
+		//}
 
-	//	context->DrawIndexed(subMesh.m_vertexCount, subMesh.m_beginIndex, 0);
-	//}
+		ps->SetFloat4("EdgeColor", DirectX::XMFLOAT4(mmdMat.m_edgeColor.x, mmdMat.m_edgeColor.y, mmdMat.m_edgeColor.z, mmdMat.m_edgeColor.w));
+		// Pixel shader
+		//context->PSSetShader(m_mmdEdgePS.Get(), nullptr, 0);
+		//{
+		//	MMDEdgePixelShaderCB psCB;
+		//	psCB.m_edgeColor = mmdMat.m_edgeColor;
+		//	context->UpdateSubresource(m_mmdEdgePSConstantBuffer.Get(), 0, nullptr, &psCB, 0, 0);
+
+		//	ID3D11Buffer* pscbs[] = { m_mmdEdgePSConstantBuffer.Get() };
+		//	context->PSSetConstantBuffers(2, 1, pscbs);
+		//}
+
+		context->RSSetState(m_mmdEdgeRS.Get());
+
+		context->OMSetBlendState(m_mmdEdgeBlendState.Get(), nullptr, 0xffffffff);
+
+		context->DrawIndexed(subMesh.m_vertexCount, subMesh.m_beginIndex, 0);
+	}
 
 	//end saba lib example
 }

@@ -106,7 +106,13 @@ private:
 	std::shared_ptr<SimplePixelShader> ppLightRaysPixelShader;
 
 	std::shared_ptr<SimplePixelShader> a5PixelShader;
-	std::shared_ptr<SimplePixelShader> watercolorPixelShader;
+	std::shared_ptr<SimplePixelShader> watercolorPixelShader;	
+	
+	//copies of saba shaders
+	std::shared_ptr<SimpleVertexShader> mmdVertexShader;
+	std::shared_ptr<SimplePixelShader> mmdPixelShader;
+	std::shared_ptr<SimpleVertexShader> mmdEdgeVertexShader;
+	std::shared_ptr<SimplePixelShader> mmdEdgePixelShader;
 
 	//array to hold materials
 	std::vector<std::shared_ptr<Material>> materials;
@@ -184,9 +190,5 @@ private:
 	std::shared_ptr<saba::VMDAnimation> anim;
 	float animTime = 0;
 	double saveTime = 0;
-	
-	//copies of saba shaders
-	std::shared_ptr<SimpleVertexShader> mmdVertexShader;
-	std::shared_ptr<SimplePixelShader> mmdPixelShader;
 };
 
