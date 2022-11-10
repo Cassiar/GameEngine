@@ -348,6 +348,7 @@ Mesh::Mesh(const char* path, const char* texpath, Microsoft::WRL::ComPtr<ID3D11D
 		temp.UVCoord = XMFLOAT2(model->GetUVs()[i][0], model->GetUVs()[i][1]);
 		temp.Tangent = {};
 		m_verts.push_back(temp);
+		//printf("i: %d \tU: %f, \tV: %f\n", i,temp.UVCoord.x, temp.UVCoord.y);
 	}
 	numIndices = model->GetIndexCount();
 

@@ -55,28 +55,36 @@ float4 main(VSOutput vsOut) : SV_TARGET0
     float3 lightDir = normalize(-LightDir);
     float3 nor = normalize(vsOut.Nor);
     float ln = dot(nor, lightDir);
-    //ln = clamp(ln + 0.5, 0.0, 1.0);
+    ln = clamp(ln + 0.5, 0.0, 1.0);
+    //ln = ln * 0.5f + 0.5f;
     float3 color = float3(0.0, 0.0, 0.0);
     float alpha = Alpha;
     float3 diffuseColor = Diffuse * LightColor;
-    color = diffuseColor;
-    color += Ambient;
+    //color = diffuseColor;
+    //color = Ambient;
     //color = clamp(color, 0.0, 1.0);
     int TexMode = TextureModes.x;
     int ToonTexMode = TextureModes.y;
     int SphereTexMode = TextureModes.z;
 
+    //float4 texColor = Tex.Sample(TexSampler, vsOut.UV);
+    //texColor.rgb = ComputeTexMulFactor(texColor.rgb, TexMulFactor);
+    //texColor.rgb = ComputeTexAddFactor(texColor.rgb, TexAddFactor);
+    //return float4(vsOut.UV.x, 0,0,0);
+
     if (TexMode != 0)
     {
         float4 texColor = Tex.Sample(TexSampler, vsOut.UV);
-        texColor.rgb = ComputeTexMulFactor(texColor.rgb, TexMulFactor);
-        texColor.rgb = ComputeTexAddFactor(texColor.rgb, TexAddFactor);
-        color *= texColor.rgb;
+        //texColor.rgb = ComputeTexMulFactor(texColor.rgb, TexMulFactor);
+        //texColor.rgb = ComputeTexAddFactor(texColor.rgb, TexAddFactor);
+        return texColor;
+        color = texColor.rgb;
         if (TexMode == 2)
         {
             alpha *= texColor.a;
         }
     }
+    //return float4(1.0f,0,0,0);
     if (alpha == 0.0)
     {
         discard;

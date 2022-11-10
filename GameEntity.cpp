@@ -1122,145 +1122,131 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 	DirectX::XMStoreFloat4x4(&wvp,
 		wMat * vMat * pMat);
 
-	size_t subMeshCount = mesh->GetModel()->GetSubMeshCount();
-	for (size_t i = 0; i < subMeshCount; i++)
-	{
-		const auto& subMesh = mesh->GetModel()->GetSubMeshes()[i];
-		const auto& mat = m_materials[subMesh.m_materialID];
-		const auto& mmdMat = mat.m_mmdMat;
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	context->IASetVertexBuffers(0, 1, mesh->GetVertexBuffer().GetAddressOf(), &stride, &offset);
+	context->IASetIndexBuffer(mesh->GetIndexBuffer().Get(), mesh->GetFormat(), 0);
+	//testing uvs 
+	//for (int i = 0; i < mesh->GetVerticies().size(); i++) {
+	//	Vertex temp = mesh->GetVerticies()[i];
+	//	printf("i: %d \tU: %f, \tV: %f\n", i, temp.UVCoord.x, temp.UVCoord.y);
+	//}
 
-		materials[i]->PrepareMaterial();
+	//size_t subMeshCount = mesh->GetModel()->GetSubMeshCount();
+	//for (size_t i = 0; i < subMeshCount; i++)
+	//{
+	//	const auto& subMesh = mesh->GetModel()->GetSubMeshes()[i];
+	//	const auto& mat = m_materials[subMesh.m_materialID];
+	//	const auto& mmdMat = mat.m_mmdMat;
 
-		std::shared_ptr<SimpleVertexShader> vs = materials[i]->GetVertexShader();
-		std::shared_ptr<SimplePixelShader> ps = materials[i]->GetPixelShader();
+	//	if (mmdMat.m_alpha == 0)
+	//	{
+	//		continue;
+	//	}
 
-		materials[i]->GetVertexShader()->SetShader();
-		materials[i]->GetPixelShader()->SetShader();
-		//    float4x4 WV;
-		//	  float4x4 WVP;
+	//	materials[subMesh.m_materialID]->PrepareMaterial();
 
-		//set the values for the vertex shader
-		//string names MUST match those in VertexShader.hlsl
-		vs->SetMatrix4x4("world", world);
-		vs->SetMatrix4x4("WV", wv);
-		vs->SetMatrix4x4("WVP", wvp);
-		//set pixel shader buffer values
-		//
-		//float   Alpha;
-		//float3  Diffuse;
-		//float3  Ambient;
-		//float3  Specular;
-		//float   SpecularPower;
-		//float3  LightColor;
-		//float3  LightDir;
-		//
-		//float4  TexMulFactor;
-		//float4  TexAddFactor;
-		//
-		//float4  ToonTexMulFactor;
-		//float4  ToonTexAddFactor;
-		//
-		//float4  SphereTexMulFactor;
-		//float4  SphereTexAddFactor;
-		//
-		//int4    TextureModes;
+	//	std::shared_ptr<SimpleVertexShader> vs = materials[subMesh.m_materialID]->GetVertexShader();
+	//	std::shared_ptr<SimplePixelShader> ps = materials[subMesh.m_materialID]->GetPixelShader();
 
-		int texMode[4] = {};
+	//	materials[subMesh.m_materialID]->GetVertexShader()->SetShader();
+	//	materials[subMesh.m_materialID]->GetPixelShader()->SetShader();
+	//	//    float4x4 WV;
+	//	//	  float4x4 WVP;
 
-		if (mat.m_texture.m_texture)
-		{
-			if (!mat.m_texture.m_hasAlpha)
-			{
-				// Use Material Alpha
-				texMode[0] = 1;
-			}
-			else
-			{
-				// Use Material Alpha * Texture Alpha
-				texMode[0] = 2;
-			}
-		}
-		else {
-			texMode[0] = 0;
-		}
-		if (mat.m_toonTexture.m_texture)
-		{
-			texMode[1] = 1;
-		}
-		else {
-			texMode[1] = 0;
-		}
-		if (mat.m_spTexture.m_texture)
-		{
-			if (mmdMat.m_spTextureMode == saba::MMDMaterial::SphereTextureMode::Mul)
-			{
-				texMode[2] = 1;
-			}
-			else if (mmdMat.m_spTextureMode == saba::MMDMaterial::SphereTextureMode::Add)
-			{
-				texMode[2] = 2;
-			}
-		}
-		else {
-			texMode[2] = 0;
-		}
+	//	//set the values for the vertex shader
+	//	//string names MUST match those in VertexShader.hlsl
+	//	//vs->SetMatrix4x4("world", world);
+	//	vs->SetMatrix4x4("WV", wv);
+	//	vs->SetMatrix4x4("WVP", wvp);
+	//	//set pixel shader buffer values
+	//	//
+	//	//float   Alpha;
+	//	//float3  Diffuse;
+	//	//float3  Ambient;
+	//	//float3  Specular;
+	//	//float   SpecularPower;
+	//	//float3  LightColor;
+	//	//float3  LightDir;
+	//	//
+	//	//float4  TexMulFactor;
+	//	//float4  TexAddFactor;
+	//	//
+	//	//float4  ToonTexMulFactor;
+	//	//float4  ToonTexAddFactor;
+	//	//
+	//	//float4  SphereTexMulFactor;
+	//	//float4  SphereTexAddFactor;
+	//	//
+	//	//int4    TextureModes;
 
-		ps->SetFloat("Alpha", mmdMat.m_alpha);
-		ps->SetFloat3("Diffuse", DirectX::XMFLOAT3(mmdMat.m_diffuse[0], mmdMat.m_diffuse[1], mmdMat.m_diffuse[2]));
-		ps->SetFloat3("Ambient", DirectX::XMFLOAT3(mmdMat.m_ambient[0], mmdMat.m_ambient[1], mmdMat.m_ambient[2]));
-		ps->SetFloat3("Specular", DirectX::XMFLOAT3(mmdMat.m_specular[0], mmdMat.m_specular[1], mmdMat.m_specular[2]));
-		ps->SetFloat("SpecularPower", mmdMat.m_specularPower);
-		ps->SetFloat3("LightColor", m_lightColor);
-		ps->SetFloat3("LightDir", m_lightDir);
+	//	int texMode[4] = {};
 
-		ps->SetFloat4("TexMulFactor", DirectX::XMFLOAT4(mmdMat.m_textureMulFactor[0], mmdMat.m_textureMulFactor[1], mmdMat.m_textureMulFactor[2], mmdMat.m_textureMulFactor[3]));
-		ps->SetFloat4("TexAddFactor", DirectX::XMFLOAT4(mmdMat.m_textureAddFactor[0], mmdMat.m_textureAddFactor[1], mmdMat.m_textureAddFactor[2], mmdMat.m_textureAddFactor[3]));
+	//	if (mat.m_texture.m_texture)
+	//	{
+	//		if (!mat.m_texture.m_hasAlpha)
+	//		{
+	//			// Use Material Alpha
+	//			texMode[0] = 1;
+	//		}
+	//		else
+	//		{
+	//			// Use Material Alpha * Texture Alpha
+	//			texMode[0] = 2;
+	//		}
+	//	}
+	//	else {
+	//		texMode[0] = 0;
+	//	}
+	//	if (mat.m_toonTexture.m_texture)
+	//	{
+	//		texMode[1] = 1;
+	//	}
+	//	else {
+	//		texMode[1] = 0;
+	//	}
+	//	if (mat.m_spTexture.m_texture)
+	//	{
+	//		if (mmdMat.m_spTextureMode == saba::MMDMaterial::SphereTextureMode::Mul)
+	//		{
+	//			texMode[2] = 1;
+	//		}
+	//		else if (mmdMat.m_spTextureMode == saba::MMDMaterial::SphereTextureMode::Add)
+	//		{
+	//			texMode[2] = 2;
+	//		}
+	//	}
+	//	else {
+	//		texMode[2] = 0;
+	//	}
 
-		ps->SetFloat4("ToonTexMulFactor", DirectX::XMFLOAT4(mmdMat.m_toonTextureMulFactor[0], mmdMat.m_toonTextureMulFactor[1], mmdMat.m_toonTextureMulFactor[2], mmdMat.m_toonTextureMulFactor[3]));
-		ps->SetFloat4("ToonTexAddFactor", DirectX::XMFLOAT4(mmdMat.m_toonTextureAddFactor[0], mmdMat.m_toonTextureAddFactor[1], mmdMat.m_toonTextureAddFactor[2], mmdMat.m_toonTextureAddFactor[3]));
+	//	ps->SetFloat("Alpha", mmdMat.m_alpha);
+	//	ps->SetFloat3("Diffuse", DirectX::XMFLOAT3(mmdMat.m_diffuse[0], mmdMat.m_diffuse[1], mmdMat.m_diffuse[2]));
+	//	ps->SetFloat3("Ambient", DirectX::XMFLOAT3(mmdMat.m_ambient[0], mmdMat.m_ambient[1], mmdMat.m_ambient[2]));
+	//	ps->SetFloat3("Specular", DirectX::XMFLOAT3(mmdMat.m_specular[0], mmdMat.m_specular[1], mmdMat.m_specular[2]));
+	//	ps->SetFloat("SpecularPower", mmdMat.m_specularPower);
+	//	ps->SetFloat3("LightColor", m_lightColor);
+	//	ps->SetFloat3("LightDir", m_lightDir);
 
-		ps->SetFloat4("SphereTexMulFactor", DirectX::XMFLOAT4(mmdMat.m_spTextureMulFactor[0], mmdMat.m_spTextureMulFactor[1], mmdMat.m_spTextureMulFactor[2], mmdMat.m_spTextureMulFactor[3]));
-		ps->SetFloat4("SphereTexMulFactor", DirectX::XMFLOAT4(mmdMat.m_spTextureAddFactor[0], mmdMat.m_spTextureAddFactor[1], mmdMat.m_spTextureAddFactor[2], mmdMat.m_spTextureAddFactor[3]));
+	//	ps->SetFloat4("TexMulFactor", DirectX::XMFLOAT4(mmdMat.m_textureMulFactor[0], mmdMat.m_textureMulFactor[1], mmdMat.m_textureMulFactor[2], mmdMat.m_textureMulFactor[3]));
+	//	ps->SetFloat4("TexAddFactor", DirectX::XMFLOAT4(mmdMat.m_textureAddFactor[0], mmdMat.m_textureAddFactor[1], mmdMat.m_textureAddFactor[2], mmdMat.m_textureAddFactor[3]));
 
-		ps->SetData("TextureModes", texMode, sizeof(int) * 4);
-		//copy data over to gpu. Equivelent to map, memcpy, unmap
-		vs->CopyAllBufferData();
-		ps->CopyAllBufferData();
+	//	ps->SetFloat4("ToonTexMulFactor", DirectX::XMFLOAT4(mmdMat.m_toonTextureMulFactor[0], mmdMat.m_toonTextureMulFactor[1], mmdMat.m_toonTextureMulFactor[2], mmdMat.m_toonTextureMulFactor[3]));
+	//	ps->SetFloat4("ToonTexAddFactor", DirectX::XMFLOAT4(mmdMat.m_toonTextureAddFactor[0], mmdMat.m_toonTextureAddFactor[1], mmdMat.m_toonTextureAddFactor[2], mmdMat.m_toonTextureAddFactor[3]));
 
-		UINT stride = sizeof(Vertex);
-		UINT offset = 0;
-		context->IASetVertexBuffers(0, 1, mesh->GetVertexBuffer().GetAddressOf(), &stride, &offset);
-		//if (isPmx) {
-		//	context->IASetIndexBuffer(indexBuf.Get(), format, 0);
-		//	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		//}
-		//else {
-		//	context->IASetIndexBuffer(indexBuf.Get(), DXGI_FORMAT_R32_UINT, 0);
-		//}
-		context->IASetIndexBuffer(mesh->GetIndexBuffer().Get(), mesh->GetFormat(), 0);
+	//	ps->SetFloat4("SphereTexMulFactor", DirectX::XMFLOAT4(mmdMat.m_spTextureMulFactor[0], mmdMat.m_spTextureMulFactor[1], mmdMat.m_spTextureMulFactor[2], mmdMat.m_spTextureMulFactor[3]));
+	//	ps->SetFloat4("SphereTexMulFactor", DirectX::XMFLOAT4(mmdMat.m_spTextureAddFactor[0], mmdMat.m_spTextureAddFactor[1], mmdMat.m_spTextureAddFactor[2], mmdMat.m_spTextureAddFactor[3]));
 
-		// Finally do the actual drawing
-		// Once per object
-		context->DrawIndexed(subMesh.m_vertexCount, subMesh.m_beginIndex, 0);
-	}
-	/*
+	//	ps->SetData("TextureModes", texMode, sizeof(texMode));
+	//	//copy data over to gpu. Equivelent to map, memcpy, unmap
+	//	vs->CopyAllBufferData();
+	//	ps->CopyAllBufferData();
 
-	//create world view and world view proj mats
-	DirectX::XMMATRIX wMat;
-	DirectX::XMMATRIX vMat;
-	DirectX::XMMATRIX pMat;
 
-	DirectX::XMFLOAT4X4 wv;
-	DirectX::XMFLOAT4X4 wvp;
-
-	wMat = DirectX::XMLoadFloat4x4(&world);
-	vMat = DirectX::XMLoadFloat4x4(&view);
-	pMat = DirectX::XMLoadFloat4x4(&projection);
-
-	DirectX::XMStoreFloat4x4(&wv,
-		vMat * wMat);
-	DirectX::XMStoreFloat4x4(&wvp,
-		pMat * vMat * wMat);
+	//	// Finally do the actual drawing
+	//	// Once per object
+	//	context->DrawIndexed(subMesh.m_vertexCount, subMesh.m_beginIndex, 0);
+	//}
 
 	//from saba library example
 	// 
@@ -1276,42 +1262,39 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 
 	//context->RSSetViewports(1, &vp);
 	//ID3D11RenderTargetView* rtvs[] = { m_renderTargetView.Get() };
-	//context->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(),
+	//context->OMSetRenderTargets(1, rtvs,
 	//	m_depthStencilView.Get()
 	//);
 
 	//context->OMSetDepthStencilState(m_defaultDSS.Get(), 0x00);
 
+	// Setup input assembler
+	{
+		//UINT strides[] = { sizeof(Vertex) };
+		//UINT offsets[] = { 0 };
+		//context->IASetInputLayout(m_mmdInputLayout.Get());
+		//ID3D11Buffer* vbs[] = { m_vertexBuffer.Get() };
+		//context->IASetVertexBuffers(0, 1, vbs, strides, offsets);
+		//context->IASetIndexBuffer(m_indexBuffer.Get(), m_indexBufferFormat, 0);
+		//context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	}
+	
+	// Setup vertex shader
+	//{
+	//	MMDVertexShaderCB vsCB;
+	//	vsCB.m_wv = wv;
+	//	vsCB.m_wvp = wvp;
+	//	context->UpdateSubresource(m_mmdVSConstantBuffer.Get(), 0, nullptr, &vsCB, 0, 0);
 
+	//	// Vertex shader
+	//	context->VSSetShader(m_mmdVS.Get(), nullptr, 0);
+	//	ID3D11Buffer* cbs[] = { m_mmdVSConstantBuffer.Get() };
+	//	context->VSSetConstantBuffers(0, 1, cbs);
+	//}
 
 	size_t subMeshCount = mesh->GetModel()->GetSubMeshCount();
 	for (size_t i = 0; i < subMeshCount; i++)
 	{
-		// Setup input assembler
-		//{
-		//	UINT strides = sizeof(SabaVertex);
-		//	UINT offsets = 0;
-		context->IASetInputLayout(m_mmdInputLayout.Get());
-		//	ID3D11Buffer* vbs[] = { m_vertexBuffer.Get() };
-		//	context->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &strides, &offsets);
-		//	context->IASetIndexBuffer(m_indexBuffer.Get(), m_indexBufferFormat, 0);
-		//	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		//}
-
-
-		// Setup vertex shader
-		{
-			MMDVertexShaderCB vsCB;
-			vsCB.m_wv = wv;
-			vsCB.m_wvp = wvp;
-			context->UpdateSubresource(m_mmdVSConstantBuffer.Get(), 0, nullptr, &vsCB, 0, 0);
-
-			// Vertex shader
-			context->VSSetShader(m_mmdVS.Get(), nullptr, 0);
-			ID3D11Buffer* cbs[] = { m_mmdVSConstantBuffer.Get() };
-			context->VSSetConstantBuffers(0, 1, cbs);
-		}
-
 		const auto& subMesh = mesh->GetModel()->GetSubMeshes()[i];
 		const auto& mat = m_materials[subMesh.m_materialID];
 		const auto& mmdMat = mat.m_mmdMat;
@@ -1320,33 +1303,34 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		{
 			continue;
 		}
+		
+		materials[subMesh.m_materialID]->PrepareMaterial();
 
-		//UINT stride = sizeof(Vertex);
-		//UINT offset = 0;
-		//context->IASetVertexBuffers(0, 1, mesh->GetVertexBuffer().GetAddressOf(), &stride, &offset);
-		//if (isPmx) {
-		//	context->IASetIndexBuffer(indexBuf.Get(), format, 0);
-		//	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		//}
-		//else {
-		//	context->IASetIndexBuffer(indexBuf.Get(), DXGI_FORMAT_R32_UINT, 0);
-		//}
-		//context->IASetIndexBuffer(mesh->GetIndexBuffer().Get(), mesh->GetFormat(), 0);
+		//set vertex shader
+		std::shared_ptr<SimpleVertexShader> vs = materials[subMesh.m_materialID]->GetVertexShader();
+		std::shared_ptr<SimplePixelShader> ps = materials[subMesh.m_materialID]->GetPixelShader();
 
-		// Finally do the actual drawing
-		// Once per object
-		//context->DrawIndexed(subMesh.m_vertexCount, subMesh.m_beginIndex, 0);
-
+		vs->SetShader();
+		vs->SetMatrix4x4("WV", wv);
+		vs->SetMatrix4x4("WVP", wvp);
 		
 		// Pixel shader
-		context->PSSetShader(m_mmdPS.Get(), nullptr, 0);
+		//context->PSSetShader(m_mmdPS.Get(), nullptr, 0);
 
-		MMDPixelShaderCB psCB;
+		ps->SetShader();
+
+		MMDPixelShaderCB psCB = {};
 		psCB.m_alpha = mmdMat.m_alpha;
 		psCB.m_diffuse = mmdMat.m_diffuse;
 		psCB.m_ambient = mmdMat.m_ambient;
 		psCB.m_specular = mmdMat.m_specular;
 		psCB.m_specularPower = mmdMat.m_specularPower;
+
+		ps->SetFloat("Alpha", mmdMat.m_alpha);
+		ps->SetFloat3("Diffuse", DirectX::XMFLOAT3(mmdMat.m_diffuse[0], mmdMat.m_diffuse[1], mmdMat.m_diffuse[2]));
+		ps->SetFloat3("Ambient", DirectX::XMFLOAT3(mmdMat.m_ambient[0], mmdMat.m_ambient[1], mmdMat.m_ambient[2]));
+		ps->SetFloat3("Specular", DirectX::XMFLOAT3(mmdMat.m_specular[0], mmdMat.m_specular[1], mmdMat.m_specular[2]));
+		ps->SetFloat("SpecularPower", mmdMat.m_specularPower);
 
 		if (mat.m_texture.m_texture)
 		{
@@ -1362,18 +1346,26 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 			}
 			psCB.m_texMulFactor = mmdMat.m_textureMulFactor;
 			psCB.m_texAddFactor = mmdMat.m_textureAddFactor;
-			ID3D11ShaderResourceView* views[] = { mat.m_texture.m_textureView.Get() };
-			ID3D11SamplerState* samplers[] = { m_textureSampler.Get() };
-			context->PSSetShaderResources(0, 1, views);
-			context->PSSetSamplers(0, 1, samplers);
+			//ID3D11ShaderResourceView* views[] = { mat.m_texture.m_textureView.Get() };
+			//ID3D11SamplerState* samplers[] = { m_textureSampler.Get() };
+			//context->PSSetShaderResources(0, 1, views);
+			//context->PSSetSamplers(0, 1, samplers);
+			ps->SetFloat4("TexMulFactor", DirectX::XMFLOAT4(mmdMat.m_textureMulFactor[0], mmdMat.m_textureMulFactor[1], mmdMat.m_textureMulFactor[2], mmdMat.m_textureMulFactor[3]));
+			ps->SetFloat4("TexAddFactor", DirectX::XMFLOAT4(mmdMat.m_textureAddFactor[0], mmdMat.m_textureAddFactor[1], mmdMat.m_textureAddFactor[2], mmdMat.m_textureAddFactor[3]));
+			ps->SetShaderResourceView("Tex", mat.m_texture.m_textureView.Get());
+			ps->SetSamplerState("TexSampler", m_textureSampler.Get());
 		}
 		else
 		{
 			psCB.m_textureModes.x = 0;
-			ID3D11ShaderResourceView* views[] = { m_dummyTextureView.Get() };
-			ID3D11SamplerState* samplers[] = { m_dummySampler.Get() };
-			context->PSSetShaderResources(0, 1, views);
-			context->PSSetSamplers(0, 1, samplers);
+			//ID3D11ShaderResourceView* views[] = { m_dummyTextureView.Get() };
+			//ID3D11SamplerState* samplers[] = { m_dummySampler.Get() };
+			//context->PSSetShaderResources(0, 1, views);
+			//context->PSSetSamplers(0, 1, samplers);
+			ps->SetFloat4("TexMulFactor", DirectX::XMFLOAT4(0,0,0,0));
+			ps->SetFloat4("TexAddFactor", DirectX::XMFLOAT4(0,0,0,0));
+			ps->SetShaderResourceView("Tex", m_dummyTextureView);
+			ps->SetSamplerState("TexSampler", m_dummySampler);
 		}
 
 		if (mat.m_toonTexture.m_texture)
@@ -1381,18 +1373,26 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 			psCB.m_textureModes.y = 1;
 			psCB.m_toonTexMulFactor = mmdMat.m_toonTextureMulFactor;
 			psCB.m_toonTexAddFactor = mmdMat.m_toonTextureAddFactor;
-			ID3D11ShaderResourceView* views[] = { mat.m_toonTexture.m_textureView.Get() };
-			ID3D11SamplerState* samplers[] = { m_toonTextureSampler.Get() };
-			context->PSSetShaderResources(1, 1, views);
-			context->PSSetSamplers(1, 1, samplers);
+			//ID3D11ShaderResourceView* views[] = { mat.m_toonTexture.m_textureView.Get() };
+			//ID3D11SamplerState* samplers[] = { m_toonTextureSampler.Get() };
+			//context->PSSetShaderResources(1, 1, views);
+			//context->PSSetSamplers(1, 1, samplers);
+			ps->SetFloat4("ToonTexMulFactor", DirectX::XMFLOAT4(mmdMat.m_toonTextureMulFactor[0], mmdMat.m_toonTextureMulFactor[1], mmdMat.m_toonTextureMulFactor[2], mmdMat.m_toonTextureMulFactor[3]));
+			ps->SetFloat4("ToonTexAddFactor", DirectX::XMFLOAT4(mmdMat.m_toonTextureAddFactor[0], mmdMat.m_toonTextureAddFactor[1], mmdMat.m_toonTextureAddFactor[2], mmdMat.m_toonTextureAddFactor[3]));
+			ps->SetShaderResourceView("ToonTex", mat.m_toonTexture.m_textureView);
+			ps->SetSamplerState("ToonTexSampler", m_toonTextureSampler);
 		}
 		else
 		{
 			psCB.m_textureModes.y = 0;
-			ID3D11ShaderResourceView* views[] = { m_dummyTextureView.Get() };
-			ID3D11SamplerState* samplers[] = { m_dummySampler.Get() };
-			context->PSSetShaderResources(1, 1, views);
-			context->PSSetSamplers(1, 1, samplers);
+			//ID3D11ShaderResourceView* views[] = { m_dummyTextureView.Get() };
+			//ID3D11SamplerState* samplers[] = { m_dummySampler.Get() };
+			//context->PSSetShaderResources(1, 1, views);
+			//context->PSSetSamplers(1, 1, samplers);
+			ps->SetFloat4("ToonTexMulFactor", DirectX::XMFLOAT4(0,0,0,0));
+			ps->SetFloat4("ToonTexAddFactor", DirectX::XMFLOAT4(0,0,0,0));
+			ps->SetShaderResourceView("ToonTex", m_dummyTextureView);
+			ps->SetSamplerState("ToonTexSampler", m_dummySampler);
 		}
 
 		if (mat.m_spTexture.m_texture)
@@ -1407,18 +1407,26 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 			}
 			psCB.m_sphereTexMulFactor = mmdMat.m_spTextureMulFactor;
 			psCB.m_sphereTexAddFactor = mmdMat.m_spTextureAddFactor;
-			ID3D11ShaderResourceView* views[] = { mat.m_spTexture.m_textureView.Get() };
-			ID3D11SamplerState* samplers[] = { m_sphereTextureSampler.Get() };
-			context->PSSetShaderResources(2, 1, views);
-			context->PSSetSamplers(2, 1, samplers);
+			//ID3D11ShaderResourceView* views[] = { mat.m_spTexture.m_textureView.Get() };
+			//ID3D11SamplerState* samplers[] = { m_sphereTextureSampler.Get() };
+			//context->PSSetShaderResources(2, 1, views);
+			//context->PSSetSamplers(2, 1, samplers);
+			ps->SetFloat4("SphereTexMulFactor", DirectX::XMFLOAT4(mmdMat.m_spTextureMulFactor[0], mmdMat.m_spTextureMulFactor[1], mmdMat.m_spTextureMulFactor[2], mmdMat.m_spTextureMulFactor[3]));
+			ps->SetFloat4("SphereTexMulFactor", DirectX::XMFLOAT4(mmdMat.m_spTextureAddFactor[0], mmdMat.m_spTextureAddFactor[1], mmdMat.m_spTextureAddFactor[2], mmdMat.m_spTextureAddFactor[3]));
+			ps->SetShaderResourceView("SphereTex", mat.m_spTexture.m_textureView);
+			ps->SetSamplerState("SphereTexSampler", m_sphereTextureSampler);
 		}
 		else
 		{
 			psCB.m_textureModes.z = 0;
-			ID3D11ShaderResourceView* views[] = { m_dummyTextureView.Get() };
-			ID3D11SamplerState* samplers[] = { m_dummySampler.Get() };
-			context->PSSetShaderResources(2, 1, views);
-			context->PSSetSamplers(2, 1, samplers);
+			//ID3D11ShaderResourceView* views[] = { m_dummyTextureView.Get() };
+			//ID3D11SamplerState* samplers[] = { m_dummySampler.Get() };
+			//context->PSSetShaderResources(2, 1, views);
+			//context->PSSetSamplers(2, 1, samplers);			
+			ps->SetFloat4("SphereTexMulFactor", DirectX::XMFLOAT4(0,0,0,0));
+			ps->SetFloat4("SphereTexMulFactor", DirectX::XMFLOAT4(0,0,0,0));
+			ps->SetShaderResourceView("SphereTex", m_dummyTextureView);
+			ps->SetSamplerState("SphereTexSampler", m_dummySampler);
 		}
 
 		psCB.m_lightColor = glm::vec3(m_lightColor.x, m_lightColor.y, m_lightColor.z);
@@ -1431,9 +1439,17 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 				DirectX::XMLoadFloat4x4(&viewMat)));
 		psCB.m_lightDir = glm::vec3(lightDir.x, lightDir.y, lightDir.z);
 
-		context->UpdateSubresource(m_mmdPSConstantBuffer.Get(), 0, nullptr, &psCB, 0, 0);
-		ID3D11Buffer* pscbs[] = { m_mmdPSConstantBuffer.Get() };
-		context->PSSetConstantBuffers(1, 1, pscbs);
+		ps->SetFloat3("LightColor", m_lightColor);
+		ps->SetFloat3("LightDir", m_lightDir);
+
+		ps->SetFloat4("TextureModes", DirectX::XMFLOAT4(psCB.m_textureModes.x, psCB.m_textureModes.y, psCB.m_textureModes.z, psCB.m_textureModes.w));
+
+		vs->CopyAllBufferData();
+		ps->CopyAllBufferData();
+
+		//context->UpdateSubresource(m_mmdPSConstantBuffer.Get(), 0, nullptr, &psCB, 0, 0);
+		//ID3D11Buffer* pscbs[] = { m_mmdPSConstantBuffer.Get() };
+		//context->PSSetConstantBuffers(1, 1, pscbs);
 
 		if (mmdMat.m_bothFace)
 		{
@@ -1444,84 +1460,88 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 			context->RSSetState(m_mmdFrontFaceRS.Get());
 		}
 
-		//context->OMSetBlendState(m_mmdBlendState.Get(), nullptr, 0xffffffff);
+		UINT stride = sizeof(Vertex);
+		UINT offset = 0;
+		context->IASetVertexBuffers(0, 1, mesh->GetVertexBuffer().GetAddressOf(), &stride, &offset);
+		context->IASetIndexBuffer(mesh->GetIndexBuffer().Get(), mesh->GetFormat(), 0);
 
-		//context->DrawIndexed(subMesh.m_vertexCount, subMesh.m_beginIndex, 0);
-	}
-	/*
-	{
-		ID3D11ShaderResourceView* views[] = { nullptr, nullptr, nullptr };
-		ID3D11SamplerState* samplers[] = { nullptr, nullptr, nullptr };
-		context->PSSetShaderResources(0, 3, views);
-		context->PSSetSamplers(0, 3, samplers);
-	}
-
-	// Draw edge
-
-	// Setup input assembler
-	{
-		context->IASetInputLayout(m_mmdEdgeInputLayout.Get());
-	}
-
-	// Setup vertex shader (VSData)
-	{
-		MMDEdgeVertexShaderCB vsCB;
-		vsCB.m_wv = wv;
-		vsCB.m_wvp = wvp;
-		vsCB.m_screenSize = glm::vec2(float(m_screenWidth), float(m_screenHeight));
-		context->UpdateSubresource(m_mmdEdgeVSConstantBuffer.Get(), 0, nullptr, &vsCB, 0, 0);
-
-		// Vertex shader
-		context->VSSetShader(m_mmdEdgeVS.Get(), nullptr, 0);
-		ID3D11Buffer* cbs[] = { m_mmdEdgeVSConstantBuffer.Get() };
-		context->VSSetConstantBuffers(0, 1, cbs);
-	}
-
-	for (size_t i = 0; i < subMeshCount; i++)
-	{
-		const auto& subMesh = mesh->GetModel()->GetSubMeshes()[i];
-		const auto& mat = m_materials[subMesh.m_materialID];
-		const auto& mmdMat = mat.m_mmdMat;
-
-		if (!mmdMat.m_edgeFlag)
-		{
-			continue;
-		}
-		if (mmdMat.m_alpha == 0.0f)
-		{
-			continue;
-		}
-
-		// Edge size constant buffer
-		{
-			MMDEdgeSizeVertexShaderCB vsCB;
-			vsCB.m_edgeSize = mmdMat.m_edgeSize;
-			context->UpdateSubresource(m_mmdEdgeSizeVSConstantBuffer.Get(), 0, nullptr, &vsCB, 0, 0);
-
-			ID3D11Buffer* cbs[] = { m_mmdEdgeSizeVSConstantBuffer.Get() };
-			context->VSSetConstantBuffers(1, 1, cbs);
-		}
-
-		// Pixel shader
-		context->PSSetShader(m_mmdEdgePS.Get(), nullptr, 0);
-		{
-			MMDEdgePixelShaderCB psCB;
-			psCB.m_edgeColor = mmdMat.m_edgeColor;
-			context->UpdateSubresource(m_mmdEdgePSConstantBuffer.Get(), 0, nullptr, &psCB, 0, 0);
-
-			ID3D11Buffer* pscbs[] = { m_mmdEdgePSConstantBuffer.Get() };
-			context->PSSetConstantBuffers(2, 1, pscbs);
-		}
-
-		context->RSSetState(m_mmdEdgeRS.Get());
-
-		context->OMSetBlendState(m_mmdEdgeBlendState.Get(), nullptr, 0xffffffff);
+		context->OMSetBlendState(m_mmdBlendState.Get(), nullptr, 0xffffffff);
 
 		context->DrawIndexed(subMesh.m_vertexCount, subMesh.m_beginIndex, 0);
-	}*/
+	}
+	
+	//{
+	//	ID3D11ShaderResourceView* views[] = { nullptr, nullptr, nullptr };
+	//	ID3D11SamplerState* samplers[] = { nullptr, nullptr, nullptr };
+	//	context->PSSetShaderResources(0, 3, views);
+	//	context->PSSetSamplers(0, 3, samplers);
+	//}
+
+	//// Draw edge
+
+	//// Setup input assembler
+	//{
+	//	context->IASetInputLayout(m_mmdEdgeInputLayout.Get());
+	//}
+
+	//// Setup vertex shader (VSData)
+	//{
+	//	MMDEdgeVertexShaderCB vsCB;
+	//	vsCB.m_wv = wv;
+	//	vsCB.m_wvp = wvp;
+	//	vsCB.m_screenSize = glm::vec2(float(m_screenWidth), float(m_screenHeight));
+	//	context->UpdateSubresource(m_mmdEdgeVSConstantBuffer.Get(), 0, nullptr, &vsCB, 0, 0);
+
+	//	// Vertex shader
+	//	context->VSSetShader(m_mmdEdgeVS.Get(), nullptr, 0);
+	//	ID3D11Buffer* cbs[] = { m_mmdEdgeVSConstantBuffer.Get() };
+	//	context->VSSetConstantBuffers(0, 1, cbs);
+	//}
+
+	//for (size_t i = 0; i < subMeshCount; i++)
+	//{
+	//	const auto& subMesh = mesh->GetModel()->GetSubMeshes()[i];
+	//	const auto& mat = m_materials[subMesh.m_materialID];
+	//	const auto& mmdMat = mat.m_mmdMat;
+
+	//	if (!mmdMat.m_edgeFlag)
+	//	{
+	//		continue;
+	//	}
+	//	if (mmdMat.m_alpha == 0.0f)
+	//	{
+	//		continue;
+	//	}
+
+	//	// Edge size constant buffer
+	//	{
+	//		MMDEdgeSizeVertexShaderCB vsCB;
+	//		vsCB.m_edgeSize = mmdMat.m_edgeSize;
+	//		context->UpdateSubresource(m_mmdEdgeSizeVSConstantBuffer.Get(), 0, nullptr, &vsCB, 0, 0);
+
+	//		ID3D11Buffer* cbs[] = { m_mmdEdgeSizeVSConstantBuffer.Get() };
+	//		context->VSSetConstantBuffers(1, 1, cbs);
+	//	}
+
+	//	// Pixel shader
+	//	context->PSSetShader(m_mmdEdgePS.Get(), nullptr, 0);
+	//	{
+	//		MMDEdgePixelShaderCB psCB;
+	//		psCB.m_edgeColor = mmdMat.m_edgeColor;
+	//		context->UpdateSubresource(m_mmdEdgePSConstantBuffer.Get(), 0, nullptr, &psCB, 0, 0);
+
+	//		ID3D11Buffer* pscbs[] = { m_mmdEdgePSConstantBuffer.Get() };
+	//		context->PSSetConstantBuffers(2, 1, pscbs);
+	//	}
+
+	//	context->RSSetState(m_mmdEdgeRS.Get());
+
+	//	context->OMSetBlendState(m_mmdEdgeBlendState.Get(), nullptr, 0xffffffff);
+
+	//	context->DrawIndexed(subMesh.m_vertexCount, subMesh.m_beginIndex, 0);
+	//}
 
 	//end saba lib example
-	//}
 }
 
 
