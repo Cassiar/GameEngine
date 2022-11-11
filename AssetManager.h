@@ -3,9 +3,11 @@
 #include "Camera.h"
 #include "Material.h"
 #include "Mesh.h"
+#include "SabaMesh.h"
 #include "SimpleShader.h"
 
 #include <fstream>
+#include <map>
 #include <WICTextureLoader.h>
 
 enum SRVMaps
@@ -22,6 +24,15 @@ enum SRVMaps
 	SampleTexture,
 	SkyBox
 };
+
+// mmd shader constant buffer
+
+//========================
+//Saba Code
+//========================
+#define	STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_STATIC
+#include <stb/stb_image.h>
 
 class AssetManager
 {
@@ -43,15 +54,21 @@ private:
 	std::unordered_map<SRVMaps, std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>> m_srvMaps;
 	std::unordered_map<SRVMaps, std::vector<std::string>> m_srvFileNames;
 
+	std::map<std::string, SabaTexture>	m_sabaTextures;
+
 	//Needs to be either deleted or moved into m_PixelShaders
 	//std::shared_ptr<SimplePixelShader> watercolorPixelShader;
 
 	//array to hold materials
-	std::vector<std::shared_ptr<Material>> m_materials;
-	std::vector<std::shared_ptr<Material>> m_toonMaterials;
+	std::vector<std::shared_ptr<Material>>		m_materials;
+	std::vector<std::shared_ptr<Material>>		m_toonMaterials;
+	std::vector<std::shared_ptr<Material>>		m_sabaMaterials;
+	std::vector<SabaMaterial>					m_sabaStructMaterials;
+	std::vector<std::shared_ptr<Material>>		m_sabaEdgeMaterials;
 
 	//array to hold meshes
 	std::vector<std::shared_ptr<Mesh>> m_meshes;
+	std::vector<std::shared_ptr<SabaMesh>> m_sabaMeshes;
 	std::vector<std::shared_ptr<Mesh>> m_toonMeshes;
 
 	// Not sure these belong here
@@ -66,8 +83,59 @@ private:
 	void InitMeshes();
 	void InitSamplers();
 	void InitMaterials();
+	bool InitSaba(std::shared_ptr<SabaMesh> mesh);
+	bool InitSabaShaders(std::shared_ptr<SabaMesh> mesh);
+	void InitSabaMaterials(std::shared_ptr<SabaMesh> mesh);
+	SabaTexture GetTexture(const std::string& texturePath);
 
 public:
+	// nshields TODO - Shouldn't be public but for simplicity of deadline i'm breaking rules
+#pragma region SabaStuff
+
+	Microsoft::WRL::ComPtr<ID3D11VertexShader>	m_mmdVS;
+	Microsoft::WRL::ComPtr<ID3D11PixelShader>	m_mmdPS;
+	Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_mmdInputLayout;
+	Microsoft::WRL::ComPtr<ID3D11SamplerState>	m_textureSampler;
+	Microsoft::WRL::ComPtr<ID3D11SamplerState>	m_toonTextureSampler;
+	Microsoft::WRL::ComPtr<ID3D11SamplerState>	m_sphereTextureSampler;
+	Microsoft::WRL::ComPtr<ID3D11BlendState>	m_mmdBlendState;
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState>	m_mmdFrontFaceRS;
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState>	m_mmdBothFaceRS;
+
+	Microsoft::WRL::ComPtr<ID3D11VertexShader>	m_mmdEdgeVS;
+	Microsoft::WRL::ComPtr<ID3D11PixelShader>	m_mmdEdgePS;
+	Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_mmdEdgeInputLayout;
+	Microsoft::WRL::ComPtr<ID3D11BlendState>	m_mmdEdgeBlendState;
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState>	m_mmdEdgeRS;
+
+	Microsoft::WRL::ComPtr<ID3D11VertexShader>	m_mmdGroundShadowVS;
+	Microsoft::WRL::ComPtr<ID3D11PixelShader>	m_mmdGroundShadowPS;
+	Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_mmdGroundShadowInputLayout;
+	Microsoft::WRL::ComPtr<ID3D11BlendState>	m_mmdGroundShadowBlendState;
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState>	m_mmdGroundShadowRS;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilState>	m_mmdGroundShadowDSS;
+
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilState>	m_defaultDSS;
+
+	Microsoft::WRL::ComPtr<ID3D11Texture2D>				m_dummyTexture;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>	m_dummyTextureView;
+	Microsoft::WRL::ComPtr<ID3D11SamplerState>			m_dummySampler;
+
+	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_vertexBuffer;
+	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_indexBuffer;
+	DXGI_FORMAT									m_indexBufferFormat;
+
+	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdVSConstantBuffer;
+	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdPSConstantBuffer;
+
+	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdEdgeVSConstantBuffer;
+	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdEdgeSizeVSConstantBuffer;
+	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdEdgePSConstantBuffer;
+
+	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdGroundShadowVSConstantBuffer;
+	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdGroundShadowPSConstantBuffer;
+#pragma endregion
+
 	// Normally this intialization function wouldn't be necessary, however, for this
 	// Singleton to make sense we need access to the ID3D11Device and ID3D11DeviceContext.
 	// I don't want the user to have to pass these through in the GetInstance function
@@ -85,9 +153,14 @@ public:
 
 	std::shared_ptr<Mesh> GetToonMesh(int index) { return m_toonMeshes[index]; }
 	std::vector<std::shared_ptr<Mesh>> GetToonMeshes() { return m_toonMeshes; }
+	
+	std::shared_ptr<SabaMesh> GetSabaMesh(int index) { return m_sabaMeshes[index]; }
+	std::vector<std::shared_ptr<SabaMesh>> GetSabaMeshes() { return m_sabaMeshes; }
 
 	std::shared_ptr<Material> GetMaterial(int index) { return m_materials[index]; }
 	std::vector<std::shared_ptr<Material>> GetMaterials() { return m_materials; }
+	std::vector<std::shared_ptr<Material>> GetSabaMaterials() { return m_sabaMaterials; }
+	std::vector<SabaMaterial> GetSabaStructMaterials() { return m_sabaStructMaterials; }
 
 	std::shared_ptr<Material> GetToonMaterial(int index) { return m_toonMaterials[index]; }
 	std::vector<std::shared_ptr<Material>> GetToonMaterials() { return m_toonMaterials; }
@@ -119,6 +192,8 @@ public:
 
 	void AddPixelShaderToMap(std::string key, std::string filename);
 	std::shared_ptr<SimplePixelShader> MakeSimplePixelShader(std::wstring csoName);
+
+	void AddSabaMesh(std::shared_ptr<SabaMesh> mesh) { m_sabaMeshes.push_back(mesh); }
 
 	void MakeRasterizerState(D3D11_RASTERIZER_DESC rastDesc, Microsoft::WRL::ComPtr<ID3D11RasterizerState>& rastLocation);
 

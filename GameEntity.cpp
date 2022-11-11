@@ -1,22 +1,11 @@
 #include "GameEntity.h"
 
-#include "BufferStructs.h"
 #include <WICTextureLoader.h>
 
 #include <string>
 #include <codecvt>
 #include <locale>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-//for saba shaders
-#include "mmd.vso.h"
-#include "mmd.pso.h"
-#include "mmd_edge.vso.h"
-#include "mmd_edge.pso.h"
-#include "mmd_ground_shadow.vso.h"
-#include "mmd_ground_shadow.pso.h"
 #include <map>
 
 #pragma comment(lib, "d3dcompiler.lib")
@@ -24,228 +13,6 @@
 
 bool g_drawDebugSpheresDefault = false;
 bool g_drawDebugCubesDefault = true;
-// mmd shader constant buffer
-
-//========================
-//Saba Code
-//========================
-#define	STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_STATIC
-#include <stb/stb_image.h>
-
-Microsoft::WRL::ComPtr<ID3D11VertexShader>	m_mmdVS;
-Microsoft::WRL::ComPtr<ID3D11PixelShader>	m_mmdPS;
-Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_mmdInputLayout;
-Microsoft::WRL::ComPtr<ID3D11SamplerState>	m_textureSampler;
-Microsoft::WRL::ComPtr<ID3D11SamplerState>	m_toonTextureSampler;
-Microsoft::WRL::ComPtr<ID3D11SamplerState>	m_sphereTextureSampler;
-Microsoft::WRL::ComPtr<ID3D11BlendState>	m_mmdBlendState;
-Microsoft::WRL::ComPtr<ID3D11RasterizerState>	m_mmdFrontFaceRS;
-Microsoft::WRL::ComPtr<ID3D11RasterizerState>	m_mmdBothFaceRS;
-
-Microsoft::WRL::ComPtr<ID3D11VertexShader>	m_mmdEdgeVS;
-Microsoft::WRL::ComPtr<ID3D11PixelShader>	m_mmdEdgePS;
-Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_mmdEdgeInputLayout;
-Microsoft::WRL::ComPtr<ID3D11BlendState>	m_mmdEdgeBlendState;
-Microsoft::WRL::ComPtr<ID3D11RasterizerState>	m_mmdEdgeRS;
-
-Microsoft::WRL::ComPtr<ID3D11VertexShader>	m_mmdGroundShadowVS;
-Microsoft::WRL::ComPtr<ID3D11PixelShader>	m_mmdGroundShadowPS;
-Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_mmdGroundShadowInputLayout;
-Microsoft::WRL::ComPtr<ID3D11BlendState>	m_mmdGroundShadowBlendState;
-Microsoft::WRL::ComPtr<ID3D11RasterizerState>	m_mmdGroundShadowRS;
-Microsoft::WRL::ComPtr<ID3D11DepthStencilState>	m_mmdGroundShadowDSS;
-
-Microsoft::WRL::ComPtr<ID3D11DepthStencilState>	m_defaultDSS;
-
-Microsoft::WRL::ComPtr<ID3D11Texture2D>				m_dummyTexture;
-Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>	m_dummyTextureView;
-Microsoft::WRL::ComPtr<ID3D11SamplerState>			m_dummySampler;
-
-Microsoft::WRL::ComPtr<ID3D11Buffer>		m_vertexBuffer;
-Microsoft::WRL::ComPtr<ID3D11Buffer>		m_indexBuffer;
-DXGI_FORMAT					m_indexBufferFormat;
-
-Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdVSConstantBuffer;
-Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdPSConstantBuffer;
-
-Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdEdgeVSConstantBuffer;
-Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdEdgeSizeVSConstantBuffer;
-Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdEdgePSConstantBuffer;
-
-Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdGroundShadowVSConstantBuffer;
-Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdGroundShadowPSConstantBuffer;
-
-struct SabaVertex
-{
-	glm::vec3	m_position;
-	glm::vec3	m_normal;
-	glm::vec2	m_uv;
-};
-
-struct MMDVertexShaderCB
-{
-	DirectX::XMFLOAT4X4	m_wv;
-	DirectX::XMFLOAT4X4 m_wvp;
-};
-
-struct MMDPixelShaderCB
-{
-	float		m_alpha;
-	glm::vec3	m_diffuse;
-	glm::vec3	m_ambient;
-	float		m_dummy1;
-	glm::vec3	m_specular;
-	float		m_specularPower;
-	glm::vec3	m_lightColor;
-	float		m_dummy2;
-	glm::vec3	m_lightDir;
-	float		m_dummy3;
-
-	glm::vec4	m_texMulFactor;
-	glm::vec4	m_texAddFactor;
-
-	glm::vec4	m_toonTexMulFactor;
-	glm::vec4	m_toonTexAddFactor;
-
-	glm::vec4	m_sphereTexMulFactor;
-	glm::vec4	m_sphereTexAddFactor;
-
-	glm::ivec4	m_textureModes;
-
-};
-
-// mmd edge shader constant buffer
-
-struct MMDEdgeVertexShaderCB
-{
-	DirectX::XMFLOAT4X4	m_wv;
-	DirectX::XMFLOAT4X4	m_wvp;
-	glm::vec2	m_screenSize;
-	float		m_dummy[2];
-};
-
-struct MMDEdgeSizeVertexShaderCB
-{
-	float		m_edgeSize;
-	float		m_dummy[3];
-};
-
-struct MMDEdgePixelShaderCB
-{
-	glm::vec4	m_edgeColor;
-};
-
-
-// mmd ground shadow shader constant buffer
-
-struct MMDGroundShadowVertexShaderCB
-{
-	DirectX::XMFLOAT4X4	m_wvp;
-};	
-
-struct MMDGroundShadowPixelShaderCB
-{
-	glm::vec4	m_shadowColor;
-};
-
-struct SabaMaterial
-{
-	explicit SabaMaterial(const saba::MMDMaterial& mat)
-		: m_mmdMat(mat)
-	{}
-
-	template <typename T>
-	using ComPtr = Microsoft::WRL::ComPtr<T>;
-
-	const saba::MMDMaterial& m_mmdMat;
-	GameEntity::Texture	m_texture;
-	GameEntity::Texture	m_spTexture;
-	GameEntity::Texture	m_toonTexture;
-};
-
-std::map<std::string, GameEntity::Texture>	m_textures;
-std::vector<SabaMaterial>	m_materials;
-
-GameEntity::Texture GameEntity::GetTexture(const std::string& texturePath)
-{
-	auto it = m_textures.find(texturePath);
-	if (it == m_textures.end())
-	{
-		saba::File file;
-		if (!file.Open(texturePath))
-		{
-			return Texture();
-		}
-		int x, y, comp;
-		int ret = stbi_info_from_file(file.GetFilePointer(), &x, &y, &comp);
-		if (ret == 0)
-		{
-			return Texture();
-		}
-
-		D3D11_TEXTURE2D_DESC tex2dDesc = {};
-		tex2dDesc.Width = x;
-		tex2dDesc.Height = y;
-		tex2dDesc.MipLevels = 1;
-		tex2dDesc.ArraySize = 1;
-		tex2dDesc.SampleDesc.Count = 1;
-		tex2dDesc.SampleDesc.Quality = 0;
-		tex2dDesc.Usage = D3D11_USAGE_DEFAULT;
-		tex2dDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-		tex2dDesc.CPUAccessFlags = 0;
-		tex2dDesc.MiscFlags = 0;
-
-		int reqComp = 0;
-		bool hasAlpha = false;
-		if (comp != 4)
-		{
-			tex2dDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-			hasAlpha = false;
-		}
-		else
-		{
-			tex2dDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-			hasAlpha = true;
-		}
-		uint8_t* image = stbi_load_from_file(file.GetFilePointer(), &x, &y, &comp, STBI_rgb_alpha);
-		D3D11_SUBRESOURCE_DATA initData = {};
-		initData.pSysMem = image;
-		initData.SysMemPitch = 4 * x;
-		Microsoft::WRL::ComPtr<ID3D11Texture2D> tex2d;
-		HRESULT hr = device->CreateTexture2D(&tex2dDesc, &initData, &tex2d);
-		stbi_image_free(image);
-		if (FAILED(hr))
-		{
-			return Texture();
-		}
-
-		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> tex2dRV;
-		hr = device->CreateShaderResourceView(tex2d.Get(), nullptr, &tex2dRV);
-		if (FAILED(hr))
-		{
-			return Texture();
-		}
-
-		Texture tex;
-		tex.m_texture = tex2d;
-		tex.m_textureView = tex2dRV;
-		tex.m_hasAlpha = hasAlpha;
-
-		m_textures[texturePath] = tex;
-
-		return m_textures[texturePath];
-	}
-	else
-	{
-		return (*it).second;
-	}
-}
-
-//========================
-//End Saba Code
-//========================
-
 
 //Chris helper methods copied over
 //including DXCore didn't seem to work
@@ -324,6 +91,7 @@ using namespace physx;
 GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, bool hasPhysics, bool isDebugEntity)
 {
 	mesh = in_mesh;
+	sabaMesh = std::shared_ptr<SabaMesh>(dynamic_cast<SabaMesh*>(this->mesh.get()));
 	material = in_material;
 	camera = in_camera;
 	transform = Transform();
@@ -388,14 +156,9 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 
 GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Camera> in_camera, Microsoft::WRL::ComPtr<ID3D11Device> in_device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> in_context,
 	std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<SimplePixelShader> pixelShader,
-	std::shared_ptr<SimpleVertexShader> edgeVertexShader, std::shared_ptr<SimplePixelShader> edgePixelShader) {
-	mesh = in_mesh;
-	camera = in_camera;
-	transform = Transform();
-	device = in_device;
+	std::shared_ptr<SimpleVertexShader> edgeVertexShader, std::shared_ptr<SimplePixelShader> edgePixelShader) 
+	: GameEntity(in_mesh, nullptr, in_camera, false, false) {
 	context = in_context;
-
-	m_rigidBody = nullptr; //std::make_shared<physx::PxRigidActor>(&transform);
 	m_collider = std::make_shared<Collider>(in_mesh, &transform);
 	m_sphere = nullptr;
 	m_drawDebugSphere = g_drawDebugSpheresDefault;
@@ -403,663 +166,13 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Camera> in
 	m_isDebugEntity = false;
 
 	if (mesh->IsPmx()) {
-		SabaSetup();
-		CreateSabaShaders();
-		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> one;//all white texture to represent ones
-		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> zero;//all black texture to represent zeros
-		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> rampTexture;//all black texture to represent zeros
 		DirectX::CreateWICTextureFromFile(device.Get(), context.Get(),
 			GetFullPathTo_Wide(L"../../Assets/Textures/allMetal.png").c_str(), nullptr, one.GetAddressOf());
 		DirectX::CreateWICTextureFromFile(device.Get(), context.Get(),
 			GetFullPathTo_Wide(L"../../Assets/Textures/noMetal.png").c_str(), nullptr, zero.GetAddressOf());
 		DirectX::CreateWICTextureFromFile(device.Get(), context.Get(),
 			GetFullPathTo_Wide(L"../../Assets/Textures/Ramp_Texture.png").c_str(), nullptr, rampTexture.GetAddressOf());
-
-
-		//create description and sampler state
-		D3D11_SAMPLER_DESC samplerDesc = {};
-		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP; // allows textures to tile
-		samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC; // allowing anisotropic filtering
-		samplerDesc.MaxAnisotropy = 4;
-		samplerDesc.MaxLOD = D3D11_FLOAT32_MAX; //allways use mipmapping
-
-		//create sampler
-		device->CreateSamplerState(&samplerDesc, basicSampler.GetAddressOf());
-
-		//create sampler state for post process
-		D3D11_SAMPLER_DESC ppSamplerDesc = {};
-		ppSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-		ppSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-		ppSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-		ppSamplerDesc.Filter = D3D11_FILTER_ANISOTROPIC; // allowing anisotropic filtering
-		ppSamplerDesc.MaxAnisotropy = 4;
-		ppSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX; //allways use mipmapping
-
-		device->CreateSamplerState(&ppSamplerDesc, rampSampler.GetAddressOf());
-
-		materials.reserve(mesh->GetModel()->GetMaterialCount());
-		for (size_t i = 0; i < mesh->GetModel()->GetMaterialCount(); i++)
-		{
-			const auto& mmdTex = mesh->GetModel()->GetMaterials()[i].m_texture;
-			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> albedo;
-
-			//tutorial source https://riptutorial.com/cplusplus/example/4190/conversion-to-std--wstring
-			std::wstring widePath = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(mmdTex);
-
-			DirectX::CreateWICTextureFromFile(device.Get(), context.Get(),
-				widePath.c_str(), nullptr, albedo.GetAddressOf());
-
-			std::shared_ptr<AssetManager> manager = AssetManager::GetInstance();
-			materials.push_back(std::make_shared<Material>(DirectX::XMFLOAT4(1.0, 1.0, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));
-			materials[i]->AddSampler("BasicSampler", basicSampler);
-			materials[i]->AddSampler("RampSampler", rampSampler);
-			materials[i]->AddTextureSRV("AlbedoTexture", albedo, manager->WideToString(widePath));
-			materials[i]->AddTextureSRV("RoughnessTexture", zero, manager->WideToString(L"../../Assets/Textures/noMetal.png"));
-			materials[i]->AddTextureSRV("AmbientTexture", one, manager->WideToString(L"../../Assets/Textures/allMetal.png"));
-			materials[i]->AddTextureSRV("RampTexture", rampTexture, manager->WideToString(L"../../Assets/Textures/Ramp_Texture.png"));
-			materials[i]->AddTextureSRV("MetalnessTexture", zero, manager->WideToString(L"../../Assets/Textures/noMetal.png"));
-			//Texture2D Tex : register(t0);
-			//Texture2D ToonTex : register(t1);
-			//Texture2D SphereTex : register(t2);
-			//sampler TexSampler : register(s0);
-			//sampler ToonTexSampler : register(s1);
-			//sampler SphereTexSampler : register(s2);
-			materials.push_back(std::make_shared<Material>(DirectX::XMFLOAT4(1.0, 1.0, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));
-			edgeMaterials.push_back(std::make_shared<Material>(DirectX::XMFLOAT4(1.0, 1.0, 1.0f, 1.0f), 0.5f, edgeVertexShader, edgePixelShader));
-			materials[i]->AddSampler("TexSampler", m_textureSampler);
-			materials[i]->AddSampler("ToonTexSampler", m_toonTextureSampler);
-			materials[i]->AddSampler("SphereTexSampler", m_sphereTextureSampler);
-			materials[i]->AddTextureSRV("Tex", albedo, manager->WideToString(widePath));
-			materials[i]->AddTextureSRV("ToonTex", albedo, manager->WideToString(widePath));
-			materials[i]->AddTextureSRV("SphereTex", albedo, manager->WideToString(widePath));
-		}		
 	}
-}
-
-bool GameEntity::SabaSetup() {
-	auto t = sizeof(MMDPixelShaderCB);
-	HRESULT hr;
-	//hr = device->CreateDeferredContext(0, &context);
-	//if (FAILED(hr))
-	//{
-	//	return false;
-	//}
-
-	// Setup vertex buffer
-	{
-		D3D11_BUFFER_DESC bufDesc = {};
-		bufDesc.Usage = D3D11_USAGE_DYNAMIC;
-		bufDesc.ByteWidth = UINT(sizeof(SabaVertex) * mesh->GetModel()->GetVertexCount());
-		bufDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		bufDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-		hr = device->CreateBuffer(&bufDesc, nullptr, &m_vertexBuffer);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Setup index buffer;
-	{
-		D3D11_BUFFER_DESC bufDesc = {};
-		bufDesc.Usage = D3D11_USAGE_IMMUTABLE;
-		bufDesc.ByteWidth = UINT(mesh->GetModel()->GetIndexElementSize() * mesh->GetModel()->GetIndexCount());
-		bufDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-
-		D3D11_SUBRESOURCE_DATA initData = {};
-		initData.pSysMem = mesh->GetModel()->GetIndices();
-		hr = device->CreateBuffer(&bufDesc, &initData, &m_indexBuffer);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-
-		if (1 == mesh->GetModel()->GetIndexElementSize())
-		{
-			m_indexBufferFormat = DXGI_FORMAT_R8_UINT;
-		}
-		else if (2 == mesh->GetModel()->GetIndexElementSize())
-		{
-			m_indexBufferFormat = DXGI_FORMAT_R16_UINT;
-		}
-		else if (4 == mesh->GetModel()->GetIndexElementSize())
-		{
-			m_indexBufferFormat = DXGI_FORMAT_R32_UINT;
-		}
-		else
-		{
-			return false;
-		}
-	}
-
-	// Setup mmd vertex shader constant buffer (VSData)
-	{
-		D3D11_BUFFER_DESC bufDesc = {};
-		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.ByteWidth = sizeof(MMDVertexShaderCB);
-		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-
-		hr = device->CreateBuffer(&bufDesc, nullptr, &m_mmdVSConstantBuffer);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Setup mmd pixel shader constant buffer (PSData)
-	{
-		D3D11_BUFFER_DESC bufDesc = {};
-		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.ByteWidth = sizeof(MMDPixelShaderCB);
-		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-
-		hr = device->CreateBuffer(&bufDesc, nullptr, &m_mmdPSConstantBuffer);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Setup mmd edge vertex shader constant buffer (VSData)
-	{
-		D3D11_BUFFER_DESC bufDesc = {};
-		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.ByteWidth = sizeof(MMDEdgeVertexShaderCB);
-		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-
-		hr = device->CreateBuffer(&bufDesc, nullptr, &m_mmdEdgeVSConstantBuffer);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Setup mmd edge vertex shader constant buffer (VSEdgeData)
-	{
-		D3D11_BUFFER_DESC bufDesc = {};
-		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.ByteWidth = sizeof(MMDEdgeSizeVertexShaderCB);
-		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-
-		hr = device->CreateBuffer(&bufDesc, nullptr, &m_mmdEdgeSizeVSConstantBuffer);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Setup mmd edge pixel shader constant buffer (PSData)
-	{
-		D3D11_BUFFER_DESC bufDesc = {};
-		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.ByteWidth = sizeof(MMDEdgePixelShaderCB);
-		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-
-		hr = device->CreateBuffer(&bufDesc, nullptr, &m_mmdEdgePSConstantBuffer);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Setup mmd ground shadow vertex shader constant buffer (VSData)
-	{
-		D3D11_BUFFER_DESC bufDesc = {};
-		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.ByteWidth = sizeof(MMDGroundShadowVertexShaderCB);
-		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-
-		hr = device->CreateBuffer(&bufDesc, nullptr, &m_mmdGroundShadowVSConstantBuffer);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Setup mmd ground shadow pixel shader constant buffer (PSData)
-	{
-		D3D11_BUFFER_DESC bufDesc = {};
-		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.ByteWidth = sizeof(MMDGroundShadowPixelShaderCB);
-		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-
-		hr = device->CreateBuffer(&bufDesc, nullptr, &m_mmdGroundShadowPSConstantBuffer);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Setup materials
-	std::shared_ptr<saba::PMXModel> m_mmdModel = mesh->GetModel();
-	for (size_t i = 0; i < mesh->GetModel()->GetMaterialCount(); i++)
-	{
-		const auto& mmdMat = m_mmdModel->GetMaterials()[i];
-		SabaMaterial mat(mmdMat);
-		if (!mmdMat.m_texture.empty())
-		{
-			auto tex = GetTexture(mmdMat.m_texture);
-			mat.m_texture = tex;
-		}
-		if (!mmdMat.m_spTexture.empty())
-		{
-			auto tex = GetTexture(mmdMat.m_spTexture);
-			mat.m_spTexture = tex;
-		}
-		if (!mmdMat.m_toonTexture.empty())
-		{
-			auto tex = GetTexture(mmdMat.m_toonTexture);
-			mat.m_toonTexture = tex;
-		}
-		m_materials.emplace_back(std::move(mat));
-	}
-
-	return true;
-}
-
-bool GameEntity::CreateSabaShaders() {
-	HRESULT hr;
-
-	// mmd shader
-	hr = device->CreateVertexShader(mmd_vso_data, sizeof(mmd_vso_data), nullptr, &m_mmdVS);
-	if (FAILED(hr))
-	{
-		return false;
-	}
-
-	hr = device->CreatePixelShader(mmd_pso_data, sizeof(mmd_pso_data), nullptr, &m_mmdPS);
-	if (FAILED(hr))
-	{
-		return false;
-	}
-
-	D3D11_INPUT_ELEMENT_DESC mmdInputElementDesc[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-	hr = device->CreateInputLayout(
-		mmdInputElementDesc, 3,
-		mmd_vso_data, sizeof(mmd_vso_data),
-		&m_mmdInputLayout
-	);
-	if (FAILED(hr))
-	{
-		return false;
-	}
-
-	// Texture sampler
-	{
-		D3D11_SAMPLER_DESC samplerDesc = {};
-		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerDesc.MinLOD = -FLT_MAX;
-		samplerDesc.MaxLOD = -FLT_MAX;
-		samplerDesc.MipLODBias = 0;
-		samplerDesc.MaxAnisotropy = 0;
-		hr = device->CreateSamplerState(&samplerDesc, &m_textureSampler);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// ToonTexture sampler
-	{
-		D3D11_SAMPLER_DESC samplerDesc = {};
-		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-		samplerDesc.MinLOD = -FLT_MAX;
-		samplerDesc.MaxLOD = -FLT_MAX;
-		samplerDesc.MipLODBias = 0;
-		samplerDesc.MaxAnisotropy = 0;
-		hr = device->CreateSamplerState(&samplerDesc, &m_toonTextureSampler);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// SphereTexture sampler
-	{
-		D3D11_SAMPLER_DESC samplerDesc = {};
-		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerDesc.MinLOD = -FLT_MAX;
-		samplerDesc.MaxLOD = -FLT_MAX;
-		samplerDesc.MipLODBias = 0;
-		samplerDesc.MaxAnisotropy = 0;
-		hr = device->CreateSamplerState(&samplerDesc, &m_sphereTextureSampler);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Blend State
-	{
-		D3D11_BLEND_DESC blendDesc = {};
-		blendDesc.AlphaToCoverageEnable = false;
-		blendDesc.IndependentBlendEnable = false;
-		blendDesc.RenderTarget[0].BlendEnable = true;
-		blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-		blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-		blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-		blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
-		blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-		blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-		blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-		hr = device->CreateBlendState(&blendDesc, &m_mmdBlendState);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Rasterizer State (Front face)
-	{
-		D3D11_RASTERIZER_DESC rsDesc = {};
-		rsDesc.FillMode = D3D11_FILL_SOLID;
-		rsDesc.CullMode = D3D11_CULL_BACK;
-		rsDesc.FrontCounterClockwise = true;
-		rsDesc.DepthBias = 0;
-		rsDesc.SlopeScaledDepthBias = 0;
-		rsDesc.DepthBiasClamp = 0;
-		rsDesc.DepthClipEnable = false;
-		rsDesc.ScissorEnable = false;
-		rsDesc.MultisampleEnable = true;
-		rsDesc.AntialiasedLineEnable = false;
-		hr = device->CreateRasterizerState(&rsDesc, &m_mmdFrontFaceRS);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Rasterizer State (Both face)
-	{
-		D3D11_RASTERIZER_DESC rsDesc = {};
-		rsDesc.FillMode = D3D11_FILL_SOLID;
-		rsDesc.CullMode = D3D11_CULL_NONE;
-		rsDesc.FrontCounterClockwise = true;
-		rsDesc.DepthBias = 0;
-		rsDesc.SlopeScaledDepthBias = 0;
-		rsDesc.DepthBiasClamp = 0;
-		rsDesc.DepthClipEnable = false;
-		rsDesc.ScissorEnable = false;
-		rsDesc.MultisampleEnable = true;
-		rsDesc.AntialiasedLineEnable = false;
-		hr = device->CreateRasterizerState(&rsDesc, &m_mmdBothFaceRS);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// mmd edge shader
-	hr = device->CreateVertexShader(mmd_edge_vso_data, sizeof(mmd_edge_vso_data), nullptr, &m_mmdEdgeVS);
-	if (FAILED(hr))
-	{
-		return false;
-	}
-
-	hr = device->CreatePixelShader(mmd_edge_pso_data, sizeof(mmd_edge_pso_data), nullptr, &m_mmdEdgePS);
-	if (FAILED(hr))
-	{
-		return false;
-	}
-
-	D3D11_INPUT_ELEMENT_DESC mmdEdgeInputElementDesc[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-	hr = device->CreateInputLayout(
-		mmdEdgeInputElementDesc, 2,
-		mmd_edge_vso_data, sizeof(mmd_edge_vso_data),
-		&m_mmdEdgeInputLayout
-	);
-	if (FAILED(hr))
-	{
-		return false;
-	}
-
-	// Blend State
-	{
-		D3D11_BLEND_DESC blendDesc = {};
-		blendDesc.AlphaToCoverageEnable = false;
-		blendDesc.IndependentBlendEnable = false;
-		blendDesc.RenderTarget[0].BlendEnable = true;
-		blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-		blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-		blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-		blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
-		blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-		blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-		blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-		hr = device->CreateBlendState(&blendDesc, &m_mmdEdgeBlendState);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Rasterizer State
-	{
-		D3D11_RASTERIZER_DESC rsDesc = {};
-		rsDesc.FillMode = D3D11_FILL_SOLID;
-		rsDesc.CullMode = D3D11_CULL_FRONT;
-		rsDesc.FrontCounterClockwise = true;
-		rsDesc.DepthBias = 0;
-		rsDesc.SlopeScaledDepthBias = 0;
-		rsDesc.DepthBiasClamp = 0;
-		rsDesc.DepthClipEnable = false;
-		rsDesc.ScissorEnable = false;
-		rsDesc.MultisampleEnable = true;
-		rsDesc.AntialiasedLineEnable = false;
-		hr = device->CreateRasterizerState(&rsDesc, &m_mmdEdgeRS);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// mmd ground shadow shader
-	hr = device->CreateVertexShader(mmd_ground_shadow_vso_data, sizeof(mmd_ground_shadow_vso_data), nullptr, &m_mmdGroundShadowVS);
-	if (FAILED(hr))
-	{
-		return false;
-	}
-
-	hr = device->CreatePixelShader(mmd_ground_shadow_pso_data, sizeof(mmd_ground_shadow_pso_data), nullptr, &m_mmdGroundShadowPS);
-	if (FAILED(hr))
-	{
-		return false;
-	}
-
-	D3D11_INPUT_ELEMENT_DESC mmdGroundShadowInputElementDesc[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-	hr = device->CreateInputLayout(
-		mmdGroundShadowInputElementDesc, 1,
-		mmd_ground_shadow_vso_data, sizeof(mmd_ground_shadow_vso_data),
-		&m_mmdGroundShadowInputLayout
-	);
-	if (FAILED(hr))
-	{
-		return false;
-	}
-
-	// Blend State
-	{
-		D3D11_BLEND_DESC blendDesc = {};
-		blendDesc.AlphaToCoverageEnable = false;
-		blendDesc.IndependentBlendEnable = false;
-		blendDesc.RenderTarget[0].BlendEnable = true;
-		blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-		blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-		blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-		blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
-		blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-		blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-		blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-		hr = device->CreateBlendState(&blendDesc, &m_mmdGroundShadowBlendState);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Rasterizer State
-	{
-		D3D11_RASTERIZER_DESC rsDesc = {};
-		rsDesc.FillMode = D3D11_FILL_SOLID;
-		rsDesc.CullMode = D3D11_CULL_NONE;
-		rsDesc.FrontCounterClockwise = true;
-		rsDesc.DepthBias = -1;
-		rsDesc.SlopeScaledDepthBias = -1.0f;
-		rsDesc.DepthBiasClamp = -1.0f;
-		rsDesc.DepthClipEnable = false;
-		rsDesc.ScissorEnable = false;
-		rsDesc.MultisampleEnable = true;
-		rsDesc.AntialiasedLineEnable = false;
-		hr = device->CreateRasterizerState(&rsDesc, &m_mmdGroundShadowRS);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Depth Stencil State
-	{
-		D3D11_DEPTH_STENCIL_DESC dsDesc = {};
-		dsDesc.DepthEnable = true;
-		dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-		dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
-		dsDesc.StencilEnable = true;
-		dsDesc.StencilReadMask = 0x01;
-		dsDesc.StencilWriteMask = 0xFF;
-		dsDesc.FrontFace.StencilFunc = D3D11_COMPARISON_NOT_EQUAL;
-		dsDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-		dsDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
-		dsDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_REPLACE;
-		dsDesc.BackFace.StencilFunc = D3D11_COMPARISON_NOT_EQUAL;
-		dsDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-		dsDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
-		dsDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_REPLACE;
-		hr = device->CreateDepthStencilState(&dsDesc, &m_mmdGroundShadowDSS);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Default Depth Stencil State
-	{
-		D3D11_DEPTH_STENCIL_DESC dsDesc = {};
-		dsDesc.DepthEnable = true;
-		dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-		dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
-		dsDesc.StencilEnable = false;
-		dsDesc.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
-		dsDesc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
-		dsDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-		dsDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-		dsDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
-		dsDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-		dsDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-		dsDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-		dsDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
-		dsDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-		hr = device->CreateDepthStencilState(&dsDesc, &m_defaultDSS);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Dummy texture
-	{
-		D3D11_TEXTURE2D_DESC tex2dDesc = {};
-		tex2dDesc.Width = 1;
-		tex2dDesc.Height = 1;
-		tex2dDesc.MipLevels = 1;
-		tex2dDesc.ArraySize = 1;
-		tex2dDesc.SampleDesc.Count = 1;
-		tex2dDesc.SampleDesc.Quality = 0;
-		tex2dDesc.Usage = D3D11_USAGE_DEFAULT;
-		tex2dDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-		tex2dDesc.CPUAccessFlags = 0;
-		tex2dDesc.MiscFlags = 0;
-		tex2dDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		hr = device->CreateTexture2D(&tex2dDesc, nullptr, &m_dummyTexture);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-
-		hr = device->CreateShaderResourceView(m_dummyTexture.Get(), nullptr, &m_dummyTextureView);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-
-		D3D11_SAMPLER_DESC samplerDesc = {};
-		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerDesc.MinLOD = -FLT_MAX;
-		samplerDesc.MaxLOD = -FLT_MAX;
-		samplerDesc.MipLODBias = 0;
-		samplerDesc.MaxAnisotropy = 0;
-		hr = device->CreateSamplerState(&samplerDesc, &m_dummySampler);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Setup materials
-	for (size_t i = 0; i < mesh->GetModel()->GetMaterialCount(); i++)
-	{
-		const auto& mmdMat = mesh->GetModel()->GetMaterials()[i];
-		SabaMaterial mat(mmdMat);
-		if (!mmdMat.m_texture.empty())
-		{
-			auto tex = GetTexture(mmdMat.m_texture);
-			mat.m_texture = tex;
-		}
-		if (!mmdMat.m_spTexture.empty())
-		{
-			auto tex = GetTexture(mmdMat.m_spTexture);
-			mat.m_spTexture = tex;
-		}
-		if (!mmdMat.m_toonTexture.empty())
-		{
-			auto tex = GetTexture(mmdMat.m_toonTexture);
-			mat.m_toonTexture = tex;
-		}
-		m_materials.emplace_back(std::move(mat));
-	}
-
-	return true;
 }
 
 GameEntity::~GameEntity()
@@ -1322,11 +435,15 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 	//	context->VSSetConstantBuffers(0, 1, cbs);
 	//}
 
-	size_t subMeshCount = mesh->GetModel()->GetSubMeshCount();
+	size_t subMeshCount = sabaMesh->GetModel()->GetSubMeshCount();
+	std::shared_ptr<AssetManager> assetManager = AssetManager::GetInstance();
+	std::vector<SabaMaterial> sabaMats = assetManager->GetSabaStructMaterials();
 	for (size_t i = 0; i < subMeshCount; i++)
 	{
-		const auto& subMesh = mesh->GetModel()->GetSubMeshes()[i];
-		const auto& mat = m_materials[subMesh.m_materialID];
+		const auto& subMesh = sabaMesh->GetModel()->GetSubMeshes()[i];
+		
+		std::vector<std::shared_ptr<Material>> materials = assetManager->GetSabaMaterials();
+		const auto& mat = sabaMats[subMesh.m_materialID];
 		const auto& mmdMat = mat.m_mmdMat;
 
 		if (mmdMat.m_alpha == 0)
@@ -1383,7 +500,7 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 			ps->SetFloat4("TexMulFactor", DirectX::XMFLOAT4(mmdMat.m_textureMulFactor[0], mmdMat.m_textureMulFactor[1], mmdMat.m_textureMulFactor[2], mmdMat.m_textureMulFactor[3]));
 			ps->SetFloat4("TexAddFactor", DirectX::XMFLOAT4(mmdMat.m_textureAddFactor[0], mmdMat.m_textureAddFactor[1], mmdMat.m_textureAddFactor[2], mmdMat.m_textureAddFactor[3]));
 			ps->SetShaderResourceView("Tex", mat.m_texture.m_textureView.Get());
-			ps->SetSamplerState("TexSampler", m_textureSampler.Get());
+			ps->SetSamplerState("TexSampler", assetManager->GetSampler("sabaSampler").Get());
 		}
 		else
 		{
@@ -1394,8 +511,8 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 			//context->PSSetSamplers(0, 1, samplers);
 			ps->SetFloat4("TexMulFactor", DirectX::XMFLOAT4(0,0,0,0));
 			ps->SetFloat4("TexAddFactor", DirectX::XMFLOAT4(0,0,0,0));
-			ps->SetShaderResourceView("Tex", m_dummyTextureView);
-			ps->SetSamplerState("TexSampler", m_dummySampler);
+			ps->SetShaderResourceView("Tex", assetManager->m_dummyTextureView);
+			ps->SetSamplerState("TexSampler", assetManager->m_dummySampler);
 		}
 
 		if (mat.m_toonTexture.m_texture)
@@ -1410,7 +527,7 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 			ps->SetFloat4("ToonTexMulFactor", DirectX::XMFLOAT4(mmdMat.m_toonTextureMulFactor[0], mmdMat.m_toonTextureMulFactor[1], mmdMat.m_toonTextureMulFactor[2], mmdMat.m_toonTextureMulFactor[3]));
 			ps->SetFloat4("ToonTexAddFactor", DirectX::XMFLOAT4(mmdMat.m_toonTextureAddFactor[0], mmdMat.m_toonTextureAddFactor[1], mmdMat.m_toonTextureAddFactor[2], mmdMat.m_toonTextureAddFactor[3]));
 			ps->SetShaderResourceView("ToonTex", mat.m_toonTexture.m_textureView);
-			ps->SetSamplerState("ToonTexSampler", m_toonTextureSampler);
+			ps->SetSamplerState("ToonTexSampler", assetManager->m_toonTextureSampler);
 		}
 		else
 		{
@@ -1421,8 +538,8 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 			//context->PSSetSamplers(1, 1, samplers);
 			ps->SetFloat4("ToonTexMulFactor", DirectX::XMFLOAT4(0,0,0,0));
 			ps->SetFloat4("ToonTexAddFactor", DirectX::XMFLOAT4(0,0,0,0));
-			ps->SetShaderResourceView("ToonTex", m_dummyTextureView);
-			ps->SetSamplerState("ToonTexSampler", m_dummySampler);
+			ps->SetShaderResourceView("ToonTex", assetManager->m_dummyTextureView);
+			ps->SetSamplerState("ToonTexSampler", assetManager->m_dummySampler);
 		}
 
 		if (mat.m_spTexture.m_texture)
@@ -1444,7 +561,7 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 			ps->SetFloat4("SphereTexMulFactor", DirectX::XMFLOAT4(mmdMat.m_spTextureMulFactor[0], mmdMat.m_spTextureMulFactor[1], mmdMat.m_spTextureMulFactor[2], mmdMat.m_spTextureMulFactor[3]));
 			ps->SetFloat4("SphereTexMulFactor", DirectX::XMFLOAT4(mmdMat.m_spTextureAddFactor[0], mmdMat.m_spTextureAddFactor[1], mmdMat.m_spTextureAddFactor[2], mmdMat.m_spTextureAddFactor[3]));
 			ps->SetShaderResourceView("SphereTex", mat.m_spTexture.m_textureView);
-			ps->SetSamplerState("SphereTexSampler", m_sphereTextureSampler);
+			ps->SetSamplerState("SphereTexSampler", assetManager->m_sphereTextureSampler);
 		}
 		else
 		{
@@ -1455,8 +572,8 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 			//context->PSSetSamplers(2, 1, samplers);			
 			ps->SetFloat4("SphereTexMulFactor", DirectX::XMFLOAT4(0,0,0,0));
 			ps->SetFloat4("SphereTexMulFactor", DirectX::XMFLOAT4(0,0,0,0));
-			ps->SetShaderResourceView("SphereTex", m_dummyTextureView);
-			ps->SetSamplerState("SphereTexSampler", m_dummySampler);
+			ps->SetShaderResourceView("SphereTex", assetManager->m_dummyTextureView);
+			ps->SetSamplerState("SphereTexSampler", assetManager->m_dummySampler);
 		}
 
 		psCB.m_lightColor = glm::vec3(m_lightColor.x, m_lightColor.y, m_lightColor.z);
@@ -1483,11 +600,11 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 
 		if (mmdMat.m_bothFace)
 		{
-			context->RSSetState(m_mmdBothFaceRS.Get());
+			context->RSSetState(assetManager->m_mmdBothFaceRS.Get());
 		}
 		else
 		{
-			context->RSSetState(m_mmdFrontFaceRS.Get());
+			context->RSSetState(assetManager->m_mmdFrontFaceRS.Get());
 		}
 
 		UINT stride = sizeof(Vertex);
@@ -1495,7 +612,7 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		context->IASetVertexBuffers(0, 1, mesh->GetVertexBuffer().GetAddressOf(), &stride, &offset);
 		context->IASetIndexBuffer(mesh->GetIndexBuffer().Get(), mesh->GetFormat(), 0);
 
-		context->OMSetBlendState(m_mmdBlendState.Get(), nullptr, 0xffffffff);
+		context->OMSetBlendState(assetManager->m_mmdBlendState.Get(), nullptr, 0xffffffff);
 
 		context->DrawIndexed(subMesh.m_vertexCount, subMesh.m_beginIndex, 0);
 	}
@@ -1511,7 +628,7 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 
 	// Setup input assembler
 	{
-		context->IASetInputLayout(m_mmdEdgeInputLayout.Get());
+		context->IASetInputLayout(assetManager->m_mmdEdgeInputLayout.Get());
 	}
 
 	// Setup vertex shader (VSData)
@@ -1530,8 +647,8 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 
 	for (size_t i = 0; i < subMeshCount; i++)
 	{
-		const auto& subMesh = mesh->GetModel()->GetSubMeshes()[i];
-		const auto& mat = m_materials[subMesh.m_materialID];
+		const auto& subMesh = sabaMesh->GetModel()->GetSubMeshes()[i];
+		const auto& mat = sabaMats[subMesh.m_materialID];
 		const auto& mmdMat = mat.m_mmdMat;
 
 		if (!mmdMat.m_edgeFlag)
@@ -1542,6 +659,8 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		{
 			continue;
 		}
+
+		std::vector<std::shared_ptr<Material>> materials = assetManager->GetSabaMaterials();
 
 		//set vertex shader
 		std::shared_ptr<SimpleVertexShader> vs = materials[subMesh.m_materialID]->GetVertexShader();
@@ -1580,9 +699,9 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		//	context->PSSetConstantBuffers(2, 1, pscbs);
 		//}
 
-		context->RSSetState(m_mmdEdgeRS.Get());
+		context->RSSetState(assetManager->m_mmdEdgeRS.Get());
 
-		context->OMSetBlendState(m_mmdEdgeBlendState.Get(), nullptr, 0xffffffff);
+		context->OMSetBlendState(assetManager->m_mmdEdgeBlendState.Get(), nullptr, 0xffffffff);
 
 		context->DrawIndexed(subMesh.m_vertexCount, subMesh.m_beginIndex, 0);
 	}

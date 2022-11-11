@@ -47,12 +47,17 @@ void AssetManager::Init(Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::
 
 	m_meshes = std::vector<std::shared_ptr<Mesh>>();
 	m_toonMeshes = std::vector<std::shared_ptr<Mesh>>();
+	m_sabaMeshes = std::vector<std::shared_ptr<SabaMesh>>();
 
 	InitTextures();
 	InitShaders();
 	InitMeshes();
 	InitSamplers();
 	InitMaterials();
+
+	InitSaba(m_sabaMeshes[0]);
+	InitSabaShaders(m_sabaMeshes[0]);
+	InitSabaMaterials(m_sabaMeshes[0]);
 }
 
 void AssetManager::InitTextures()
@@ -132,6 +137,8 @@ void AssetManager::InitMeshes()
 	m_meshes.push_back(LoadMesh("quad.obj"));
 
 	m_toonMeshes.push_back(LoadMesh("Tree.obj"));
+
+	m_sabaMeshes.push_back(std::make_shared<SabaMesh>(GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), GetFullPathTo("../../Assets/Toon/Lisa/Texture").c_str(), m_device, m_context));
 }
 
 void AssetManager::InitSamplers()
@@ -161,6 +168,30 @@ void AssetManager::InitSamplers()
 
 	m_samplers["ppLightRaysSampler"] = Microsoft::WRL::ComPtr<ID3D11SamplerState>();
 	m_device->CreateSamplerState(&ppSamplerDesc, m_samplers["ppLightRaysSampler"].GetAddressOf());
+
+	//create sampler state for post process
+	D3D11_SAMPLER_DESC rampSamplerDesc = {};
+	ppSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSamplerDesc.Filter = D3D11_FILTER_ANISOTROPIC; // allowing anisotropic filtering
+	ppSamplerDesc.MaxAnisotropy = 4;
+	ppSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX; //allways use mipmapping
+
+	m_samplers["rampSampler"] = Microsoft::WRL::ComPtr<ID3D11SamplerState>();
+	m_device->CreateSamplerState(&ppSamplerDesc, m_samplers["rampSampler"].GetAddressOf());
+
+	//create description and sampler state
+	D3D11_SAMPLER_DESC sabaSamplerDesc = {};
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP; // allows textures to tile
+	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC; // allowing anisotropic filtering
+	samplerDesc.MaxAnisotropy = 4;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX; //allways use mipmapping
+
+	m_samplers["sabaSampler"] = Microsoft::WRL::ComPtr<ID3D11SamplerState>();
+	m_device->CreateSamplerState(&sabaSamplerDesc, m_samplers["sabaSampler"].GetAddressOf());
 }
 
 void AssetManager::InitMaterials()
@@ -195,6 +226,709 @@ void AssetManager::InitMaterials()
 	m_toonMaterials[0]->AddTextureSRV("MetalnessTexture",	m_srvMaps[ToonMetalness][0],	m_srvFileNames[ToonMetalness][0]);
 }
 
+
+bool AssetManager::InitSaba(std::shared_ptr<SabaMesh> mesh) {
+	auto t = sizeof(MMDPixelShaderCB);
+	HRESULT hr;
+	//hr = m_device->CreateDeferredContext(0, &m_context);
+	//if (FAILED(hr))
+	//{
+	//	return false;
+	//}
+
+	// Setup vertex buffer
+	{
+		D3D11_BUFFER_DESC bufDesc = {};
+		bufDesc.Usage = D3D11_USAGE_DYNAMIC;
+		bufDesc.ByteWidth = UINT(sizeof(SabaVertex) * mesh->GetModel()->GetVertexCount());
+		bufDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		bufDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+		hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_vertexBuffer);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// Setup index buffer;
+	{
+		D3D11_BUFFER_DESC bufDesc = {};
+		bufDesc.Usage = D3D11_USAGE_IMMUTABLE;
+		bufDesc.ByteWidth = UINT(mesh->GetModel()->GetIndexElementSize() * mesh->GetModel()->GetIndexCount());
+		bufDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+		bufDesc.CPUAccessFlags = 0;
+
+		D3D11_SUBRESOURCE_DATA initData = {};
+		initData.pSysMem = mesh->GetModel()->GetIndices();
+		hr = m_device->CreateBuffer(&bufDesc, &initData, &m_indexBuffer);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+
+		if (1 == mesh->GetModel()->GetIndexElementSize())
+		{
+			m_indexBufferFormat = DXGI_FORMAT_R8_UINT;
+		}
+		else if (2 == mesh->GetModel()->GetIndexElementSize())
+		{
+			m_indexBufferFormat = DXGI_FORMAT_R16_UINT;
+		}
+		else if (4 == mesh->GetModel()->GetIndexElementSize())
+		{
+			m_indexBufferFormat = DXGI_FORMAT_R32_UINT;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	// Setup mmd vertex shader constant buffer (VSData)
+	{
+		D3D11_BUFFER_DESC bufDesc = {};
+		bufDesc.Usage = D3D11_USAGE_DEFAULT;
+		bufDesc.ByteWidth = sizeof(MMDVertexShaderCB);
+		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		bufDesc.CPUAccessFlags = 0;
+
+		hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdVSConstantBuffer);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// Setup mmd pixel shader constant buffer (PSData)
+	{
+		D3D11_BUFFER_DESC bufDesc = {};
+		bufDesc.Usage = D3D11_USAGE_DEFAULT;
+		bufDesc.ByteWidth = sizeof(MMDPixelShaderCB);
+		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		bufDesc.CPUAccessFlags = 0;
+
+		hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdPSConstantBuffer);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// Setup mmd edge vertex shader constant buffer (VSData)
+	{
+		D3D11_BUFFER_DESC bufDesc = {};
+		bufDesc.Usage = D3D11_USAGE_DEFAULT;
+		bufDesc.ByteWidth = sizeof(MMDEdgeVertexShaderCB);
+		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		bufDesc.CPUAccessFlags = 0;
+
+		hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdEdgeVSConstantBuffer);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// Setup mmd edge vertex shader constant buffer (VSEdgeData)
+	{
+		D3D11_BUFFER_DESC bufDesc = {};
+		bufDesc.Usage = D3D11_USAGE_DEFAULT;
+		bufDesc.ByteWidth = sizeof(MMDEdgeSizeVertexShaderCB);
+		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		bufDesc.CPUAccessFlags = 0;
+
+		hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdEdgeSizeVSConstantBuffer);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// Setup mmd edge pixel shader constant buffer (PSData)
+	{
+		D3D11_BUFFER_DESC bufDesc = {};
+		bufDesc.Usage = D3D11_USAGE_DEFAULT;
+		bufDesc.ByteWidth = sizeof(MMDEdgePixelShaderCB);
+		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		bufDesc.CPUAccessFlags = 0;
+
+		hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdEdgePSConstantBuffer);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// Setup mmd ground shadow vertex shader constant buffer (VSData)
+	{
+		D3D11_BUFFER_DESC bufDesc = {};
+		bufDesc.Usage = D3D11_USAGE_DEFAULT;
+		bufDesc.ByteWidth = sizeof(MMDGroundShadowVertexShaderCB);
+		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		bufDesc.CPUAccessFlags = 0;
+
+		hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdGroundShadowVSConstantBuffer);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// Setup mmd ground shadow pixel shader constant buffer (PSData)
+	{
+		D3D11_BUFFER_DESC bufDesc = {};
+		bufDesc.Usage = D3D11_USAGE_DEFAULT;
+		bufDesc.ByteWidth = sizeof(MMDGroundShadowPixelShaderCB);
+		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		bufDesc.CPUAccessFlags = 0;
+
+		hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdGroundShadowPSConstantBuffer);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// Setup materials
+	std::shared_ptr<saba::PMXModel> m_mmdModel = mesh->GetModel();
+	for (size_t i = 0; i < mesh->GetModel()->GetMaterialCount(); i++)
+	{
+		const auto& mmdMat = m_mmdModel->GetMaterials()[i];
+		SabaMaterial mat(mmdMat);
+		if (!mmdMat.m_texture.empty())
+		{
+			auto tex = GetTexture(mmdMat.m_texture);
+			mat.m_texture = tex;
+		}
+		if (!mmdMat.m_spTexture.empty())
+		{
+			auto tex = GetTexture(mmdMat.m_spTexture);
+			mat.m_spTexture = tex;
+		}
+		if (!mmdMat.m_toonTexture.empty())
+		{
+			auto tex = GetTexture(mmdMat.m_toonTexture);
+			mat.m_toonTexture = tex;
+		}
+		m_sabaStructMaterials.emplace_back(std::move(mat));
+	}
+
+	return true;
+}
+
+bool AssetManager::InitSabaShaders(std::shared_ptr<SabaMesh> mesh) {
+	HRESULT hr;
+
+	// mmd shader
+	hr = m_device->CreateVertexShader(mmd_vso_data, sizeof(mmd_vso_data), nullptr, &m_mmdVS);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	hr = m_device->CreatePixelShader(mmd_pso_data, sizeof(mmd_pso_data), nullptr, &m_mmdPS);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	D3D11_INPUT_ELEMENT_DESC mmdInputElementDesc[] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+	hr = m_device->CreateInputLayout(
+		mmdInputElementDesc, 3,
+		mmd_vso_data, sizeof(mmd_vso_data),
+		&m_mmdInputLayout
+	);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	// Texture sampler
+	{
+		D3D11_SAMPLER_DESC samplerDesc = {};
+		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.MinLOD = -FLT_MAX;
+		samplerDesc.MaxLOD = -FLT_MAX;
+		samplerDesc.MipLODBias = 0;
+		samplerDesc.MaxAnisotropy = 0;
+		hr = m_device->CreateSamplerState(&samplerDesc, &m_textureSampler);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// ToonTexture sampler
+	{
+		D3D11_SAMPLER_DESC samplerDesc = {};
+		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+		samplerDesc.MinLOD = -FLT_MAX;
+		samplerDesc.MaxLOD = -FLT_MAX;
+		samplerDesc.MipLODBias = 0;
+		samplerDesc.MaxAnisotropy = 0;
+		hr = m_device->CreateSamplerState(&samplerDesc, &m_toonTextureSampler);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// SphereTexture sampler
+	{
+		D3D11_SAMPLER_DESC samplerDesc = {};
+		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.MinLOD = -FLT_MAX;
+		samplerDesc.MaxLOD = -FLT_MAX;
+		samplerDesc.MipLODBias = 0;
+		samplerDesc.MaxAnisotropy = 0;
+		hr = m_device->CreateSamplerState(&samplerDesc, &m_sphereTextureSampler);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// Blend State
+	{
+		D3D11_BLEND_DESC blendDesc = {};
+		blendDesc.AlphaToCoverageEnable = false;
+		blendDesc.IndependentBlendEnable = false;
+		blendDesc.RenderTarget[0].BlendEnable = true;
+		blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+		blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+		blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+		blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
+		blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
+		blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+		blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+		hr = m_device->CreateBlendState(&blendDesc, &m_mmdBlendState);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// Rasterizer State (Front face)
+	{
+		D3D11_RASTERIZER_DESC rsDesc = {};
+		rsDesc.FillMode = D3D11_FILL_SOLID;
+		rsDesc.CullMode = D3D11_CULL_BACK;
+		rsDesc.FrontCounterClockwise = true;
+		rsDesc.DepthBias = 0;
+		rsDesc.SlopeScaledDepthBias = 0;
+		rsDesc.DepthBiasClamp = 0;
+		rsDesc.DepthClipEnable = false;
+		rsDesc.ScissorEnable = false;
+		rsDesc.MultisampleEnable = true;
+		rsDesc.AntialiasedLineEnable = false;
+		hr = m_device->CreateRasterizerState(&rsDesc, &m_mmdFrontFaceRS);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// Rasterizer State (Both face)
+	{
+		D3D11_RASTERIZER_DESC rsDesc = {};
+		rsDesc.FillMode = D3D11_FILL_SOLID;
+		rsDesc.CullMode = D3D11_CULL_NONE;
+		rsDesc.FrontCounterClockwise = true;
+		rsDesc.DepthBias = 0;
+		rsDesc.SlopeScaledDepthBias = 0;
+		rsDesc.DepthBiasClamp = 0;
+		rsDesc.DepthClipEnable = false;
+		rsDesc.ScissorEnable = false;
+		rsDesc.MultisampleEnable = true;
+		rsDesc.AntialiasedLineEnable = false;
+		hr = m_device->CreateRasterizerState(&rsDesc, &m_mmdBothFaceRS);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// mmd edge shader
+	hr = m_device->CreateVertexShader(mmd_edge_vso_data, sizeof(mmd_edge_vso_data), nullptr, &m_mmdEdgeVS);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	hr = m_device->CreatePixelShader(mmd_edge_pso_data, sizeof(mmd_edge_pso_data), nullptr, &m_mmdEdgePS);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	D3D11_INPUT_ELEMENT_DESC mmdEdgeInputElementDesc[] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+	hr = m_device->CreateInputLayout(
+		mmdEdgeInputElementDesc, 2,
+		mmd_edge_vso_data, sizeof(mmd_edge_vso_data),
+		&m_mmdEdgeInputLayout
+	);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	// Blend State
+	{
+		D3D11_BLEND_DESC blendDesc = {};
+		blendDesc.AlphaToCoverageEnable = false;
+		blendDesc.IndependentBlendEnable = false;
+		blendDesc.RenderTarget[0].BlendEnable = true;
+		blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+		blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+		blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+		blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
+		blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
+		blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+		blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+		hr = m_device->CreateBlendState(&blendDesc, &m_mmdEdgeBlendState);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// Rasterizer State
+	{
+		D3D11_RASTERIZER_DESC rsDesc = {};
+		rsDesc.FillMode = D3D11_FILL_SOLID;
+		rsDesc.CullMode = D3D11_CULL_FRONT;
+		rsDesc.FrontCounterClockwise = true;
+		rsDesc.DepthBias = 0;
+		rsDesc.SlopeScaledDepthBias = 0;
+		rsDesc.DepthBiasClamp = 0;
+		rsDesc.DepthClipEnable = false;
+		rsDesc.ScissorEnable = false;
+		rsDesc.MultisampleEnable = true;
+		rsDesc.AntialiasedLineEnable = false;
+		hr = m_device->CreateRasterizerState(&rsDesc, &m_mmdEdgeRS);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// mmd ground shadow shader
+	hr = m_device->CreateVertexShader(mmd_ground_shadow_vso_data, sizeof(mmd_ground_shadow_vso_data), nullptr, &m_mmdGroundShadowVS);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	hr = m_device->CreatePixelShader(mmd_ground_shadow_pso_data, sizeof(mmd_ground_shadow_pso_data), nullptr, &m_mmdGroundShadowPS);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	D3D11_INPUT_ELEMENT_DESC mmdGroundShadowInputElementDesc[] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+	hr = m_device->CreateInputLayout(
+		mmdGroundShadowInputElementDesc, 1,
+		mmd_ground_shadow_vso_data, sizeof(mmd_ground_shadow_vso_data),
+		&m_mmdGroundShadowInputLayout
+	);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	// Blend State
+	{
+		D3D11_BLEND_DESC blendDesc = {};
+		blendDesc.AlphaToCoverageEnable = false;
+		blendDesc.IndependentBlendEnable = false;
+		blendDesc.RenderTarget[0].BlendEnable = true;
+		blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+		blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+		blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+		blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
+		blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
+		blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+		blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+		hr = m_device->CreateBlendState(&blendDesc, &m_mmdGroundShadowBlendState);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// Rasterizer State
+	{
+		D3D11_RASTERIZER_DESC rsDesc = {};
+		rsDesc.FillMode = D3D11_FILL_SOLID;
+		rsDesc.CullMode = D3D11_CULL_NONE;
+		rsDesc.FrontCounterClockwise = true;
+		rsDesc.DepthBias = -1;
+		rsDesc.SlopeScaledDepthBias = -1.0f;
+		rsDesc.DepthBiasClamp = -1.0f;
+		rsDesc.DepthClipEnable = false;
+		rsDesc.ScissorEnable = false;
+		rsDesc.MultisampleEnable = true;
+		rsDesc.AntialiasedLineEnable = false;
+		hr = m_device->CreateRasterizerState(&rsDesc, &m_mmdGroundShadowRS);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// Depth Stencil State
+	{
+		D3D11_DEPTH_STENCIL_DESC dsDesc = {};
+		dsDesc.DepthEnable = true;
+		dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+		dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
+		dsDesc.StencilEnable = true;
+		dsDesc.StencilReadMask = 0x01;
+		dsDesc.StencilWriteMask = 0xFF;
+		dsDesc.FrontFace.StencilFunc = D3D11_COMPARISON_NOT_EQUAL;
+		dsDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+		dsDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+		dsDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_REPLACE;
+		dsDesc.BackFace.StencilFunc = D3D11_COMPARISON_NOT_EQUAL;
+		dsDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+		dsDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+		dsDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_REPLACE;
+		hr = m_device->CreateDepthStencilState(&dsDesc, &m_mmdGroundShadowDSS);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// Default Depth Stencil State
+	{
+		D3D11_DEPTH_STENCIL_DESC dsDesc = {};
+		dsDesc.DepthEnable = true;
+		dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+		dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
+		dsDesc.StencilEnable = false;
+		dsDesc.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
+		dsDesc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
+		dsDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+		dsDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+		dsDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+		dsDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+		dsDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+		dsDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+		dsDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+		dsDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+		hr = m_device->CreateDepthStencilState(&dsDesc, &m_defaultDSS);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// Dummy texture
+	{
+		D3D11_TEXTURE2D_DESC tex2dDesc = {};
+		tex2dDesc.Width = 1;
+		tex2dDesc.Height = 1;
+		tex2dDesc.MipLevels = 1;
+		tex2dDesc.ArraySize = 1;
+		tex2dDesc.SampleDesc.Count = 1;
+		tex2dDesc.SampleDesc.Quality = 0;
+		tex2dDesc.Usage = D3D11_USAGE_DEFAULT;
+		tex2dDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		tex2dDesc.CPUAccessFlags = 0;
+		tex2dDesc.MiscFlags = 0;
+		tex2dDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		hr = m_device->CreateTexture2D(&tex2dDesc, nullptr, &m_dummyTexture);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+
+		hr = m_device->CreateShaderResourceView(m_dummyTexture.Get(), nullptr, &m_dummyTextureView);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+
+		D3D11_SAMPLER_DESC samplerDesc = {};
+		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.MinLOD = -FLT_MAX;
+		samplerDesc.MaxLOD = -FLT_MAX;
+		samplerDesc.MipLODBias = 0;
+		samplerDesc.MaxAnisotropy = 0;
+		hr = m_device->CreateSamplerState(&samplerDesc, &m_dummySampler);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+	}
+
+	// Setup materials
+	for (size_t i = 0; i < mesh->GetModel()->GetMaterialCount(); i++)
+	{
+		const auto& mmdMat = mesh->GetModel()->GetMaterials()[i];
+		SabaMaterial mat(mmdMat);
+		if (!mmdMat.m_texture.empty())
+		{
+			auto tex = GetTexture(mmdMat.m_texture);
+			mat.m_texture = tex;
+		}
+		if (!mmdMat.m_spTexture.empty())
+		{
+			auto tex = GetTexture(mmdMat.m_spTexture);
+			mat.m_spTexture = tex;
+		}
+		if (!mmdMat.m_toonTexture.empty())
+		{
+			auto tex = GetTexture(mmdMat.m_toonTexture);
+			mat.m_toonTexture = tex;
+		}
+		m_sabaStructMaterials.emplace_back(std::move(mat));
+	}
+
+	return true;
+}
+
+void AssetManager::InitSabaMaterials(std::shared_ptr<SabaMesh> mesh) {
+	m_sabaMaterials.reserve(mesh->GetModel()->GetMaterialCount());
+	m_vertexShaders["edgeVertexShader"] = std::make_shared<SimpleVertexShader>(m_device, m_context, GetFullPathTo_Wide(L"MMDEdgeVertexShader.cso").c_str());
+	m_pixelShaders["edgePixelShader"] = std::make_shared<SimplePixelShader>(m_device, m_context, GetFullPathTo_Wide(L"MMDEdgePixelShader.cso").c_str());
+
+	m_vertexShaders["mmdVertexShader"] = std::make_shared<SimpleVertexShader>(m_device, m_context, GetFullPathTo_Wide(L"MMDVertexShader.cso").c_str());
+	m_pixelShaders["mmdPixelShader"] = std::make_shared<SimplePixelShader>(m_device, m_context, GetFullPathTo_Wide(L"MMDPixelShader.cso").c_str());
+	for (size_t i = 0; i < mesh->GetModel()->GetMaterialCount(); i++)
+	{
+		const auto& mmdTex = mesh->GetModel()->GetMaterials()[i].m_texture;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> albedo;
+
+		std::wstring widePath = StringToWide(mmdTex);
+
+		DirectX::CreateWICTextureFromFile(m_device.Get(), m_context.Get(),
+			widePath.c_str(), nullptr, albedo.GetAddressOf());
+
+		//m_sabaMaterials.push_back(std::make_shared<Material>(DirectX::XMFLOAT4(1.0, 1.0, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));
+		//m_sabaMaterials[i]->AddSampler("BasicSampler", m_samplers["sabaSampler"]);
+		//m_sabaMaterials[i]->AddSampler("RampSampler", m_samplers["rampSampler"]);
+		//m_sabaMaterials[i]->AddTextureSRV("AlbedoTexture", albedo, WideToString(widePath));
+		//m_sabaMaterials[i]->AddTextureSRV("RoughnessTexture", zero, WideToString(L"../../Assets/Textures/noMetal.png"));
+		//m_sabaMaterials[i]->AddTextureSRV("AmbientTexture", one, WideToString(L"../../Assets/Textures/allMetal.png"));
+		//m_sabaMaterials[i]->AddTextureSRV("RampTexture", rampTexture, WideToString(L"../../Assets/Textures/Ramp_Texture.png"));
+		//m_sabaMaterials[i]->AddTextureSRV("MetalnessTexture", zero, WideToString(L"../../Assets/Textures/noMetal.png"));
+		//Texture2D Tex : register(t0);
+		//Texture2D ToonTex : register(t1);
+		//Texture2D SphereTex : register(t2);
+		//sampler TexSampler : register(s0);
+		//sampler ToonTexSampler : register(s1);
+		//sampler SphereTexSampler : register(s2);
+		m_sabaMaterials.push_back(std::make_shared<Material>(DirectX::XMFLOAT4(1.0, 1.0, 1.0f, 1.0f), 0.5f, m_vertexShaders["mmdVertexShader"], m_pixelShaders["mmdPixelShader"]));
+
+		m_sabaEdgeMaterials.push_back(std::make_shared<Material>(DirectX::XMFLOAT4(1.0, 1.0, 1.0f, 1.0f), 0.5f, m_vertexShaders["edgeVertexShader"], m_pixelShaders["edgePixelShader"]));
+		m_sabaMaterials[i]->AddSampler("TexSampler", m_textureSampler);
+		m_sabaMaterials[i]->AddSampler("ToonTexSampler", m_toonTextureSampler);
+		m_sabaMaterials[i]->AddSampler("SphereTexSampler", m_sphereTextureSampler);
+		m_sabaMaterials[i]->AddTextureSRV("Tex", albedo, WideToString(widePath));
+		m_sabaMaterials[i]->AddTextureSRV("ToonTex", albedo,WideToString(widePath));
+		m_sabaMaterials[i]->AddTextureSRV("SphereTex", albedo, WideToString(widePath));
+	}
+}
+
+
+SabaTexture AssetManager::GetTexture(const std::string& texturePath)
+{
+	auto it = m_sabaTextures.find(texturePath);
+	if (it == m_sabaTextures.end())
+	{
+		saba::File file;
+		if (!file.Open(texturePath))
+		{
+			return SabaTexture();
+		}
+		int x, y, comp;
+		int ret = stbi_info_from_file(file.GetFilePointer(), &x, &y, &comp);
+		if (ret == 0)
+		{
+			return SabaTexture();
+		}
+
+		D3D11_TEXTURE2D_DESC tex2dDesc = {};
+		tex2dDesc.Width = x;
+		tex2dDesc.Height = y;
+		tex2dDesc.MipLevels = 1;
+		tex2dDesc.ArraySize = 1;
+		tex2dDesc.SampleDesc.Count = 1;
+		tex2dDesc.SampleDesc.Quality = 0;
+		tex2dDesc.Usage = D3D11_USAGE_DEFAULT;
+		tex2dDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		tex2dDesc.CPUAccessFlags = 0;
+		tex2dDesc.MiscFlags = 0;
+
+		int reqComp = 0;
+		bool hasAlpha = false;
+		if (comp != 4)
+		{
+			tex2dDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			hasAlpha = false;
+		}
+		else
+		{
+			tex2dDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			hasAlpha = true;
+		}
+		uint8_t* image = stbi_load_from_file(file.GetFilePointer(), &x, &y, &comp, STBI_rgb_alpha);
+		D3D11_SUBRESOURCE_DATA initData = {};
+		initData.pSysMem = image;
+		initData.SysMemPitch = 4 * x;
+		Microsoft::WRL::ComPtr<ID3D11Texture2D> tex2d;
+		HRESULT hr = m_device->CreateTexture2D(&tex2dDesc, &initData, &tex2d);
+		stbi_image_free(image);
+		if (FAILED(hr))
+		{
+			return SabaTexture();
+		}
+
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> tex2dRV;
+		hr = m_device->CreateShaderResourceView(tex2d.Get(), nullptr, &tex2dRV);
+		if (FAILED(hr))
+		{
+			return SabaTexture();
+		}
+
+		SabaTexture tex;
+		tex.m_texture = tex2d;
+		tex.m_textureView = tex2dRV;
+		tex.m_hasAlpha = hasAlpha;
+
+		m_sabaTextures[texturePath] = tex;
+
+		return m_sabaTextures[texturePath];
+	}
+	else
+	{
+		return (*it).second;
+	}
+}
 
 //helper function to create cube map from 6 textures.
 //used with permission from Chris Cascioli

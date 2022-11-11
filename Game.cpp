@@ -129,7 +129,7 @@ void Game::CreateBasicGeometry()
 	m_AssetManager->AddSRVToMap(ToonMetalness,	L"../../Assets/Textures/noMetal.png", true);
 	m_AssetManager->AddSRVToMap(SampleTexture,	L"../../Assets/Textures/Ramp_Texture.png", true);
 	
-	sabaLisa = std::make_shared<Mesh>(m_AssetManager->GetFullPathTo("../../Assets/Toon/Lisa/Lisa_Textured.pmx").c_str(), m_AssetManager->GetFullPathTo("../../Assets/Toon/Lisa/Texture").c_str(), device, context);
+	sabaLisa = m_AssetManager->GetSabaMesh(0);
 	//sabaEntity = std::make_shared<GameEntity>(sabaLisa, m_AssetManager->GetToonMaterial(0), camera, device);
 	//std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
 		

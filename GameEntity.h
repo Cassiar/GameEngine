@@ -58,25 +58,9 @@ public:
 	//Updates entity and checks for collisions
 	void Update(float dt, std::vector<std::shared_ptr<GameEntity>>& collisionEntities);
 	
-	struct Texture
-	{
-		template <typename T>
-		using ComPtr = Microsoft::WRL::ComPtr<T>;
-
-		ComPtr<ID3D11Texture2D>				m_texture;
-		ComPtr<ID3D11ShaderResourceView>	m_textureView;
-		bool								m_hasAlpha;
-	};
 private:	
-
-	bool CreateSabaShaders();
-	bool SabaSetup();
-	Texture GetTexture(const std::string& texturePath);
-
-	std::vector<std::shared_ptr<Material>> materials;
-	std::vector<std::shared_ptr<Material>> edgeMaterials;
-
 	std::shared_ptr<Mesh> mesh;
+	std::shared_ptr<SabaMesh> sabaMesh;
 	std::shared_ptr<Camera> camera;
 	Transform transform;
 	std::shared_ptr<Material> material;
@@ -95,6 +79,8 @@ private:
 	
 	Microsoft::WRL::ComPtr<ID3D11Device> device;
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context;
-	Microsoft::WRL::ComPtr<ID3D11SamplerState> basicSampler;
-	Microsoft::WRL::ComPtr<ID3D11SamplerState> rampSampler;
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> one;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> zero;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> rampTexture;
 };
