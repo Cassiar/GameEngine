@@ -369,6 +369,9 @@ void Mesh::Draw()
 	{
 		context->DrawIndexed(numIndices, 0, 0);
 	}
+	if (this->IsPmx()) {
+		int temp = 0;
+	}
 }
 
 void Mesh::Draw(Microsoft::WRL::ComPtr<ID3D11RasterizerState> customRast)

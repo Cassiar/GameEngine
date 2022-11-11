@@ -171,24 +171,24 @@ void AssetManager::InitSamplers()
 
 	//create sampler state for post process
 	D3D11_SAMPLER_DESC rampSamplerDesc = {};
-	ppSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	ppSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	ppSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-	ppSamplerDesc.Filter = D3D11_FILTER_ANISOTROPIC; // allowing anisotropic filtering
-	ppSamplerDesc.MaxAnisotropy = 4;
-	ppSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX; //allways use mipmapping
+	rampSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	rampSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	rampSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	rampSamplerDesc.Filter = D3D11_FILTER_ANISOTROPIC; // allowing anisotropic filtering
+	rampSamplerDesc.MaxAnisotropy = 4;
+	rampSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX; //allways use mipmapping
 
 	m_samplers["rampSampler"] = Microsoft::WRL::ComPtr<ID3D11SamplerState>();
 	m_device->CreateSamplerState(&ppSamplerDesc, m_samplers["rampSampler"].GetAddressOf());
 
 	//create description and sampler state
 	D3D11_SAMPLER_DESC sabaSamplerDesc = {};
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP; // allows textures to tile
-	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC; // allowing anisotropic filtering
-	samplerDesc.MaxAnisotropy = 4;
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX; //allways use mipmapping
+	sabaSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sabaSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sabaSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP; // allows textures to tile
+	sabaSamplerDesc.Filter = D3D11_FILTER_ANISOTROPIC; // allowing anisotropic filtering
+	sabaSamplerDesc.MaxAnisotropy = 4;
+	sabaSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX; //allways use mipmapping
 
 	m_samplers["sabaSampler"] = Microsoft::WRL::ComPtr<ID3D11SamplerState>();
 	m_device->CreateSamplerState(&sabaSamplerDesc, m_samplers["sabaSampler"].GetAddressOf());

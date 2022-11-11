@@ -134,12 +134,12 @@ void Game::CreateBasicGeometry()
 	//std::shared_ptr<Mesh> catapult = std::make_shared<Mesh>(GetFullPathTo("../../Assets/Models/catapult.obj").c_str(), device, context);
 		
 	//load animation file
-	//animFile = std::make_shared<saba::VMDFile>();
-	//saba::ReadVMDFile(animFile.get(), GetFullPathTo("../../Assets/Anim/Male_run_in_place_lisa.vmd").c_str());
-	//anim = std::make_shared<saba::VMDAnimation>();
-	//sabaLisa->GetModel()->InitializeAnimation();
-	//anim->Create(sabaLisa->GetModel());
-	//anim->Add(*animFile.get());
+	animFile = std::make_shared<saba::VMDFile>();
+	saba::ReadVMDFile(animFile.get(), m_AssetManager->GetFullPathTo("../../Assets/Anim/Male_run_in_place_lisa.vmd").c_str());
+	anim = std::make_shared<saba::VMDAnimation>();
+	m_AssetManager->GetSabaMesh(0)->GetModel()->InitializeAnimation();
+	anim->Create(m_AssetManager->GetSabaMesh(0)->GetModel());
+	anim->Add(*animFile.get());
 
 	//create some entities
 	//cube direectly in front of camera
@@ -150,7 +150,7 @@ void Game::CreateBasicGeometry()
 	
 	m_EntityManager->GetEntity(1)->GetTransform()->SetScale(20.0f, 1.0f, 20.0f);
 
-	m_EntityManager->AddEntity(std::make_shared<GameEntity>(sabaLisa, camera, device, context, 
+	m_EntityManager->AddEntity(std::make_shared<GameEntity>(m_AssetManager->GetSabaMesh(0), camera, device, context,
 		m_AssetManager->GetVertexShader("mmdVertexShader"), m_AssetManager->GetPixelShader("mmdPixelShader"),
 		m_AssetManager->GetVertexShader("mmdEdgeVertexShader"), m_AssetManager->GetPixelShader("mmdEdgePixelShader")));
 
@@ -1157,7 +1157,7 @@ void Game::CreateMaterialGUI(float deltaTime) {
 // --------------------------------------------------------
 void Game::Update(float deltaTime, float totalTime)
 {
-	/*double time = saba::GetTime();
+	double time = saba::GetTime();
 	double elapsed = time - saveTime;
 	if (elapsed > 1.0 / 30.0)
 	{
@@ -1165,7 +1165,7 @@ void Game::Update(float deltaTime, float totalTime)
 	}
 	saveTime = time;
 	animTime += float(elapsed);
-	std::shared_ptr<saba::PMXModel> tempModel = sabaLisa->GetModel();
+	std::shared_ptr<saba::PMXModel> tempModel = m_AssetManager->GetSabaMesh(0)->GetModel();
 	tempModel->BeginAnimation();
 	tempModel->UpdateAllAnimation(anim.get(), animTime * 30.0f, elapsed);
 	tempModel->EndAnimation();
@@ -1189,7 +1189,7 @@ void Game::Update(float deltaTime, float totalTime)
 		vertices[i].UVCoord = XMFLOAT2(uvs[i][0], uvs[i][1]);
 		vertices[i].Tangent = {};
 	}
-	context->Unmap(sabaLisa->GetVertexBuffer().Get(), 0);*/
+	context->Unmap(sabaLisa->GetVertexBuffer().Get(), 0);
 
 	// Example input checking: Quit if the escape key is pressed
 	if (Input::GetInstance().KeyDown(VK_ESCAPE)) {

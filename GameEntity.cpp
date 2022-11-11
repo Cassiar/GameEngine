@@ -91,7 +91,6 @@ using namespace physx;
 GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> in_material, std::shared_ptr<Camera> in_camera, bool hasPhysics, bool isDebugEntity)
 {
 	mesh = in_mesh;
-	sabaMesh = std::shared_ptr<SabaMesh>(dynamic_cast<SabaMesh*>(this->mesh.get()));
 	material = in_material;
 	camera = in_camera;
 	transform = Transform();
@@ -154,11 +153,12 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 	m_rigidBody = rigidBody;
 }
 
-GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Camera> in_camera, Microsoft::WRL::ComPtr<ID3D11Device> in_device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> in_context,
+GameEntity::GameEntity(std::shared_ptr<SabaMesh> in_mesh, std::shared_ptr<Camera> in_camera, Microsoft::WRL::ComPtr<ID3D11Device> in_device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> in_context,
 	std::shared_ptr<SimpleVertexShader> vertexShader, std::shared_ptr<SimplePixelShader> pixelShader,
 	std::shared_ptr<SimpleVertexShader> edgeVertexShader, std::shared_ptr<SimplePixelShader> edgePixelShader) 
 	: GameEntity(in_mesh, nullptr, in_camera, false, false) {
 	context = in_context;
+	sabaMesh = in_mesh;
 	m_collider = std::make_shared<Collider>(in_mesh, &transform);
 	m_sphere = nullptr;
 	m_drawDebugSphere = g_drawDebugSpheresDefault;
@@ -267,8 +267,8 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
-	context->IASetVertexBuffers(0, 1, mesh->GetVertexBuffer().GetAddressOf(), &stride, &offset);
-	context->IASetIndexBuffer(mesh->GetIndexBuffer().Get(), mesh->GetFormat(), 0);
+	context->IASetVertexBuffers(0, 1, sabaMesh->GetVertexBuffer().GetAddressOf(), &stride, &offset);
+	context->IASetIndexBuffer(sabaMesh->GetIndexBuffer().Get(), sabaMesh->GetFormat(), 0);
 	//testing uvs 
 	//for (int i = 0; i < mesh->GetVerticies().size(); i++) {
 	//	Vertex temp = mesh->GetVerticies()[i];
@@ -609,8 +609,8 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 
 		UINT stride = sizeof(Vertex);
 		UINT offset = 0;
-		context->IASetVertexBuffers(0, 1, mesh->GetVertexBuffer().GetAddressOf(), &stride, &offset);
-		context->IASetIndexBuffer(mesh->GetIndexBuffer().Get(), mesh->GetFormat(), 0);
+		context->IASetVertexBuffers(0, 1, sabaMesh->GetVertexBuffer().GetAddressOf(), &stride, &offset);
+		context->IASetIndexBuffer(sabaMesh->GetIndexBuffer().Get(), sabaMesh->GetFormat(), 0);
 
 		context->OMSetBlendState(assetManager->m_mmdBlendState.Get(), nullptr, 0xffffffff);
 
@@ -632,7 +632,7 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 	}
 
 	// Setup vertex shader (VSData)
-	//{
+	//{ 
 	//	MMDEdgeVertexShaderCB vsCB;
 	//	vsCB.m_wv = wv;
 	//	vsCB.m_wvp = wvp;
@@ -699,6 +699,8 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		//	context->PSSetConstantBuffers(2, 1, pscbs);
 		//}
 
+		vs->CopyAllBufferData();
+		ps->CopyAllBufferData();
 		context->RSSetState(assetManager->m_mmdEdgeRS.Get());
 
 		context->OMSetBlendState(assetManager->m_mmdEdgeBlendState.Get(), nullptr, 0xffffffff);
