@@ -44,8 +44,8 @@ Game::Game(HINSTANCE hInstance)
 	printf("Console window created successfully.  Feel free to printf() here.\n");
 #endif
 	printf("%i, %i", this->width, this->height);
-	camera = std::make_shared<Camera>(XMFLOAT3(0.0f, 6.5f, -15), (float)this->width / this->height, XM_PIDIV4, 0.1f, 1000.0f);
-	camera->GetTransform()->Rotate(XMFLOAT3(XM_PIDIV4, 0, 0));
+	camera = std::make_shared<Camera>(XMFLOAT3(0.0f, 6.5f, -50), (float)this->width / this->height, XM_PIDIV4, 0.1f, 1000.0f);
+	camera->GetTransform()->Rotate(XMFLOAT3(0, 0, 0));
 	camera->UpdateViewMatrix();
 	camera->GetViewMatrix();
 	ambientTerm = XMFLOAT3(0.0f, 0.0f, 0.0f); //sky red-ish to match sun peaking over planet
@@ -154,7 +154,7 @@ void Game::CreateBasicGeometry()
 		m_AssetManager->GetVertexShader("mmdVertexShader"), m_AssetManager->GetPixelShader("mmdPixelShader"),
 		m_AssetManager->GetVertexShader("mmdEdgeVertexShader"), m_AssetManager->GetPixelShader("mmdEdgePixelShader")));
 
-	m_EntityManager->GetEntity(2)->GetTransform()->MoveAbsolute(XMFLOAT3(20, 0, 20));
+	m_EntityManager->GetEntity(2)->GetTransform()->MoveAbsolute(XMFLOAT3(0, 0, 20));
 	m_EntityManager->GetEntity(2)->GetTransform()->Rotate(XMFLOAT3(0, XM_PI, 0));//face toward starting pos
 
 	//create sky obj
@@ -853,6 +853,10 @@ void Game::CreateGui(float deltaTime) {
 		ImGui::Text("FPS: %i", lastFrameCount);
 
 		ImGui::PushID(1);
+		ImGui::Text("Enable animation: ");
+		ImGui::SameLine();
+		ImGui::Checkbox("    ", &animOn);
+
 		bool entitiesOpen = ImGui::TreeNode("Entities", "%s", "Entities");
 		if (entitiesOpen) {
 			std::unordered_map<Transform*, std::shared_ptr<GameEntity>> childEntityTransformMap;
@@ -1157,39 +1161,41 @@ void Game::CreateMaterialGUI(float deltaTime) {
 // --------------------------------------------------------
 void Game::Update(float deltaTime, float totalTime)
 {
-	double time = saba::GetTime();
-	double elapsed = time - saveTime;
-	if (elapsed > 1.0 / 30.0)
-	{
-		elapsed = 1.0 / 30.0;
+	if (animOn) {
+		double time = saba::GetTime();
+		double elapsed = time - saveTime;
+		if (elapsed > 1.0 / 30.0)
+		{
+			elapsed = 1.0 / 30.0;
+		}
+		saveTime = time;
+		animTime += float(elapsed);
+		std::shared_ptr<saba::PMXModel> tempModel = m_AssetManager->GetSabaMesh(0)->GetModel();
+		tempModel->BeginAnimation();
+		tempModel->UpdateAllAnimation(anim.get(), animTime * 30.0f, elapsed);
+		tempModel->EndAnimation();
+		tempModel->Update();
+		size_t vtxCount = tempModel->GetVertexCount();
+		HRESULT hr;
+		D3D11_MAPPED_SUBRESOURCE mapRes;
+		hr = context->Map(sabaLisa->GetVertexBuffer().Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapRes);
+		if (FAILED(hr))
+		{
+			return;
+		}
+		Vertex* vertices = (Vertex*)mapRes.pData;
+		const glm::vec3* positions = tempModel->GetUpdatePositions();
+		const glm::vec3* normals = tempModel->GetUpdateNormals();
+		const glm::vec2* uvs = tempModel->GetUpdateUVs();
+		for (size_t i = 0; i < vtxCount; i++)
+		{
+			vertices[i].Position = XMFLOAT3(positions[i][0], positions[i][1], positions[i][2]);
+			vertices[i].Normal = XMFLOAT3(normals[i][0], normals[i][1], normals[i][2]);
+			vertices[i].UVCoord = XMFLOAT2(uvs[i][0], uvs[i][1]);
+			vertices[i].Tangent = {};
+		}
+		context->Unmap(sabaLisa->GetVertexBuffer().Get(), 0);
 	}
-	saveTime = time;
-	animTime += float(elapsed);
-	std::shared_ptr<saba::PMXModel> tempModel = m_AssetManager->GetSabaMesh(0)->GetModel();
-	tempModel->BeginAnimation();
-	tempModel->UpdateAllAnimation(anim.get(), animTime * 30.0f, elapsed);
-	tempModel->EndAnimation();
-	tempModel->Update();
-	size_t vtxCount = tempModel->GetVertexCount();
-	HRESULT hr;
-	D3D11_MAPPED_SUBRESOURCE mapRes;
-	hr = context->Map(sabaLisa->GetVertexBuffer().Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapRes);
-	if (FAILED(hr))
-	{
-		return;
-	}
-	Vertex* vertices = (Vertex*)mapRes.pData;
-	const glm::vec3* positions = tempModel->GetUpdatePositions();
-	const glm::vec3* normals = tempModel->GetUpdateNormals();
-	const glm::vec2* uvs = tempModel->GetUpdateUVs();
-	for (size_t i = 0; i < vtxCount; i++)
-	{
-		vertices[i].Position = XMFLOAT3(positions[i][0], positions[i][1], positions[i][2]);
-		vertices[i].Normal = XMFLOAT3(normals[i][0], normals[i][1], normals[i][2]);
-		vertices[i].UVCoord = XMFLOAT2(uvs[i][0], uvs[i][1]);
-		vertices[i].Tangent = {};
-	}
-	context->Unmap(sabaLisa->GetVertexBuffer().Get(), 0);
 
 	// Example input checking: Quit if the escape key is pressed
 	if (Input::GetInstance().KeyDown(VK_ESCAPE)) {
@@ -1202,7 +1208,7 @@ void Game::Update(float deltaTime, float totalTime)
 	m_PhysicsManager->UpdatePhysics(deltaTime);
 
 	CreateGui(deltaTime);
-	CreateMaterialGUI(deltaTime);
+	//CreateMaterialGUI(deltaTime);
 
 	camera->Update(deltaTime);
 }

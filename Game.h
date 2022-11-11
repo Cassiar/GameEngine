@@ -173,5 +173,7 @@ private:
 	std::shared_ptr<saba::VMDAnimation> anim;
 	float animTime = 0;
 	double saveTime = 0;
+
+	bool animOn = false;
 };
 
