@@ -92,9 +92,7 @@ public:
 	// nshields TODO - Shouldn't be public but for simplicity of deadline i'm breaking rules
 #pragma region SabaStuff
 
-	Microsoft::WRL::ComPtr<ID3D11VertexShader>	m_mmdVS;
-	Microsoft::WRL::ComPtr<ID3D11PixelShader>	m_mmdPS;
-	Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_mmdInputLayout;
+	//Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_mmdInputLayout;
 	Microsoft::WRL::ComPtr<ID3D11SamplerState>	m_textureSampler;
 	Microsoft::WRL::ComPtr<ID3D11SamplerState>	m_toonTextureSampler;
 	Microsoft::WRL::ComPtr<ID3D11SamplerState>	m_sphereTextureSampler;
@@ -102,18 +100,9 @@ public:
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState>	m_mmdFrontFaceRS;
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState>	m_mmdBothFaceRS;
 
-	Microsoft::WRL::ComPtr<ID3D11VertexShader>	m_mmdEdgeVS;
-	Microsoft::WRL::ComPtr<ID3D11PixelShader>	m_mmdEdgePS;
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_mmdEdgeInputLayout;
 	Microsoft::WRL::ComPtr<ID3D11BlendState>	m_mmdEdgeBlendState;
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState>	m_mmdEdgeRS;
-
-	Microsoft::WRL::ComPtr<ID3D11VertexShader>	m_mmdGroundShadowVS;
-	Microsoft::WRL::ComPtr<ID3D11PixelShader>	m_mmdGroundShadowPS;
-	Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_mmdGroundShadowInputLayout;
-	Microsoft::WRL::ComPtr<ID3D11BlendState>	m_mmdGroundShadowBlendState;
-	Microsoft::WRL::ComPtr<ID3D11RasterizerState>	m_mmdGroundShadowRS;
-	Microsoft::WRL::ComPtr<ID3D11DepthStencilState>	m_mmdGroundShadowDSS;
 
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilState>	m_defaultDSS;
 
@@ -121,19 +110,16 @@ public:
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>	m_dummyTextureView;
 	Microsoft::WRL::ComPtr<ID3D11SamplerState>			m_dummySampler;
 
-	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_vertexBuffer;
-	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_indexBuffer;
-	DXGI_FORMAT									m_indexBufferFormat;
+	//Microsoft::WRL::ComPtr<ID3D11Buffer>		m_vertexBuffer;
+	//Microsoft::WRL::ComPtr<ID3D11Buffer>		m_indexBuffer;
+	//DXGI_FORMAT									m_indexBufferFormat;
 
-	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdVSConstantBuffer;
-	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdPSConstantBuffer;
+	//Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdVSConstantBuffer;
+	//Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdPSConstantBuffer;
 
-	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdEdgeVSConstantBuffer;
-	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdEdgeSizeVSConstantBuffer;
-	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdEdgePSConstantBuffer;
-
-	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdGroundShadowVSConstantBuffer;
-	Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdGroundShadowPSConstantBuffer;
+	//Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdEdgeVSConstantBuffer;
+	//Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdEdgeSizeVSConstantBuffer;
+	//Microsoft::WRL::ComPtr<ID3D11Buffer>		m_mmdEdgePSConstantBuffer;
 #pragma endregion
 
 	// Normally this intialization function wouldn't be necessary, however, for this

@@ -237,158 +237,158 @@ bool AssetManager::InitSaba(std::shared_ptr<SabaMesh> mesh) {
 	//}
 
 	// Setup vertex buffer
-	{
-		D3D11_BUFFER_DESC bufDesc = {};
-		bufDesc.Usage = D3D11_USAGE_DYNAMIC;
-		bufDesc.ByteWidth = UINT(sizeof(SabaVertex) * mesh->GetModel()->GetVertexCount());
-		bufDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		bufDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-		hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_vertexBuffer);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Setup index buffer;
-	{
-		D3D11_BUFFER_DESC bufDesc = {};
-		bufDesc.Usage = D3D11_USAGE_IMMUTABLE;
-		bufDesc.ByteWidth = UINT(mesh->GetModel()->GetIndexElementSize() * mesh->GetModel()->GetIndexCount());
-		bufDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-
-		D3D11_SUBRESOURCE_DATA initData = {};
-		initData.pSysMem = mesh->GetModel()->GetIndices();
-		hr = m_device->CreateBuffer(&bufDesc, &initData, &m_indexBuffer);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-
-		if (1 == mesh->GetModel()->GetIndexElementSize())
-		{
-			m_indexBufferFormat = DXGI_FORMAT_R8_UINT;
-		}
-		else if (2 == mesh->GetModel()->GetIndexElementSize())
-		{
-			m_indexBufferFormat = DXGI_FORMAT_R16_UINT;
-		}
-		else if (4 == mesh->GetModel()->GetIndexElementSize())
-		{
-			m_indexBufferFormat = DXGI_FORMAT_R32_UINT;
-		}
-		else
-		{
-			return false;
-		}
-	}
+	//{
+	//	D3D11_BUFFER_DESC bufDesc = {};
+	//	bufDesc.Usage = D3D11_USAGE_DYNAMIC;
+	//	bufDesc.ByteWidth = UINT(sizeof(SabaVertex) * mesh->GetModel()->GetVertexCount());
+	//	bufDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	//	bufDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	//
+	//	hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_vertexBuffer);
+	//	if (FAILED(hr))
+	//	{
+	//		return false;
+	//	}
+	//}
+	//
+	//// Setup index buffer;
+	//{
+	//	D3D11_BUFFER_DESC bufDesc = {};
+	//	bufDesc.Usage = D3D11_USAGE_IMMUTABLE;
+	//	bufDesc.ByteWidth = UINT(mesh->GetModel()->GetIndexElementSize() * mesh->GetModel()->GetIndexCount());
+	//	bufDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	//	bufDesc.CPUAccessFlags = 0;
+	//
+	//	D3D11_SUBRESOURCE_DATA initData = {};
+	//	initData.pSysMem = mesh->GetModel()->GetIndices();
+	//	hr = m_device->CreateBuffer(&bufDesc, &initData, &m_indexBuffer);
+	//	if (FAILED(hr))
+	//	{
+	//		return false;
+	//	}
+	//
+	//	if (1 == mesh->GetModel()->GetIndexElementSize())
+	//	{
+	//		m_indexBufferFormat = DXGI_FORMAT_R8_UINT;
+	//	}
+	//	else if (2 == mesh->GetModel()->GetIndexElementSize())
+	//	{
+	//		m_indexBufferFormat = DXGI_FORMAT_R16_UINT;
+	//	}
+	//	else if (4 == mesh->GetModel()->GetIndexElementSize())
+	//	{
+	//		m_indexBufferFormat = DXGI_FORMAT_R32_UINT;
+	//	}
+	//	else
+	//	{
+	//		return false;
+	//	}
+	//}
 
 	// Setup mmd vertex shader constant buffer (VSData)
-	{
-		D3D11_BUFFER_DESC bufDesc = {};
-		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.ByteWidth = sizeof(MMDVertexShaderCB);
-		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-
-		hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdVSConstantBuffer);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Setup mmd pixel shader constant buffer (PSData)
-	{
-		D3D11_BUFFER_DESC bufDesc = {};
-		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.ByteWidth = sizeof(MMDPixelShaderCB);
-		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-
-		hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdPSConstantBuffer);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
+	//{
+	//	D3D11_BUFFER_DESC bufDesc = {};
+	//	bufDesc.Usage = D3D11_USAGE_DEFAULT;
+	//	bufDesc.ByteWidth = sizeof(MMDVertexShaderCB);
+	//	bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	//	bufDesc.CPUAccessFlags = 0;
+	//
+	//	hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdVSConstantBuffer);
+	//	if (FAILED(hr))
+	//	{
+	//		return false;
+	//	}
+	//}
+	//
+	//// Setup mmd pixel shader constant buffer (PSData)
+	//{
+	//	D3D11_BUFFER_DESC bufDesc = {};
+	//	bufDesc.Usage = D3D11_USAGE_DEFAULT;
+	//	bufDesc.ByteWidth = sizeof(MMDPixelShaderCB);
+	//	bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	//	bufDesc.CPUAccessFlags = 0;
+	//
+	//	hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdPSConstantBuffer);
+	//	if (FAILED(hr))
+	//	{
+	//		return false;
+	//	}
+	//}
 
 	// Setup mmd edge vertex shader constant buffer (VSData)
-	{
-		D3D11_BUFFER_DESC bufDesc = {};
-		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.ByteWidth = sizeof(MMDEdgeVertexShaderCB);
-		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-
-		hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdEdgeVSConstantBuffer);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Setup mmd edge vertex shader constant buffer (VSEdgeData)
-	{
-		D3D11_BUFFER_DESC bufDesc = {};
-		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.ByteWidth = sizeof(MMDEdgeSizeVertexShaderCB);
-		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-
-		hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdEdgeSizeVSConstantBuffer);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
+	//{
+	//	D3D11_BUFFER_DESC bufDesc = {};
+	//	bufDesc.Usage = D3D11_USAGE_DEFAULT;
+	//	bufDesc.ByteWidth = sizeof(MMDEdgeVertexShaderCB);
+	//	bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	//	bufDesc.CPUAccessFlags = 0;
+	//
+	//	hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdEdgeVSConstantBuffer);
+	//	if (FAILED(hr))
+	//	{
+	//		return false;
+	//	}
+	//}
+	//
+	//// Setup mmd edge vertex shader constant buffer (VSEdgeData)
+	//{
+	//	D3D11_BUFFER_DESC bufDesc = {};
+	//	bufDesc.Usage = D3D11_USAGE_DEFAULT;
+	//	bufDesc.ByteWidth = sizeof(MMDEdgeSizeVertexShaderCB);
+	//	bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	//	bufDesc.CPUAccessFlags = 0;
+	//
+	//	hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdEdgeSizeVSConstantBuffer);
+	//	if (FAILED(hr))
+	//	{
+	//		return false;
+	//	}
+	//}
 
 	// Setup mmd edge pixel shader constant buffer (PSData)
-	{
-		D3D11_BUFFER_DESC bufDesc = {};
-		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.ByteWidth = sizeof(MMDEdgePixelShaderCB);
-		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-
-		hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdEdgePSConstantBuffer);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Setup mmd ground shadow vertex shader constant buffer (VSData)
-	{
-		D3D11_BUFFER_DESC bufDesc = {};
-		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.ByteWidth = sizeof(MMDGroundShadowVertexShaderCB);
-		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-
-		hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdGroundShadowVSConstantBuffer);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
+	//{
+	//	D3D11_BUFFER_DESC bufDesc = {};
+	//	bufDesc.Usage = D3D11_USAGE_DEFAULT;
+	//	bufDesc.ByteWidth = sizeof(MMDEdgePixelShaderCB);
+	//	bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	//	bufDesc.CPUAccessFlags = 0;
+	//
+	//	hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdEdgePSConstantBuffer);
+	//	if (FAILED(hr))
+	//	{
+	//		return false;
+	//	}
+	//}
+	//
+	//// Setup mmd ground shadow vertex shader constant buffer (VSData)
+	//{
+	//	D3D11_BUFFER_DESC bufDesc = {};
+	//	bufDesc.Usage = D3D11_USAGE_DEFAULT;
+	//	bufDesc.ByteWidth = sizeof(MMDGroundShadowVertexShaderCB);
+	//	bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	//	bufDesc.CPUAccessFlags = 0;
+	//
+	//	hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdGroundShadowVSConstantBuffer);
+	//	if (FAILED(hr))
+	//	{
+	//		return false;
+	//	}
+	//}
 
 	// Setup mmd ground shadow pixel shader constant buffer (PSData)
-	{
-		D3D11_BUFFER_DESC bufDesc = {};
-		bufDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufDesc.ByteWidth = sizeof(MMDGroundShadowPixelShaderCB);
-		bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufDesc.CPUAccessFlags = 0;
-
-		hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdGroundShadowPSConstantBuffer);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
+	//{
+	//	D3D11_BUFFER_DESC bufDesc = {};
+	//	bufDesc.Usage = D3D11_USAGE_DEFAULT;
+	//	bufDesc.ByteWidth = sizeof(MMDGroundShadowPixelShaderCB);
+	//	bufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	//	bufDesc.CPUAccessFlags = 0;
+	//
+	//	hr = m_device->CreateBuffer(&bufDesc, nullptr, &m_mmdGroundShadowPSConstantBuffer);
+	//	if (FAILED(hr))
+	//	{
+	//		return false;
+	//	}
+	//}
 
 	// Setup materials
 	std::shared_ptr<saba::PMXModel> m_mmdModel = mesh->GetModel();
@@ -420,33 +420,33 @@ bool AssetManager::InitSaba(std::shared_ptr<SabaMesh> mesh) {
 bool AssetManager::InitSabaShaders(std::shared_ptr<SabaMesh> mesh) {
 	HRESULT hr;
 
-	// mmd shader
-	hr = m_device->CreateVertexShader(mmd_vso_data, sizeof(mmd_vso_data), nullptr, &m_mmdVS);
-	if (FAILED(hr))
-	{
-		return false;
-	}
+	//// mmd shader
+	//hr = m_device->CreateVertexShader(mmd_vso_data, sizeof(mmd_vso_data), nullptr, &m_mmdVS);
+	//if (FAILED(hr))
+	//{
+	//	return false;
+	//}
 
-	hr = m_device->CreatePixelShader(mmd_pso_data, sizeof(mmd_pso_data), nullptr, &m_mmdPS);
-	if (FAILED(hr))
-	{
-		return false;
-	}
+	//hr = m_device->CreatePixelShader(mmd_pso_data, sizeof(mmd_pso_data), nullptr, &m_mmdPS);
+	//if (FAILED(hr))
+	//{
+	//	return false;
+	//}
 
-	D3D11_INPUT_ELEMENT_DESC mmdInputElementDesc[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-	hr = m_device->CreateInputLayout(
-		mmdInputElementDesc, 3,
-		mmd_vso_data, sizeof(mmd_vso_data),
-		&m_mmdInputLayout
-	);
-	if (FAILED(hr))
-	{
-		return false;
-	}
+	//D3D11_INPUT_ELEMENT_DESC mmdInputElementDesc[] = {
+	//	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+	//	{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	//	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	//};
+	//hr = m_device->CreateInputLayout(
+	//	mmdInputElementDesc, 3,
+	//	mmd_vso_data, sizeof(mmd_vso_data),
+	//	&m_mmdInputLayout
+	//);
+	//if (FAILED(hr))
+	//{
+	//	return false;
+	//}
 
 	// Texture sampler
 	{
@@ -563,17 +563,17 @@ bool AssetManager::InitSabaShaders(std::shared_ptr<SabaMesh> mesh) {
 	}
 
 	// mmd edge shader
-	hr = m_device->CreateVertexShader(mmd_edge_vso_data, sizeof(mmd_edge_vso_data), nullptr, &m_mmdEdgeVS);
-	if (FAILED(hr))
-	{
-		return false;
-	}
-
-	hr = m_device->CreatePixelShader(mmd_edge_pso_data, sizeof(mmd_edge_pso_data), nullptr, &m_mmdEdgePS);
-	if (FAILED(hr))
-	{
-		return false;
-	}
+	//hr = m_device->CreateVertexShader(mmd_edge_vso_data, sizeof(mmd_edge_vso_data), nullptr, &m_mmdEdgeVS);
+	//if (FAILED(hr))
+	//{
+	//	return false;
+	//}
+	//
+	//hr = m_device->CreatePixelShader(mmd_edge_pso_data, sizeof(mmd_edge_pso_data), nullptr, &m_mmdEdgePS);
+	//if (FAILED(hr))
+	//{
+	//	return false;
+	//}
 
 	D3D11_INPUT_ELEMENT_DESC mmdEdgeInputElementDesc[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -623,96 +623,6 @@ bool AssetManager::InitSabaShaders(std::shared_ptr<SabaMesh> mesh) {
 		rsDesc.MultisampleEnable = true;
 		rsDesc.AntialiasedLineEnable = false;
 		hr = m_device->CreateRasterizerState(&rsDesc, &m_mmdEdgeRS);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// mmd ground shadow shader
-	hr = m_device->CreateVertexShader(mmd_ground_shadow_vso_data, sizeof(mmd_ground_shadow_vso_data), nullptr, &m_mmdGroundShadowVS);
-	if (FAILED(hr))
-	{
-		return false;
-	}
-
-	hr = m_device->CreatePixelShader(mmd_ground_shadow_pso_data, sizeof(mmd_ground_shadow_pso_data), nullptr, &m_mmdGroundShadowPS);
-	if (FAILED(hr))
-	{
-		return false;
-	}
-
-	D3D11_INPUT_ELEMENT_DESC mmdGroundShadowInputElementDesc[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-	hr = m_device->CreateInputLayout(
-		mmdGroundShadowInputElementDesc, 1,
-		mmd_ground_shadow_vso_data, sizeof(mmd_ground_shadow_vso_data),
-		&m_mmdGroundShadowInputLayout
-	);
-	if (FAILED(hr))
-	{
-		return false;
-	}
-
-	// Blend State
-	{
-		D3D11_BLEND_DESC blendDesc = {};
-		blendDesc.AlphaToCoverageEnable = false;
-		blendDesc.IndependentBlendEnable = false;
-		blendDesc.RenderTarget[0].BlendEnable = true;
-		blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-		blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-		blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-		blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
-		blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-		blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-		blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-		hr = m_device->CreateBlendState(&blendDesc, &m_mmdGroundShadowBlendState);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Rasterizer State
-	{
-		D3D11_RASTERIZER_DESC rsDesc = {};
-		rsDesc.FillMode = D3D11_FILL_SOLID;
-		rsDesc.CullMode = D3D11_CULL_NONE;
-		rsDesc.FrontCounterClockwise = true;
-		rsDesc.DepthBias = -1;
-		rsDesc.SlopeScaledDepthBias = -1.0f;
-		rsDesc.DepthBiasClamp = -1.0f;
-		rsDesc.DepthClipEnable = false;
-		rsDesc.ScissorEnable = false;
-		rsDesc.MultisampleEnable = true;
-		rsDesc.AntialiasedLineEnable = false;
-		hr = m_device->CreateRasterizerState(&rsDesc, &m_mmdGroundShadowRS);
-		if (FAILED(hr))
-		{
-			return false;
-		}
-	}
-
-	// Depth Stencil State
-	{
-		D3D11_DEPTH_STENCIL_DESC dsDesc = {};
-		dsDesc.DepthEnable = true;
-		dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-		dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
-		dsDesc.StencilEnable = true;
-		dsDesc.StencilReadMask = 0x01;
-		dsDesc.StencilWriteMask = 0xFF;
-		dsDesc.FrontFace.StencilFunc = D3D11_COMPARISON_NOT_EQUAL;
-		dsDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-		dsDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
-		dsDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_REPLACE;
-		dsDesc.BackFace.StencilFunc = D3D11_COMPARISON_NOT_EQUAL;
-		dsDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-		dsDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
-		dsDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_REPLACE;
-		hr = m_device->CreateDepthStencilState(&dsDesc, &m_mmdGroundShadowDSS);
 		if (FAILED(hr))
 		{
 			return false;
