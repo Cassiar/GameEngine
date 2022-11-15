@@ -269,11 +269,6 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 	UINT offset = 0;
 	context->IASetVertexBuffers(0, 1, sabaMesh->GetVertexBuffer().GetAddressOf(), &stride, &offset);
 	context->IASetIndexBuffer(sabaMesh->GetIndexBuffer().Get(), sabaMesh->GetFormat(), 0);
-	//testing uvs 
-	//for (int i = 0; i < mesh->GetVerticies().size(); i++) {
-	//	Vertex temp = mesh->GetVerticies()[i];
-	//	printf("i: %d \tU: %f, \tV: %f\n", i, temp.UVCoord.x, temp.UVCoord.y);
-	//}
 
 	//size_t subMeshCount = mesh->GetModel()->GetSubMeshCount();
 	//for (size_t i = 0; i < subMeshCount; i++)
@@ -403,38 +398,6 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 	vp.TopLeftX = 0;
 	vp.TopLeftY = 0;
 
-	//context->RSSetViewports(1, &vp);
-	//ID3D11RenderTargetView* rtvs[] = { m_renderTargetView.Get() };
-	//context->OMSetRenderTargets(1, rtvs,
-	//	m_depthStencilView.Get()
-	//);
-
-	//context->OMSetDepthStencilState(m_defaultDSS.Get(), 0x00);
-
-	// Setup input assembler
-	{
-		//UINT strides[] = { sizeof(Vertex) };
-		//UINT offsets[] = { 0 };
-		//context->IASetInputLayout(m_mmdInputLayout.Get());
-		//ID3D11Buffer* vbs[] = { m_vertexBuffer.Get() };
-		//context->IASetVertexBuffers(0, 1, vbs, strides, offsets);
-		//context->IASetIndexBuffer(m_indexBuffer.Get(), m_indexBufferFormat, 0);
-		//context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	}
-	
-	// Setup vertex shader
-	//{
-	//	MMDVertexShaderCB vsCB;
-	//	vsCB.m_wv = wv;
-	//	vsCB.m_wvp = wvp;
-	//	context->UpdateSubresource(m_mmdVSConstantBuffer.Get(), 0, nullptr, &vsCB, 0, 0);
-
-	//	// Vertex shader
-	//	context->VSSetShader(m_mmdVS.Get(), nullptr, 0);
-	//	ID3D11Buffer* cbs[] = { m_mmdVSConstantBuffer.Get() };
-	//	context->VSSetConstantBuffers(0, 1, cbs);
-	//}
-
 	size_t subMeshCount = sabaMesh->GetModel()->GetSubMeshCount();
 	std::shared_ptr<AssetManager> assetManager = AssetManager::GetInstance();
 	std::vector<SabaMaterial> sabaMats = assetManager->GetSabaStructMaterials();
@@ -450,6 +413,8 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		{
 			continue;
 		}
+
+		DirectX::XMFLOAT4 texModes = {};
 		
 		materials[subMesh.m_materialID]->PrepareMaterial();
 
@@ -460,18 +425,15 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		vs->SetShader();
 		vs->SetMatrix4x4("WV", wv);
 		vs->SetMatrix4x4("WVP", wvp);
-		
-		// Pixel shader
-		//context->PSSetShader(m_mmdPS.Get(), nullptr, 0);
 
 		ps->SetShader();
 
-		MMDPixelShaderCB psCB = {};
-		psCB.m_alpha = mmdMat.m_alpha;
-		psCB.m_diffuse = mmdMat.m_diffuse;
-		psCB.m_ambient = mmdMat.m_ambient;
-		psCB.m_specular = mmdMat.m_specular;
-		psCB.m_specularPower = mmdMat.m_specularPower;
+		//MMDPixelShaderCB psCB = {};
+		//psCB.m_alpha = mmdMat.m_alpha;
+		//psCB.m_diffuse = mmdMat.m_diffuse;
+		//psCB.m_ambient = mmdMat.m_ambient;
+		//psCB.m_specular = mmdMat.m_specular;
+		//psCB.m_specularPower = mmdMat.m_specularPower;
 
 		ps->SetFloat("Alpha", mmdMat.m_alpha);
 		ps->SetFloat3("Diffuse", DirectX::XMFLOAT3(mmdMat.m_diffuse[0], mmdMat.m_diffuse[1], mmdMat.m_diffuse[2]));
@@ -484,15 +446,17 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 			if (!mat.m_texture.m_hasAlpha)
 			{
 				// Use Material Alpha
-				psCB.m_textureModes.x = 1;
+				//psCB.m_textureModes.x = 1;
+				texModes.x = 1;
 			}
 			else
 			{
 				// Use Material Alpha * Texture Alpha
-				psCB.m_textureModes.x = 2;
+				//psCB.m_textureModes.x = 2;
+				texModes.x = 2;
 			}
-			psCB.m_texMulFactor = mmdMat.m_textureMulFactor;
-			psCB.m_texAddFactor = mmdMat.m_textureAddFactor;
+			//psCB.m_texMulFactor = mmdMat.m_textureMulFactor;
+			//psCB.m_texAddFactor = mmdMat.m_textureAddFactor;
 			//ID3D11ShaderResourceView* views[] = { mat.m_texture.m_textureView.Get() };
 			//ID3D11SamplerState* samplers[] = { m_textureSampler.Get() };
 			//context->PSSetShaderResources(0, 1, views);
@@ -504,7 +468,8 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		}
 		else
 		{
-			psCB.m_textureModes.x = 0;
+			//psCB.m_textureModes.x = 0;
+			texModes.x = 0;
 			//ID3D11ShaderResourceView* views[] = { m_dummyTextureView.Get() };
 			//ID3D11SamplerState* samplers[] = { m_dummySampler.Get() };
 			//context->PSSetShaderResources(0, 1, views);
@@ -517,9 +482,10 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 
 		if (mat.m_toonTexture.m_texture)
 		{
-			psCB.m_textureModes.y = 1;
-			psCB.m_toonTexMulFactor = mmdMat.m_toonTextureMulFactor;
-			psCB.m_toonTexAddFactor = mmdMat.m_toonTextureAddFactor;
+			//psCB.m_textureModes.y = 1;
+			texModes.y = 1;
+			//psCB.m_toonTexMulFactor = mmdMat.m_toonTextureMulFactor;
+			//psCB.m_toonTexAddFactor = mmdMat.m_toonTextureAddFactor;
 			//ID3D11ShaderResourceView* views[] = { mat.m_toonTexture.m_textureView.Get() };
 			//ID3D11SamplerState* samplers[] = { m_toonTextureSampler.Get() };
 			//context->PSSetShaderResources(1, 1, views);
@@ -531,7 +497,8 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		}
 		else
 		{
-			psCB.m_textureModes.y = 0;
+			//psCB.m_textureModes.y = 0;
+			texModes.y = 0; 
 			//ID3D11ShaderResourceView* views[] = { m_dummyTextureView.Get() };
 			//ID3D11SamplerState* samplers[] = { m_dummySampler.Get() };
 			//context->PSSetShaderResources(1, 1, views);
@@ -546,14 +513,16 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		{
 			if (mmdMat.m_spTextureMode == saba::MMDMaterial::SphereTextureMode::Mul)
 			{
-				psCB.m_textureModes.z = 1;
+				//psCB.m_textureModes.z = 1;
+				texModes.z = 1;
 			}
 			else if (mmdMat.m_spTextureMode == saba::MMDMaterial::SphereTextureMode::Add)
 			{
-				psCB.m_textureModes.z = 2;
+				//psCB.m_textureModes.z = 2;
+				texModes.z = 2;
 			}
-			psCB.m_sphereTexMulFactor = mmdMat.m_spTextureMulFactor;
-			psCB.m_sphereTexAddFactor = mmdMat.m_spTextureAddFactor;
+			//psCB.m_sphereTexMulFactor = mmdMat.m_spTextureMulFactor;
+			//psCB.m_sphereTexAddFactor = mmdMat.m_spTextureAddFactor;
 			//ID3D11ShaderResourceView* views[] = { mat.m_spTexture.m_textureView.Get() };
 			//ID3D11SamplerState* samplers[] = { m_sphereTextureSampler.Get() };
 			//context->PSSetShaderResources(2, 1, views);
@@ -565,7 +534,8 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		}
 		else
 		{
-			psCB.m_textureModes.z = 0;
+			//psCB.m_textureModes.z = 0;
+			texModes.z = 0;
 			//ID3D11ShaderResourceView* views[] = { m_dummyTextureView.Get() };
 			//ID3D11SamplerState* samplers[] = { m_dummySampler.Get() };
 			//context->PSSetShaderResources(2, 1, views);
@@ -576,7 +546,7 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 			ps->SetSamplerState("SphereTexSampler", assetManager->m_dummySampler);
 		}
 
-		psCB.m_lightColor = glm::vec3(m_lightColor.x, m_lightColor.y, m_lightColor.z);
+		//psCB.m_lightColor = glm::vec3(m_lightColor.x, m_lightColor.y, m_lightColor.z);
 		DirectX::XMFLOAT4 lightDir = DirectX::XMFLOAT4(m_lightDir.x, m_lightDir.y, m_lightDir.z, 1.0f);
 		DirectX::XMFLOAT4X4 viewMat = view;
 		//lightDir = viewMat * lightDir;
@@ -584,12 +554,12 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		DirectX::XMStoreFloat4(&lightDir,
 			DirectX::XMVector4Transform(DirectX::XMLoadFloat4(&lightDir),
 				DirectX::XMLoadFloat4x4(&viewMat)));
-		psCB.m_lightDir = glm::vec3(lightDir.x, lightDir.y, lightDir.z);
+		//psCB.m_lightDir = glm::vec3(lightDir.x, lightDir.y, lightDir.z);
 
 		ps->SetFloat3("LightColor", m_lightColor);
 		ps->SetFloat3("LightDir", m_lightDir);
 
-		ps->SetFloat4("TextureModes", DirectX::XMFLOAT4(psCB.m_textureModes.x, psCB.m_textureModes.y, psCB.m_textureModes.z, psCB.m_textureModes.w));
+		ps->SetFloat4("TextureModes", texModes);
 
 		vs->CopyAllBufferData();
 		ps->CopyAllBufferData();
@@ -660,7 +630,7 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 			continue;
 		}
 
-		std::vector<std::shared_ptr<Material>> materials = assetManager->GetSabaMaterials();
+		std::vector<std::shared_ptr<Material>> materials = assetManager->GetSabaEdgeMaterials();
 
 		//set vertex shader
 		std::shared_ptr<SimpleVertexShader> vs = materials[subMesh.m_materialID]->GetVertexShader();

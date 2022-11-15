@@ -134,6 +134,7 @@ public:
 	std::shared_ptr<Material> GetMaterial(int index) { return m_materials[index]; }
 	std::vector<std::shared_ptr<Material>> GetMaterials() { return m_materials; }
 	std::vector<std::shared_ptr<Material>> GetSabaMaterials() { return m_sabaMaterials; }
+	std::vector<std::shared_ptr<Material>> GetSabaEdgeMaterials() { return m_sabaEdgeMaterials; }
 	std::vector<SabaMaterial> GetSabaStructMaterials() { return m_sabaStructMaterials; }
 
 	std::shared_ptr<Material> GetToonMaterial(int index) { return m_toonMaterials[index]; }
