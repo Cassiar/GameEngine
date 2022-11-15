@@ -118,6 +118,8 @@ void AssetManager::InitShaders()
 	AddVertShaderToMap("skyVertexShader",			"SkyVertexShader.cso");
 	AddVertShaderToMap("shadowVertexShader",		"ShadowVertexShader.cso");
 	AddVertShaderToMap("ppLightRaysVertexShader",	"PostProcessLightRaysVertexShader.cso");
+	//AddVertShaderToMap("mmdVertexShader",			"MMDVertexShader.cso");
+	//AddVertShaderToMap("mmdEdgeVertexShader",		"MMDEdgeVertexShader.cso");
 
 	AddPixelShaderToMap("pixelShader",				"PixelShader.cso");
 	AddPixelShaderToMap("debugPixelShader",			"DebugColorShader.cso");
@@ -126,6 +128,8 @@ void AssetManager::InitShaders()
 	AddPixelShaderToMap("toonPixelShader",			"ToonPixelShader.cso");
 	AddPixelShaderToMap("ppLightRaysPixelShader",	"PostProcessLightRaysPixelShader.cso");
 	AddPixelShaderToMap("a5PixelShader",			"A5CustomPS.cso");
+	//AddPixelShaderToMap("mmdPixelShader",			"MMDPixelShader.cso");
+	//AddPixelShaderToMap("mmdEdgePixelShader",		"MMDEdgePixelShader.cso");
 }
 
 void AssetManager::InitMeshes()
@@ -524,7 +528,7 @@ void AssetManager::InitSabaMaterials(std::shared_ptr<SabaMesh> mesh) {
 	m_sabaMaterials.reserve(mesh->GetModel()->GetMaterialCount());
 	m_vertexShaders["edgeVertexShader"] = std::make_shared<SimpleVertexShader>(m_device, m_context, GetFullPathTo_Wide(L"MMDEdgeVertexShader.cso").c_str());
 	m_pixelShaders["edgePixelShader"] = std::make_shared<SimplePixelShader>(m_device, m_context, GetFullPathTo_Wide(L"MMDEdgePixelShader.cso").c_str());
-
+	
 	m_vertexShaders["mmdVertexShader"] = std::make_shared<SimpleVertexShader>(m_device, m_context, GetFullPathTo_Wide(L"MMDVertexShader.cso").c_str());
 	m_pixelShaders["mmdPixelShader"] = std::make_shared<SimplePixelShader>(m_device, m_context, GetFullPathTo_Wide(L"MMDPixelShader.cso").c_str());
 	for (size_t i = 0; i < mesh->GetModel()->GetMaterialCount(); i++)
@@ -537,29 +541,15 @@ void AssetManager::InitSabaMaterials(std::shared_ptr<SabaMesh> mesh) {
 		DirectX::CreateWICTextureFromFile(m_device.Get(), m_context.Get(),
 			widePath.c_str(), nullptr, albedo.GetAddressOf());
 
-		//m_sabaMaterials.push_back(std::make_shared<Material>(DirectX::XMFLOAT4(1.0, 1.0, 1.0f, 1.0f), 0.5f, vertexShader, pixelShader));
-		//m_sabaMaterials[i]->AddSampler("BasicSampler", m_samplers["sabaSampler"]);
-		//m_sabaMaterials[i]->AddSampler("RampSampler", m_samplers["rampSampler"]);
-		//m_sabaMaterials[i]->AddTextureSRV("AlbedoTexture", albedo, WideToString(widePath));
-		//m_sabaMaterials[i]->AddTextureSRV("RoughnessTexture", zero, WideToString(L"../../Assets/Textures/noMetal.png"));
-		//m_sabaMaterials[i]->AddTextureSRV("AmbientTexture", one, WideToString(L"../../Assets/Textures/allMetal.png"));
-		//m_sabaMaterials[i]->AddTextureSRV("RampTexture", rampTexture, WideToString(L"../../Assets/Textures/Ramp_Texture.png"));
-		//m_sabaMaterials[i]->AddTextureSRV("MetalnessTexture", zero, WideToString(L"../../Assets/Textures/noMetal.png"));
-		//Texture2D Tex : register(t0);
-		//Texture2D ToonTex : register(t1);
-		//Texture2D SphereTex : register(t2);
-		//sampler TexSampler : register(s0);
-		//sampler ToonTexSampler : register(s1);
-		//sampler SphereTexSampler : register(s2);
 		m_sabaMaterials.push_back(std::make_shared<Material>(DirectX::XMFLOAT4(1.0, 1.0, 1.0f, 1.0f), 0.5f, m_vertexShaders["mmdVertexShader"], m_pixelShaders["mmdPixelShader"]));
-
-		m_sabaEdgeMaterials.push_back(std::make_shared<Material>(DirectX::XMFLOAT4(1.0, 1.0, 1.0f, 1.0f), 0.5f, m_vertexShaders["edgeVertexShader"], m_pixelShaders["edgePixelShader"]));
 		m_sabaMaterials[i]->AddSampler("TexSampler", m_textureSampler);
 		m_sabaMaterials[i]->AddSampler("ToonTexSampler", m_toonTextureSampler);
 		m_sabaMaterials[i]->AddSampler("SphereTexSampler", m_sphereTextureSampler);
 		m_sabaMaterials[i]->AddTextureSRV("Tex", albedo, WideToString(widePath));
 		m_sabaMaterials[i]->AddTextureSRV("ToonTex", albedo,WideToString(widePath));
 		m_sabaMaterials[i]->AddTextureSRV("SphereTex", albedo, WideToString(widePath));
+
+		m_sabaEdgeMaterials.push_back(std::make_shared<Material>(DirectX::XMFLOAT4(1.0, 1.0, 1.0f, 1.0f), 0.5f, m_vertexShaders["edgeVertexShader"], m_pixelShaders["edgePixelShader"]));
 	}
 }
 

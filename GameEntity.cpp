@@ -426,14 +426,7 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		vs->SetMatrix4x4("WV", wv);
 		vs->SetMatrix4x4("WVP", wvp);
 
-		ps->SetShader();
-
-		//MMDPixelShaderCB psCB = {};
-		//psCB.m_alpha = mmdMat.m_alpha;
-		//psCB.m_diffuse = mmdMat.m_diffuse;
-		//psCB.m_ambient = mmdMat.m_ambient;
-		//psCB.m_specular = mmdMat.m_specular;
-		//psCB.m_specularPower = mmdMat.m_specularPower;
+		ps->SetShader();w
 
 		ps->SetFloat("Alpha", mmdMat.m_alpha);
 		ps->SetFloat3("Diffuse", DirectX::XMFLOAT3(mmdMat.m_diffuse[0], mmdMat.m_diffuse[1], mmdMat.m_diffuse[2]));
@@ -446,21 +439,13 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 			if (!mat.m_texture.m_hasAlpha)
 			{
 				// Use Material Alpha
-				//psCB.m_textureModes.x = 1;
 				texModes.x = 1;
 			}
 			else
 			{
 				// Use Material Alpha * Texture Alpha
-				//psCB.m_textureModes.x = 2;
 				texModes.x = 2;
 			}
-			//psCB.m_texMulFactor = mmdMat.m_textureMulFactor;
-			//psCB.m_texAddFactor = mmdMat.m_textureAddFactor;
-			//ID3D11ShaderResourceView* views[] = { mat.m_texture.m_textureView.Get() };
-			//ID3D11SamplerState* samplers[] = { m_textureSampler.Get() };
-			//context->PSSetShaderResources(0, 1, views);
-			//context->PSSetSamplers(0, 1, samplers);
 			ps->SetFloat4("TexMulFactor", DirectX::XMFLOAT4(mmdMat.m_textureMulFactor[0], mmdMat.m_textureMulFactor[1], mmdMat.m_textureMulFactor[2], mmdMat.m_textureMulFactor[3]));
 			ps->SetFloat4("TexAddFactor", DirectX::XMFLOAT4(mmdMat.m_textureAddFactor[0], mmdMat.m_textureAddFactor[1], mmdMat.m_textureAddFactor[2], mmdMat.m_textureAddFactor[3]));
 			ps->SetShaderResourceView("Tex", mat.m_texture.m_textureView.Get());
@@ -468,12 +453,7 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		}
 		else
 		{
-			//psCB.m_textureModes.x = 0;
 			texModes.x = 0;
-			//ID3D11ShaderResourceView* views[] = { m_dummyTextureView.Get() };
-			//ID3D11SamplerState* samplers[] = { m_dummySampler.Get() };
-			//context->PSSetShaderResources(0, 1, views);
-			//context->PSSetSamplers(0, 1, samplers);
 			ps->SetFloat4("TexMulFactor", DirectX::XMFLOAT4(0,0,0,0));
 			ps->SetFloat4("TexAddFactor", DirectX::XMFLOAT4(0,0,0,0));
 			ps->SetShaderResourceView("Tex", assetManager->m_dummyTextureView);
@@ -482,14 +462,7 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 
 		if (mat.m_toonTexture.m_texture)
 		{
-			//psCB.m_textureModes.y = 1;
 			texModes.y = 1;
-			//psCB.m_toonTexMulFactor = mmdMat.m_toonTextureMulFactor;
-			//psCB.m_toonTexAddFactor = mmdMat.m_toonTextureAddFactor;
-			//ID3D11ShaderResourceView* views[] = { mat.m_toonTexture.m_textureView.Get() };
-			//ID3D11SamplerState* samplers[] = { m_toonTextureSampler.Get() };
-			//context->PSSetShaderResources(1, 1, views);
-			//context->PSSetSamplers(1, 1, samplers);
 			ps->SetFloat4("ToonTexMulFactor", DirectX::XMFLOAT4(mmdMat.m_toonTextureMulFactor[0], mmdMat.m_toonTextureMulFactor[1], mmdMat.m_toonTextureMulFactor[2], mmdMat.m_toonTextureMulFactor[3]));
 			ps->SetFloat4("ToonTexAddFactor", DirectX::XMFLOAT4(mmdMat.m_toonTextureAddFactor[0], mmdMat.m_toonTextureAddFactor[1], mmdMat.m_toonTextureAddFactor[2], mmdMat.m_toonTextureAddFactor[3]));
 			ps->SetShaderResourceView("ToonTex", mat.m_toonTexture.m_textureView);
@@ -497,12 +470,7 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		}
 		else
 		{
-			//psCB.m_textureModes.y = 0;
 			texModes.y = 0; 
-			//ID3D11ShaderResourceView* views[] = { m_dummyTextureView.Get() };
-			//ID3D11SamplerState* samplers[] = { m_dummySampler.Get() };
-			//context->PSSetShaderResources(1, 1, views);
-			//context->PSSetSamplers(1, 1, samplers);
 			ps->SetFloat4("ToonTexMulFactor", DirectX::XMFLOAT4(0,0,0,0));
 			ps->SetFloat4("ToonTexAddFactor", DirectX::XMFLOAT4(0,0,0,0));
 			ps->SetShaderResourceView("ToonTex", assetManager->m_dummyTextureView);
@@ -518,15 +486,8 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 			}
 			else if (mmdMat.m_spTextureMode == saba::MMDMaterial::SphereTextureMode::Add)
 			{
-				//psCB.m_textureModes.z = 2;
 				texModes.z = 2;
 			}
-			//psCB.m_sphereTexMulFactor = mmdMat.m_spTextureMulFactor;
-			//psCB.m_sphereTexAddFactor = mmdMat.m_spTextureAddFactor;
-			//ID3D11ShaderResourceView* views[] = { mat.m_spTexture.m_textureView.Get() };
-			//ID3D11SamplerState* samplers[] = { m_sphereTextureSampler.Get() };
-			//context->PSSetShaderResources(2, 1, views);
-			//context->PSSetSamplers(2, 1, samplers);
 			ps->SetFloat4("SphereTexMulFactor", DirectX::XMFLOAT4(mmdMat.m_spTextureMulFactor[0], mmdMat.m_spTextureMulFactor[1], mmdMat.m_spTextureMulFactor[2], mmdMat.m_spTextureMulFactor[3]));
 			ps->SetFloat4("SphereTexMulFactor", DirectX::XMFLOAT4(mmdMat.m_spTextureAddFactor[0], mmdMat.m_spTextureAddFactor[1], mmdMat.m_spTextureAddFactor[2], mmdMat.m_spTextureAddFactor[3]));
 			ps->SetShaderResourceView("SphereTex", mat.m_spTexture.m_textureView);
@@ -534,27 +495,19 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		}
 		else
 		{
-			//psCB.m_textureModes.z = 0;
 			texModes.z = 0;
-			//ID3D11ShaderResourceView* views[] = { m_dummyTextureView.Get() };
-			//ID3D11SamplerState* samplers[] = { m_dummySampler.Get() };
-			//context->PSSetShaderResources(2, 1, views);
-			//context->PSSetSamplers(2, 1, samplers);			
 			ps->SetFloat4("SphereTexMulFactor", DirectX::XMFLOAT4(0,0,0,0));
 			ps->SetFloat4("SphereTexMulFactor", DirectX::XMFLOAT4(0,0,0,0));
 			ps->SetShaderResourceView("SphereTex", assetManager->m_dummyTextureView);
 			ps->SetSamplerState("SphereTexSampler", assetManager->m_dummySampler);
 		}
 
-		//psCB.m_lightColor = glm::vec3(m_lightColor.x, m_lightColor.y, m_lightColor.z);
 		DirectX::XMFLOAT4 lightDir = DirectX::XMFLOAT4(m_lightDir.x, m_lightDir.y, m_lightDir.z, 1.0f);
 		DirectX::XMFLOAT4X4 viewMat = view;
-		//lightDir = viewMat * lightDir;
 		//update light dir to be in screen space
 		DirectX::XMStoreFloat4(&lightDir,
 			DirectX::XMVector4Transform(DirectX::XMLoadFloat4(&lightDir),
 				DirectX::XMLoadFloat4x4(&viewMat)));
-		//psCB.m_lightDir = glm::vec3(lightDir.x, lightDir.y, lightDir.z);
 
 		ps->SetFloat3("LightColor", m_lightColor);
 		ps->SetFloat3("LightDir", m_lightDir);
@@ -564,9 +517,6 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		vs->CopyAllBufferData();
 		ps->CopyAllBufferData();
 
-		//context->UpdateSubresource(m_mmdPSConstantBuffer.Get(), 0, nullptr, &psCB, 0, 0);
-		//ID3D11Buffer* pscbs[] = { m_mmdPSConstantBuffer.Get() };
-		//context->PSSetConstantBuffers(1, 1, pscbs);
 
 		if (mmdMat.m_bothFace)
 		{
@@ -601,20 +551,6 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		context->IASetInputLayout(assetManager->m_mmdEdgeInputLayout.Get());
 	}
 
-	// Setup vertex shader (VSData)
-	//{ 
-	//	MMDEdgeVertexShaderCB vsCB;
-	//	vsCB.m_wv = wv;
-	//	vsCB.m_wvp = wvp;
-	//	vsCB.m_screenSize = glm::vec2(float(m_screenWidth), float(m_screenHeight));
-	//	context->UpdateSubresource(m_mmdEdgeVSConstantBuffer.Get(), 0, nullptr, &vsCB, 0, 0);
-
-	//	// Vertex shader
-	//	context->VSSetShader(m_mmdEdgeVS.Get(), nullptr, 0);
-	//	ID3D11Buffer* cbs[] = { m_mmdEdgeVSConstantBuffer.Get() };
-	//	context->VSSetConstantBuffers(0, 1, cbs);
-	//}
-
 	for (size_t i = 0; i < subMeshCount; i++)
 	{
 		const auto& subMesh = sabaMesh->GetModel()->GetSubMeshes()[i];
@@ -642,32 +578,9 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		vs->SetFloat2("ScreenSize", DirectX::XMFLOAT2(m_screenWidth, m_screenHeight));
 		vs->SetFloat("EdgeSize", mmdMat.m_edgeSize);
 
-		// Pixel shader
-		//context->PSSetShader(m_mmdPS.Get(), nullptr, 0);
-
 		ps->SetShader();
 
-		// Edge size constant buffer
-		//{
-		//	MMDEdgeSizeVertexShaderCB vsCB;
-		//	vsCB.m_edgeSize = mmdMat.m_edgeSize;
-		//	context->UpdateSubresource(m_mmdEdgeSizeVSConstantBuffer.Get(), 0, nullptr, &vsCB, 0, 0);
-
-		//	ID3D11Buffer* cbs[] = { m_mmdEdgeSizeVSConstantBuffer.Get() };
-		//	context->VSSetConstantBuffers(1, 1, cbs);
-		//}
-
 		ps->SetFloat4("EdgeColor", DirectX::XMFLOAT4(mmdMat.m_edgeColor.x, mmdMat.m_edgeColor.y, mmdMat.m_edgeColor.z, mmdMat.m_edgeColor.w));
-		// Pixel shader
-		//context->PSSetShader(m_mmdEdgePS.Get(), nullptr, 0);
-		//{
-		//	MMDEdgePixelShaderCB psCB;
-		//	psCB.m_edgeColor = mmdMat.m_edgeColor;
-		//	context->UpdateSubresource(m_mmdEdgePSConstantBuffer.Get(), 0, nullptr, &psCB, 0, 0);
-
-		//	ID3D11Buffer* pscbs[] = { m_mmdEdgePSConstantBuffer.Get() };
-		//	context->PSSetConstantBuffers(2, 1, pscbs);
-		//}
 
 		vs->CopyAllBufferData();
 		ps->CopyAllBufferData();
