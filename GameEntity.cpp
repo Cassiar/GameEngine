@@ -423,10 +423,11 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		std::shared_ptr<SimplePixelShader> ps = materials[subMesh.m_materialID]->GetPixelShader();
 
 		vs->SetShader();
+		vs->SetMatrix4x4("W", world);
 		vs->SetMatrix4x4("WV", wv);
 		vs->SetMatrix4x4("WVP", wvp);
 
-		ps->SetShader();w
+		ps->SetShader();
 
 		ps->SetFloat("Alpha", mmdMat.m_alpha);
 		ps->SetFloat3("Diffuse", DirectX::XMFLOAT3(mmdMat.m_diffuse[0], mmdMat.m_diffuse[1], mmdMat.m_diffuse[2]));
@@ -573,6 +574,7 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		std::shared_ptr<SimplePixelShader> ps = materials[subMesh.m_materialID]->GetPixelShader();
 
 		vs->SetShader();
+		vs->SetMatrix4x4("W", world);
 		vs->SetMatrix4x4("WV", wv);
 		vs->SetMatrix4x4("WVP", wvp);
 		vs->SetFloat2("ScreenSize", DirectX::XMFLOAT2(m_screenWidth, m_screenHeight));
@@ -588,7 +590,7 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 
 		context->OMSetBlendState(assetManager->m_mmdEdgeBlendState.Get(), nullptr, 0xffffffff);
 
-		context->DrawIndexed(subMesh.m_vertexCount, subMesh.m_beginIndex, 0);
+		//context->DrawIndexed(subMesh.m_vertexCount, subMesh.m_beginIndex, 0);
 	}
 
 	//end saba lib example

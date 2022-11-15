@@ -1,5 +1,6 @@
 cbuffer VSData : register(b0)
 {
+    float4x4 W;
     float4x4 WV;
     float4x4 WVP;
     float2 ScreenSize;

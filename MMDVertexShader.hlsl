@@ -1,6 +1,6 @@
 cbuffer VSData : register(b0)
 {
-    //float4x4 world;
+    float4x4 W;
     float4x4 WV;
     float4x4 WVP;
 };
@@ -26,8 +26,8 @@ VSOutput main(VSInput input)
 {
     VSOutput vsOut;
     vsOut.Position = mul(WVP, float4(input.Pos, 1.0));
-    vsOut.Pos = mul(WV, float4(input.Pos, 1.0)).xyz;
-    vsOut.Nor = mul((float3x3)WV, input.Nor).xyz;
+    vsOut.Pos = mul(W, float4(input.Pos, 1.0)).xyz;
+    vsOut.Nor = mul((float3x3)W, input.Nor).xyz;
     vsOut.UV = float2(input.UV.x, 1.0 - input.UV.y);
     //vsOut.UV = input.UV;
     return vsOut;

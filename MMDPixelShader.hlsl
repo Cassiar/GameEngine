@@ -60,9 +60,9 @@ float4 main(VSOutput vsOut) : SV_TARGET0
     float3 color = float3(0.0, 0.0, 0.0);
     float alpha = Alpha;
     float3 diffuseColor = Diffuse * LightColor;
-    //color = diffuseColor;
-    //color = Ambient;
-    //color = clamp(color, 0.0, 1.0);
+    color = diffuseColor;
+    color = Ambient;
+    color = clamp(color, 0.0, 1.0);
     int TexMode = TextureModes.x;
     int ToonTexMode = TextureModes.y;
     int SphereTexMode = TextureModes.z;
@@ -75,9 +75,8 @@ float4 main(VSOutput vsOut) : SV_TARGET0
     if (TexMode != 0)
     {
         float4 texColor = Tex.Sample(TexSampler, vsOut.UV);
-        //texColor.rgb = ComputeTexMulFactor(texColor.rgb, TexMulFactor);
-        //texColor.rgb = ComputeTexAddFactor(texColor.rgb, TexAddFactor);
-        return texColor;
+        texColor.rgb = ComputeTexMulFactor(texColor.rgb, TexMulFactor);
+        texColor.rgb = ComputeTexAddFactor(texColor.rgb, TexAddFactor);
         color = texColor.rgb;
         if (TexMode == 2)
         {
