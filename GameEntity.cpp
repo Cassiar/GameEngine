@@ -401,11 +401,11 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 	size_t subMeshCount = sabaMesh->GetModel()->GetSubMeshCount();
 	std::shared_ptr<AssetManager> assetManager = AssetManager::GetInstance();
 	std::vector<SabaMaterial> sabaMats = assetManager->GetSabaStructMaterials();
+	std::vector<std::shared_ptr<Material>> materials = assetManager->GetSabaMaterials();
 	for (size_t i = 0; i < subMeshCount; i++)
 	{
 		const auto& subMesh = sabaMesh->GetModel()->GetSubMeshes()[i];
 		
-		std::vector<std::shared_ptr<Material>> materials = assetManager->GetSabaMaterials();
 		const auto& mat = sabaMats[subMesh.m_materialID];
 		const auto& mmdMat = mat.m_mmdMat;
 
@@ -548,50 +548,51 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 	// Draw edge
 
 	// Setup input assembler
-	{
-		context->IASetInputLayout(assetManager->m_mmdEdgeInputLayout.Get());
-	}
+	//{
+	//	context->IASetInputLayout(assetManager->m_mmdEdgeInputLayout.Get());
+	//}
 
-	for (size_t i = 0; i < subMeshCount; i++)
-	{
-		const auto& subMesh = sabaMesh->GetModel()->GetSubMeshes()[i];
-		const auto& mat = sabaMats[subMesh.m_materialID];
-		const auto& mmdMat = mat.m_mmdMat;
+	//materials = assetManager->GetSabaEdgeMaterials();
 
-		if (!mmdMat.m_edgeFlag)
-		{
-			continue;
-		}
-		if (mmdMat.m_alpha == 0.0f)
-		{
-			continue;
-		}
+	//for (size_t i = 0; i < subMeshCount; i++)
+	//{
+	//	const auto& subMesh = sabaMesh->GetModel()->GetSubMeshes()[i];
+	//	const auto& mat = sabaMats[subMesh.m_materialID];
+	//	const auto& mmdMat = mat.m_mmdMat;
 
-		std::vector<std::shared_ptr<Material>> materials = assetManager->GetSabaEdgeMaterials();
+	//	if (!mmdMat.m_edgeFlag)
+	//	{
+	//		continue;
+	//	}
+	//	if (mmdMat.m_alpha == 0.0f)
+	//	{
+	//		continue;
+	//	}
 
-		//set vertex shader
-		std::shared_ptr<SimpleVertexShader> vs = materials[subMesh.m_materialID]->GetVertexShader();
-		std::shared_ptr<SimplePixelShader> ps = materials[subMesh.m_materialID]->GetPixelShader();
 
-		vs->SetShader();
-		vs->SetMatrix4x4("W", world);
-		vs->SetMatrix4x4("WV", wv);
-		vs->SetMatrix4x4("WVP", wvp);
-		vs->SetFloat2("ScreenSize", DirectX::XMFLOAT2(m_screenWidth, m_screenHeight));
-		vs->SetFloat("EdgeSize", mmdMat.m_edgeSize);
+	//	//set vertex shader
+	//	std::shared_ptr<SimpleVertexShader> vs = materials[subMesh.m_materialID]->GetVertexShader();
+	//	std::shared_ptr<SimplePixelShader> ps = materials[subMesh.m_materialID]->GetPixelShader();
 
-		ps->SetShader();
+	//	vs->SetShader();
+	//	vs->SetMatrix4x4("W", world);
+	//	vs->SetMatrix4x4("WV", wv);
+	//	vs->SetMatrix4x4("WVP", wvp);
+	//	vs->SetFloat2("ScreenSize", DirectX::XMFLOAT2(m_screenWidth, m_screenHeight));
+	//	vs->SetFloat("EdgeSize", mmdMat.m_edgeSize/1000.0f);
 
-		ps->SetFloat4("EdgeColor", DirectX::XMFLOAT4(mmdMat.m_edgeColor.x, mmdMat.m_edgeColor.y, mmdMat.m_edgeColor.z, mmdMat.m_edgeColor.w));
+	//	ps->SetShader();
 
-		vs->CopyAllBufferData();
-		ps->CopyAllBufferData();
-		context->RSSetState(assetManager->m_mmdEdgeRS.Get());
+	//	ps->SetFloat4("EdgeColor", DirectX::XMFLOAT4(mmdMat.m_edgeColor.x, mmdMat.m_edgeColor.y, mmdMat.m_edgeColor.z, mmdMat.m_edgeColor.w));
 
-		context->OMSetBlendState(assetManager->m_mmdEdgeBlendState.Get(), nullptr, 0xffffffff);
+	//	vs->CopyAllBufferData();
+	//	ps->CopyAllBufferData();
+	//	context->RSSetState(assetManager->m_mmdEdgeRS.Get());
 
-		//context->DrawIndexed(subMesh.m_vertexCount, subMesh.m_beginIndex, 0);
-	}
+	//	context->OMSetBlendState(assetManager->m_mmdEdgeBlendState.Get(), nullptr, 0xffffffff);
+
+	//	context->DrawIndexed(subMesh.m_vertexCount, subMesh.m_beginIndex, 0);
+	//}
 
 	//end saba lib example
 }

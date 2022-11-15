@@ -21,7 +21,7 @@ struct VSOutput
 VSOutput main(VSInput input)
 {
     VSOutput vsOut;
-    float3 nor = mul((float3x3)WV, input.Nor);
+    float3 nor = mul((float3x3)W, input.Nor);
     float4 pos = mul(WVP, float4(input.Pos, 1.0));
     float2 screenNor = normalize((float2)nor);
     pos.xy += screenNor * float2(1.0, 1.0) / (ScreenSize * 0.5) * EdgeSize * pos.w;
