@@ -55,8 +55,8 @@ float4 main(VSOutput vsOut) : SV_TARGET0
     float3 lightDir = normalize(-LightDir);
     float3 nor = normalize(vsOut.Nor);
     float ln = dot(nor, lightDir);
-    ln = clamp(ln + 0.5, 0.0, 1.0);
-    //ln = ln * 0.5f + 0.5f;
+    //ln = clamp(ln + 0.5, 0.0, 1.0);
+    ln = ln * 0.5f + 0.5f;
     float3 color = float3(0.0, 0.0, 0.0);
     float alpha = Alpha;
     float3 diffuseColor = Diffuse * LightColor;
@@ -67,10 +67,6 @@ float4 main(VSOutput vsOut) : SV_TARGET0
     int ToonTexMode = TextureModes.y;
     int SphereTexMode = TextureModes.z;
 
-    //float4 texColor = Tex.Sample(TexSampler, vsOut.UV);
-    //texColor.rgb = ComputeTexMulFactor(texColor.rgb, TexMulFactor);
-    //texColor.rgb = ComputeTexAddFactor(texColor.rgb, TexAddFactor);
-    //return float4(vsOut.UV.x, 0,0,0);
 
     if (TexMode != 0)
     {

@@ -270,122 +270,6 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 	context->IASetVertexBuffers(0, 1, sabaMesh->GetVertexBuffer().GetAddressOf(), &stride, &offset);
 	context->IASetIndexBuffer(sabaMesh->GetIndexBuffer().Get(), sabaMesh->GetFormat(), 0);
 
-	//size_t subMeshCount = mesh->GetModel()->GetSubMeshCount();
-	//for (size_t i = 0; i < subMeshCount; i++)
-	//{
-	//	const auto& subMesh = mesh->GetModel()->GetSubMeshes()[i];
-	//	const auto& mat = m_materials[subMesh.m_materialID];
-	//	const auto& mmdMat = mat.m_mmdMat;
-
-	//	if (mmdMat.m_alpha == 0)
-	//	{
-	//		continue;
-	//	}
-
-	//	materials[subMesh.m_materialID]->PrepareMaterial();
-
-	//	std::shared_ptr<SimpleVertexShader> vs = materials[subMesh.m_materialID]->GetVertexShader();
-	//	std::shared_ptr<SimplePixelShader> ps = materials[subMesh.m_materialID]->GetPixelShader();
-
-	//	materials[subMesh.m_materialID]->GetVertexShader()->SetShader();
-	//	materials[subMesh.m_materialID]->GetPixelShader()->SetShader();
-	//	//    float4x4 WV;
-	//	//	  float4x4 WVP;
-
-	//	//set the values for the vertex shader
-	//	//string names MUST match those in VertexShader.hlsl
-	//	//vs->SetMatrix4x4("world", world);
-	//	vs->SetMatrix4x4("WV", wv);
-	//	vs->SetMatrix4x4("WVP", wvp);
-	//	//set pixel shader buffer values
-	//	//
-	//	//float   Alpha;
-	//	//float3  Diffuse;
-	//	//float3  Ambient;
-	//	//float3  Specular;
-	//	//float   SpecularPower;
-	//	//float3  LightColor;
-	//	//float3  LightDir;
-	//	//
-	//	//float4  TexMulFactor;
-	//	//float4  TexAddFactor;
-	//	//
-	//	//float4  ToonTexMulFactor;
-	//	//float4  ToonTexAddFactor;
-	//	//
-	//	//float4  SphereTexMulFactor;
-	//	//float4  SphereTexAddFactor;
-	//	//
-	//	//int4    TextureModes;
-
-	//	int texMode[4] = {};
-
-	//	if (mat.m_texture.m_texture)
-	//	{
-	//		if (!mat.m_texture.m_hasAlpha)
-	//		{
-	//			// Use Material Alpha
-	//			texMode[0] = 1;
-	//		}
-	//		else
-	//		{
-	//			// Use Material Alpha * Texture Alpha
-	//			texMode[0] = 2;
-	//		}
-	//	}
-	//	else {
-	//		texMode[0] = 0;
-	//	}
-	//	if (mat.m_toonTexture.m_texture)
-	//	{
-	//		texMode[1] = 1;
-	//	}
-	//	else {
-	//		texMode[1] = 0;
-	//	}
-	//	if (mat.m_spTexture.m_texture)
-	//	{
-	//		if (mmdMat.m_spTextureMode == saba::MMDMaterial::SphereTextureMode::Mul)
-	//		{
-	//			texMode[2] = 1;
-	//		}
-	//		else if (mmdMat.m_spTextureMode == saba::MMDMaterial::SphereTextureMode::Add)
-	//		{
-	//			texMode[2] = 2;
-	//		}
-	//	}
-	//	else {
-	//		texMode[2] = 0;
-	//	}
-
-	//	ps->SetFloat("Alpha", mmdMat.m_alpha);
-	//	ps->SetFloat3("Diffuse", DirectX::XMFLOAT3(mmdMat.m_diffuse[0], mmdMat.m_diffuse[1], mmdMat.m_diffuse[2]));
-	//	ps->SetFloat3("Ambient", DirectX::XMFLOAT3(mmdMat.m_ambient[0], mmdMat.m_ambient[1], mmdMat.m_ambient[2]));
-	//	ps->SetFloat3("Specular", DirectX::XMFLOAT3(mmdMat.m_specular[0], mmdMat.m_specular[1], mmdMat.m_specular[2]));
-	//	ps->SetFloat("SpecularPower", mmdMat.m_specularPower);
-	//	ps->SetFloat3("LightColor", m_lightColor);
-	//	ps->SetFloat3("LightDir", m_lightDir);
-
-	//	ps->SetFloat4("TexMulFactor", DirectX::XMFLOAT4(mmdMat.m_textureMulFactor[0], mmdMat.m_textureMulFactor[1], mmdMat.m_textureMulFactor[2], mmdMat.m_textureMulFactor[3]));
-	//	ps->SetFloat4("TexAddFactor", DirectX::XMFLOAT4(mmdMat.m_textureAddFactor[0], mmdMat.m_textureAddFactor[1], mmdMat.m_textureAddFactor[2], mmdMat.m_textureAddFactor[3]));
-
-	//	ps->SetFloat4("ToonTexMulFactor", DirectX::XMFLOAT4(mmdMat.m_toonTextureMulFactor[0], mmdMat.m_toonTextureMulFactor[1], mmdMat.m_toonTextureMulFactor[2], mmdMat.m_toonTextureMulFactor[3]));
-	//	ps->SetFloat4("ToonTexAddFactor", DirectX::XMFLOAT4(mmdMat.m_toonTextureAddFactor[0], mmdMat.m_toonTextureAddFactor[1], mmdMat.m_toonTextureAddFactor[2], mmdMat.m_toonTextureAddFactor[3]));
-
-	//	ps->SetFloat4("SphereTexMulFactor", DirectX::XMFLOAT4(mmdMat.m_spTextureMulFactor[0], mmdMat.m_spTextureMulFactor[1], mmdMat.m_spTextureMulFactor[2], mmdMat.m_spTextureMulFactor[3]));
-	//	ps->SetFloat4("SphereTexMulFactor", DirectX::XMFLOAT4(mmdMat.m_spTextureAddFactor[0], mmdMat.m_spTextureAddFactor[1], mmdMat.m_spTextureAddFactor[2], mmdMat.m_spTextureAddFactor[3]));
-
-	//	ps->SetData("TextureModes", texMode, sizeof(texMode));
-	//	//copy data over to gpu. Equivelent to map, memcpy, unmap
-	//	vs->CopyAllBufferData();
-	//	ps->CopyAllBufferData();
-
-
-	//	// Finally do the actual drawing
-	//	// Once per object
-	//	context->DrawIndexed(subMesh.m_vertexCount, subMesh.m_beginIndex, 0);
-	//}
-
 	//from saba library example
 	// 
 	// Draw model
@@ -545,6 +429,7 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 		context->PSSetSamplers(0, 3, samplers);
 	}
 
+#pragma region Edge
 	// Draw edge
 
 	// Setup input assembler
@@ -595,6 +480,7 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 	//}
 
 	//end saba lib example
+#pragma endregion
 }
 
 
