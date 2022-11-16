@@ -89,6 +89,8 @@ StyleCopReport.xml
 *.pch
 *.pdb
 !Vendor/PhysX/lib/*.pdb
+!include/Saba/*.pdb
+!include/Bullet/*.pdb
 *.ipdb
 *.pgc
 *.pgd
