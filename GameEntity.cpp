@@ -244,7 +244,7 @@ void GameEntity::Draw()
 }
 
 void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, DirectX::XMFLOAT4X4 projection,
-	DirectX::XMFLOAT3 m_lightColor, DirectX::XMFLOAT3 m_lightDir,
+	/*DirectX::XMFLOAT3 m_lightColor, DirectX::XMFLOAT3 m_lightDir,*/ int numLights, Light* lights,
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> m_renderTargetView, Microsoft::WRL::ComPtr<ID3D11DepthStencilView> m_depthStencilView,
 	float m_screenWidth, float m_screenHeight) {
 	
@@ -387,15 +387,17 @@ void GameEntity::DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, Di
 			ps->SetSamplerState("SphereTexSampler", assetManager->m_dummySampler);
 		}
 
-		DirectX::XMFLOAT4 lightDir = DirectX::XMFLOAT4(m_lightDir.x, m_lightDir.y, m_lightDir.z, 1.0f);
-		DirectX::XMFLOAT4X4 viewMat = view;
-		//update light dir to be in screen space
-		DirectX::XMStoreFloat4(&lightDir,
-			DirectX::XMVector4Transform(DirectX::XMLoadFloat4(&lightDir),
-				DirectX::XMLoadFloat4x4(&viewMat)));
+		//DirectX::XMFLOAT4 lightDir = DirectX::XMFLOAT4(m_lightDir.x, m_lightDir.y, m_lightDir.z, 1.0f);
+		//DirectX::XMFLOAT4X4 viewMat = view;
+		////update light dir to be in screen space
+		//DirectX::XMStoreFloat4(&lightDir,
+		//	DirectX::XMVector4Transform(DirectX::XMLoadFloat4(&lightDir),
+		//		DirectX::XMLoadFloat4x4(&viewMat)));
 
-		ps->SetFloat3("LightColor", m_lightColor);
-		ps->SetFloat3("LightDir", m_lightDir);
+		//ps->SetFloat3("LightColor", m_lightColor);
+		//ps->SetFloat3("LightDir", m_lightDir);
+		ps->SetInt("numLights", numLights);
+		ps->SetData("lights", &lights[0], sizeof(Light)* (int)numLights);
 
 		ps->SetFloat4("TextureModes", texModes);
 

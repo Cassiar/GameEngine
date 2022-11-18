@@ -13,6 +13,7 @@
 #include "Camera.h"
 #include "Collider.h"
 #include "Material.h"
+#include "Lights.h"
 #include "PhysXManager.h"
 
 class GameEntity
@@ -51,8 +52,8 @@ public:
 
 	//will hold draw code
 	void Draw();
-	void DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, DirectX::XMFLOAT4X4 projection, 
-		DirectX::XMFLOAT3 m_lightColor, DirectX::XMFLOAT3 m_lightDir,
+	void DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, DirectX::XMFLOAT4X4 projection,
+		/*DirectX::XMFLOAT3 m_lightColor, DirectX::XMFLOAT3 m_lightDir,*/int numLights, Light* light,
 		Microsoft::WRL::ComPtr<ID3D11RenderTargetView> m_renderTargetView, Microsoft::WRL::ComPtr<ID3D11DepthStencilView> m_depthStencilView,
 		float m_screenWidth, float m_screenHeight);
 	//Updates entity and checks for collisions

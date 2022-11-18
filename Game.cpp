@@ -1296,8 +1296,9 @@ void Game::Draw(float deltaTime, float totalTime)
 		}
 
 		if (entity->GetMesh()->IsPmx()) {
+			//send light data to shaders
 			entity->DrawPMX(entity->GetTransform()->GetWorldMatrix(), camera->GetViewMatrix(), camera->GetProjectionMatrix(), 
-				lights[0].Color, lights[0].Direction, 
+				/*lights[0].Color, lights[0].Direction,*/(int)lights.size(), &lights[0],
 				backBufferRTV, depthStencilView, width, height);
 		}
 		else {
