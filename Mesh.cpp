@@ -364,14 +364,15 @@ void Mesh::Draw()
 	//	context->IASetIndexBuffer(indexBuf.Get(), DXGI_FORMAT_R32_UINT, 0);
 	//}
 	context->IASetIndexBuffer(indexBuf.Get(), format, 0);
+	context->DrawIndexed(numIndices, 0, 0);
 
-	if (!this->IsPmx())
-	{
-		context->DrawIndexed(numIndices, 0, 0);
-	}
-	if (this->IsPmx()) {
-		int temp = 0;
-	}
+	//if (!this->IsPmx())
+	//{
+	//	context->DrawIndexed(numIndices, 0, 0);
+	//}
+	//if (this->IsPmx()) {
+	//	int temp = 0;
+	//}
 }
 
 void Mesh::Draw(Microsoft::WRL::ComPtr<ID3D11RasterizerState> customRast)
