@@ -1296,6 +1296,23 @@ void Game::Draw(float deltaTime, float totalTime)
 		}
 
 		if (entity->GetMesh()->IsPmx()) {
+			std::shared_ptr<AssetManager> assetManager = AssetManager::GetInstance();
+
+			std::shared_ptr<SimpleVertexShader> vs = assetManager->GetSabaMaterials()[0]->GetVertexShader();
+			//send shadow info to vertex shader
+			vs->SetMatrix4x4("lightView", shadowViewMat);
+			//vs->SetData("lightView", &sh)
+			vs->SetMatrix4x4("lightProj", shadowProjMat);
+			vs->SetMatrix4x4("spotLightView", spotShadowViewMat);
+			vs->SetMatrix4x4("spotLightProj", spotShadowProjMat);
+
+			std::shared_ptr<SimplePixelShader> ps = assetManager->GetSabaMaterials()[0]->GetPixelShader();
+			ps->SetShaderResourceView("ShadowMap", shadowSRV);
+			ps->SetShaderResourceView("ShadowBox1", shadowBoxSRVs[0]);
+			ps->SetShaderResourceView("ShadowBox2", shadowBoxSRVs[1]);
+			ps->SetShaderResourceView("ShadowSpotMap", shadowSpotSRV);
+			ps->SetSamplerState("ShadowSampler", shadowSampler);
+
 			//send light data to shaders
 			entity->DrawPMX(entity->GetTransform()->GetWorldMatrix(), camera->GetViewMatrix(), camera->GetProjectionMatrix(), 
 				/*lights[0].Color, lights[0].Direction,*/(int)lights.size(), &lights[0],
