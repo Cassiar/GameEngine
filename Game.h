@@ -65,7 +65,7 @@ private:
 
 	void CreateMaterialGUI();
 
-	void RenderDirectionalShadowMap(DirectX::XMFLOAT3 dir);
+	void RenderDirectionalShadowMap(DirectX::XMFLOAT3 dir, DirectX::XMFLOAT3 targetPos);
 	void RenderPointShadowMap(DirectX::XMFLOAT3 pos, int index, float range, float nearZ, float farZ);
 	void RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, float range, float spotFallOff, float nearZ, float farZ);
 	

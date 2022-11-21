@@ -373,15 +373,15 @@ void Game::CreateShadowResources()
 	}
 }
 
-void Game::RenderDirectionalShadowMap(XMFLOAT3 dir)
+void Game::RenderDirectionalShadowMap(XMFLOAT3 dir, XMFLOAT3 targetPos)
 {
 	std::shared_ptr<SimpleVertexShader> shadowVertexShader = m_AssetManager->GetVertexShader("shadowVertexShader");
 
 	//move 20 units back along view direction
 	//create "camera" mats
 	XMMATRIX shView = XMMatrixLookAtLH(
-		XMVectorSet(dir.x * -20, dir.y * -20, dir.z * -20, 0),
-		XMVectorSet(0, 0, 0, 0),
+		XMVectorSet(dir.x * -20 + targetPos.x, dir.y * -20 + targetPos.y, dir.z * -20 + targetPos.z, 0),
+		XMVectorSet(targetPos.x, targetPos.y, targetPos.z, 0),
 		XMVectorSet(0, 1, 0, 0));
 	XMStoreFloat4x4(&shadowViewMat, shView);
 
@@ -1263,7 +1263,7 @@ void Game::Draw(float deltaTime, float totalTime)
 		//lights[i].ShadowNumber = -1; //set to -1 so ps knows that it's doesn't use point shadow map
 		if (lights[i].CastsShadows) {
 			if (lights[i].Type == LIGHT_TYPE_DIRECTIONAL) {
-				RenderDirectionalShadowMap(lights[i].Direction);
+				RenderDirectionalShadowMap(lights[i].Direction, m_EntityManager->GetEntity(2)->GetTransform()->GetPosition());
 			}
 			else if (lights[i].Type == LIGHT_TYPE_POINT && numPointMaps < MAX_POINT_SHADOWS_NUM) {
 				RenderPointShadowMap(lights[i].Position, numPointMaps, lights[i].Range, lights[i].NearZ, lights[i].FarZ);
