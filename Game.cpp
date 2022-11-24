@@ -1120,7 +1120,25 @@ void Game::CreateGui(float deltaTime) {
 		ImGui::PopID();
 
 		// Show the demo window
-		//ImGui::ShowDemoWindow();
+		//ImGui::ShowDemoWindow();	
+		if (ImGui::TreeNode("Morph"))
+		{
+			auto model = m_AssetManager->GetSabaMesh(0)->GetModel();
+			auto morphMan = model->GetMorphManager();
+			size_t morphCount = morphMan->GetMorphCount();
+			for (size_t morphIdx = 0; morphIdx < morphCount; morphIdx++)
+			{
+				auto morph = morphMan->GetMorph(morphIdx);
+				float weight = morph->GetWeight();
+				if (ImGui::SliderFloat(morph->GetName().c_str(), &weight, 0.0f, 1.0f))
+				{
+					morph->SetWeight(weight);
+					//m_AssetManager->GetSabaMesh(0)->GetModel()->UpdateMorphAnimation();
+				}
+			}
+			ImGui::TreePop();
+		}
+		
 	}
 }
 
@@ -1161,6 +1179,10 @@ void Game::CreateMaterialGUI(float deltaTime) {
 // --------------------------------------------------------
 void Game::Update(float deltaTime, float totalTime)
 {
+	auto morphManager = m_AssetManager->GetSabaMesh(0)->GetModel()->GetMorphManager();
+	auto morph = morphManager->GetMorph(0);
+	morph->SetWeight(1.0);
+	//m_AssetManager->GetSabaMesh(0)->GetModel()->UpdateMorphAnimation();
 	if (animOn) {
 		double time = saba::GetTime();
 		double elapsed = time - saveTime;
@@ -1173,6 +1195,7 @@ void Game::Update(float deltaTime, float totalTime)
 		std::shared_ptr<saba::PMXModel> tempModel = m_AssetManager->GetSabaMesh(0)->GetModel();
 		tempModel->BeginAnimation();
 		tempModel->UpdateAllAnimation(anim.get(), animTime * 30.0f, elapsed);
+		tempModel->UpdateMorphAnimation();
 		tempModel->EndAnimation();
 		tempModel->Update();
 		size_t vtxCount = tempModel->GetVertexCount();
