@@ -1179,9 +1179,7 @@ void Game::CreateMaterialGUI(float deltaTime) {
 // --------------------------------------------------------
 void Game::Update(float deltaTime, float totalTime)
 {
-	auto morphManager = m_AssetManager->GetSabaMesh(0)->GetModel()->GetMorphManager();
-	auto morph = morphManager->GetMorph(0);
-	morph->SetWeight(1.0);
+
 	//m_AssetManager->GetSabaMesh(0)->GetModel()->UpdateMorphAnimation();
 	if (animOn) {
 		double time = saba::GetTime();
@@ -1195,6 +1193,9 @@ void Game::Update(float deltaTime, float totalTime)
 		std::shared_ptr<saba::PMXModel> tempModel = m_AssetManager->GetSabaMesh(0)->GetModel();
 		tempModel->BeginAnimation();
 		tempModel->UpdateAllAnimation(anim.get(), animTime * 30.0f, elapsed);
+		auto morphManager = m_AssetManager->GetSabaMesh(0)->GetModel()->GetMorphManager();
+		auto morph = morphManager->GetMorph(0);
+		morph->SetWeight(1.0);
 		tempModel->UpdateMorphAnimation();
 		tempModel->EndAnimation();
 		tempModel->Update();
