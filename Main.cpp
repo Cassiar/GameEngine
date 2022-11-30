@@ -1,6 +1,7 @@
 
 #include <Windows.h>
 #include "Game.h"
+#include <VLD/include/vld.h>
 
 // --------------------------------------------------------
 // Entry point for a graphical (non-console) Windows application
@@ -15,7 +16,7 @@ int WINAPI WinMain(
 	// Enable memory leak detection as a quick and dirty
 	// way of determining if we forgot to clean something up
 	//  - You may want to use something more advanced, like Visual Leak Detector
-	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+	//_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
 
 	//int* leak = new int;
