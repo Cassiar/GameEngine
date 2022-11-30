@@ -326,7 +326,7 @@ namespace saba
 
 	bool PMXModel::Load(const std::string& filepath, const std::string& mmdDataDir)
 	{
-		//Destroy();
+		Destroy();
 
 		PMXFile pmx;
 		if (!ReadPMXFile(&pmx, filepath.c_str()))

@@ -24,6 +24,8 @@
 #include <Saba/Model/MMD/VMDAnimation.h>
 #include <Saba/Model/MMD/VMDFile.h>
 
+#define IMGUI_USE_WCHAR32
+
 //handles updating game logic and stores objects that are drawn
 class Game 
 	: public DXCore
@@ -175,5 +177,7 @@ private:
 	double saveTime = 0;
 
 	bool animOn = false;
+
+	std::shared_ptr<std::vector<float>> morphWeights;
 };
 

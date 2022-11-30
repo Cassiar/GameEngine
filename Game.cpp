@@ -1118,27 +1118,31 @@ void Game::CreateGui(float deltaTime) {
 		}
 
 		ImGui::PopID();
-
+		morphWeights = std::make_shared<std::vector<float>>();
+		ImGui::PushID(5);
 		// Show the demo window
-		//ImGui::ShowDemoWindow();	
+		ImGui::ShowDemoWindow();	
 		if (ImGui::TreeNode("Morph"))
 		{
 			auto model = m_AssetManager->GetSabaMesh(0)->GetModel();
 			auto morphMan = model->GetMorphManager();
 			size_t morphCount = morphMan->GetMorphCount();
+			morphWeights->reserve(morphCount);
 			for (size_t morphIdx = 0; morphIdx < morphCount; morphIdx++)
 			{
 				auto morph = morphMan->GetMorph(morphIdx);
 				float weight = morph->GetWeight();
-				if (ImGui::SliderFloat(morph->GetName().c_str(), &weight, 0.0f, 1.0f))
+				morphWeights->push_back(weight);
+				if (ImGui::SliderFloat(morph->GetName().c_str(), &(*morphWeights)[morphIdx], 0.0f, 1.0f))
 				{
-					morph->SetWeight(weight);
+					//(*morphWeights)[morphIdx] = weight;
+					//morph->SetWeight(weight);
 					//m_AssetManager->GetSabaMesh(0)->GetModel()->UpdateMorphAnimation();
 				}
 			}
 			ImGui::TreePop();
 		}
-		
+		ImGui::PopID();
 	}
 }
 
@@ -1194,8 +1198,10 @@ void Game::Update(float deltaTime, float totalTime)
 		tempModel->BeginAnimation();
 		tempModel->UpdateAllAnimation(anim.get(), animTime * 30.0f, elapsed);
 		auto morphManager = m_AssetManager->GetSabaMesh(0)->GetModel()->GetMorphManager();
-		auto morph = morphManager->GetMorph(0);
-		morph->SetWeight(1.0);
+		for (int i = 0; i < morphWeights->size(); i++) {
+			morphManager->GetMorph(i)->SetWeight((*morphWeights)[i]);
+		}
+		//morph->SetWeight(1.0);
 		tempModel->UpdateMorphAnimation();
 		tempModel->EndAnimation();
 		tempModel->Update();

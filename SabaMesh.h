@@ -12,7 +12,9 @@ private:
 public:
 	SabaMesh(const char* path, const char* texpath, Microsoft::WRL::ComPtr<ID3D11Device> device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> in_context);
 	//Nothing to clean
-	~SabaMesh(){}
+	~SabaMesh() {
+		model->Destroy();
+	}
 
 	bool IsPmx() override { return true; }
 
