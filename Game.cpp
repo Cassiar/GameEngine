@@ -1129,7 +1129,7 @@ void Game::CreateGui(float deltaTime) {
 		morphWeights = std::make_shared<std::vector<float>>();
 		ImGui::PushID(5);
 		// Show the demo window
-		ImGui::ShowDemoWindow();	
+		//ImGui::ShowDemoWindow();	
 		if (ImGui::TreeNode("Morph"))
 		{
 			auto model = m_AssetManager->GetSabaMesh(0)->GetModel();
