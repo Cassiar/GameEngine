@@ -65,14 +65,14 @@ private:
 
 	void CreateMaterialGUI(float deltaTime);
 
-	void CreateMaterialGUI();
+	//void CreateMaterialGUI();
 
 	void RenderDirectionalShadowMap(DirectX::XMFLOAT3 dir, DirectX::XMFLOAT3 targetPos);
 	void RenderPointShadowMap(DirectX::XMFLOAT3 pos, int index, float range, float nearZ, float farZ);
 	void RenderSpotShadowMap(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 dir, float range, float spotFallOff, float nearZ, float farZ);
 	
 	//helper function to reduce repitition in shadow map funcs
-	void PassShadowObjs();
+	//void PassShadowObjs();
 
 	void Save() override;
 
@@ -94,8 +94,8 @@ private:
 	//  - More info here: https://github.com/Microsoft/DirectXTK/wiki/ComPtr
 
 	// Buffers to hold actual geometry data
-	Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
+	//Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
+	//Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
 	
 	// Shaders and shader-related constructs
 	// now handled by simple shader
@@ -177,6 +177,8 @@ private:
 	double saveTime = 0;
 
 	bool animOn = false;
+	bool runAnim = false;
+	bool morphAnim = false;
 
 	std::shared_ptr<std::vector<float>> morphWeights;
 };

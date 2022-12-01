@@ -856,6 +856,14 @@ void Game::CreateGui(float deltaTime) {
 		ImGui::Text("Enable animation: ");
 		ImGui::SameLine();
 		ImGui::Checkbox("    ", &animOn);
+		if (animOn) {
+			ImGui::Text("Enable Run: ");
+			ImGui::SameLine();
+			ImGui::Checkbox("     ", &runAnim);
+			ImGui::Text("Enable Morph: ");
+			ImGui::SameLine();
+			ImGui::Checkbox("      ", &morphAnim);
+		}
 
 		bool entitiesOpen = ImGui::TreeNode("Entities", "%s", "Entities");
 		if (entitiesOpen) {
@@ -1196,13 +1204,17 @@ void Game::Update(float deltaTime, float totalTime)
 		animTime += float(elapsed);
 		std::shared_ptr<saba::PMXModel> tempModel = m_AssetManager->GetSabaMesh(0)->GetModel();
 		tempModel->BeginAnimation();
-		tempModel->UpdateAllAnimation(anim.get(), animTime * 30.0f, elapsed);
-		auto morphManager = m_AssetManager->GetSabaMesh(0)->GetModel()->GetMorphManager();
-		for (int i = 0; i < morphWeights->size(); i++) {
-			morphManager->GetMorph(i)->SetWeight((*morphWeights)[i]);
+		if (runAnim) {
+			tempModel->UpdateAllAnimation(anim.get(), animTime * 30.0f, elapsed);
 		}
-		//morph->SetWeight(1.0);
-		tempModel->UpdateMorphAnimation();
+		if (morphAnim) {
+			auto morphManager = m_AssetManager->GetSabaMesh(0)->GetModel()->GetMorphManager();
+			for (int i = 0; i < morphWeights->size(); i++) {
+				morphManager->GetMorph(i)->SetWeight((*morphWeights)[i]);
+			}
+			//morph->SetWeight(1.0);
+			tempModel->UpdateMorphAnimation();
+		}
 		tempModel->EndAnimation();
 		tempModel->Update();
 		size_t vtxCount = tempModel->GetVertexCount();

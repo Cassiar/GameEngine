@@ -14,7 +14,7 @@ Camera::Camera(DirectX::XMFLOAT3 pos, float in_aspectRatio, float in_fov, float 
     UpdateViewMatrix();
     UpdateProjectionMatrix(aspectRatio);
 
-    moveSpeed = 2.0f;
+    moveSpeed = 10.0f;
     mouseMoveSpeed = 1.0f;
 }
 
