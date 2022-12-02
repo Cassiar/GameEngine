@@ -78,11 +78,20 @@ Game::~Game()
 // --------------------------------------------------------
 void Game::Init()
 {
+	m_EntityManager = EntityManager::GetInstance();
+
+	AssetManager::InitializeSingleton(device, context);
+	m_AssetManager = AssetManager::GetInstance();
+	m_PhysicsManager = PhysXManager::GetInstance();
+
 	{
 		// Initialize ImGui
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
+		
+		//load font with japanese support
+		//io.Fonts->AddFontFromFileTTF(m_AssetManager->GetFullPathTo("../../Assets/mplus-1m-regular.ttf").c_str(), 13.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 
 		// Pick a style
 		ImGui::StyleColorsDark();
@@ -93,12 +102,7 @@ void Game::Init()
 		ImGui_ImplDX11_Init(device.Get(), context.Get());
 	}
 
-	m_EntityManager = EntityManager::GetInstance();
 
-	AssetManager::InitializeSingleton(device, context);
-	m_AssetManager = AssetManager::GetInstance();
-
-	m_PhysicsManager = PhysXManager::GetInstance();
 
 	//load create the shapes and skybox
 	CreateBasicGeometry();
