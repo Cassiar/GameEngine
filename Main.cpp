@@ -1,4 +1,4 @@
-
+//#include <Saba/Base/Log.h>
 #include <Windows.h>
 #include "Game.h"
 #include <VLD/include/vld.h>
@@ -18,7 +18,7 @@ int WINAPI WinMain(
 	//  - You may want to use something more advanced, like Visual Leak Detector
 	//_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
-
+	//SABA_INFO("Start");
 	//int* leak = new int;
 
 	// Create the Game object using
@@ -40,5 +40,7 @@ int WINAPI WinMain(
 
 	// Begin the message and game loop, and then return
 	// whatever we get back once the game loop is over
-	return dxGame.Run();
+	int result = dxGame.Run();
+	//saba::SingletonFinalizer::Finalize();
+	return result;
 }
