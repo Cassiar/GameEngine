@@ -6,6 +6,7 @@
 #include "imgui.h"
 #include "imgui_impl_dx11.h"
 #include "imgui_impl_win32.h"
+//#include "imgui_draw.cpp"
 
 #include "WICTextureLoader.h" //loading textures, in DirectX namespace
 
@@ -89,10 +90,14 @@ void Game::Init()
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
-		
-		//load font with japanese support
-		//io.Fonts->AddFontFromFileTTF(m_AssetManager->GetFullPathTo("../../Assets/mplus-1m-regular.ttf").c_str(), 13.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 
+		//const ImWchar* ranges = io.Fonts->GetGlyphRangesJapanese();
+		//load font with japanese support
+		//(*io.Fonts).AddFontFromFileTTF("E:\\College Semester 7\\IGME550\\GameEngine\\Assets\\mplus-1m-regular.ttf", 13.0f);// , NULL, ranges);
+		//io.Fonts->AddFontFromFileTTF("Arial.ttf", 13);
+		//ImGui::PushFont(font);
+		io.Fonts->Build();
+		
 		// Pick a style
 		ImGui::StyleColorsDark();
 		//ImGui::StyleColorsClassic();

@@ -88,20 +88,7 @@ private:
 	//array to hold each light's position, used to simplify passing in point light info
 	std::vector<DirectX::XMFLOAT3> lightPoses;
 
-	// Note the usage of ComPtr below
-	//  - This is a smart pointer for objects that abide by the
-	//    Component Object Model, which DirectX objects do
-	//  - More info here: https://github.com/Microsoft/DirectXTK/wiki/ComPtr
-
-	// Buffers to hold actual geometry data
-	//Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
-	//Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
-	
-	// Shaders and shader-related constructs
-	// now handled by simple shader
-	//Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
-	//Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
-	//Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
+	//ImFont* font;
 
 	//simple shader stuff
 	std::shared_ptr<SimpleVertexShader> vertexShader;
