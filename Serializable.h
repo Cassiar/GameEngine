@@ -14,6 +14,14 @@ enum TypeKey {
 	Sampler
 };
 
+struct SerialData {
+	SerialData() {
+		Init();
+	}
+
+	virtual void Init() = 0;
+};
+
 class Serializable
 {
 private:
@@ -27,8 +35,9 @@ public:
 
 	void ClearSerial() { m_readKey = ""; m_data = ""; m_numDataEntries = 0; }
 
+	void WriteObj(SerialData data);
+	SerialData ReadObj(std::string serializedData);
+
 	void Write(TypeKey writeType, std::string data);
 	std::string GetFull();
-	std::string SerializeSamplerDesc(D3D11_SAMPLER_DESC desc);
-	D3D11_SAMPLER_DESC DeSerializeSamplerDesc(std::string serialized);
 };
