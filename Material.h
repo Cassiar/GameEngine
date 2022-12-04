@@ -14,7 +14,7 @@
 
 #include "SimpleShader.h"
 
-#define MATERIAL_MAX_SERIAL_SRVS 16
+#define MATERIAL_MAX_SERIAL_SRVS 18
 #define MATERIAL_MAX_SERIAL_SAMPLERS 8
 
 #pragma pack(push, 1)
@@ -26,12 +26,14 @@ struct MaterialSerialData : SerialData {
 	std::string		srvNames[MATERIAL_MAX_SERIAL_SRVS];
 	std::string		srvFileNames[MATERIAL_MAX_SERIAL_SRVS];
 
-	std::string	vsFileName;
+	std::string		vsFileName;
 	std::string		vsName;
-	std::string	psFileName;
+	std::string		psFileName;
 	std::string		psName;
 
 	std::string		samplerNames[MATERIAL_MAX_SERIAL_SAMPLERS];
+
+	~MaterialSerialData() { }
 };
 #pragma pack(pop)
 
@@ -71,7 +73,7 @@ public:
 	std::string SerializeToString();
 
 	void WriteToBinary(std::wstring filePath) override;
-	SerialData ReadBinary(std::wstring filePath) override;
+	MaterialSerialData ReadBinary(std::wstring filePath); //override;
 	
 private:
 	DirectX::XMFLOAT4 colorTint;

@@ -123,9 +123,11 @@ void Material::WriteToBinary(std::wstring filePath) {
         if (index == MATERIAL_MAX_SERIAL_SRVS)
             break;
 
-        data.srvTypes[index] = textureTypes[kv.first];
-        data.srvNames[index] = kv.first;
-        data.srvFileNames[index] = textureFiles[kv.first];
+        std::string key = kv.first;
+        data.srvTypes[index] = textureTypes[key];
+        data.srvNames[index] = "RoughnessTextur";//key;
+        std::string file = textureFiles[kv.first];
+        data.srvFileNames[index] = file;
 
         index++;
     }
@@ -142,50 +144,37 @@ void Material::WriteToBinary(std::wstring filePath) {
         if (index == MATERIAL_MAX_SERIAL_SAMPLERS)
             break;
 
-        data.samplerNames[index] = kv.first;
+        data.samplerNames[index] = kv.first + '\0';
         index++;
     }
 
-    char writeBuff[sizeof(MaterialSerialData)];
-    memcpy(writeBuff, &data, sizeof(data));
-    wStream.write(writeBuff, sizeof(data));
+    wStream.write((char*)&data, sizeof(data));
+
+    int temp = sizeof(data);
+    int temp2 = sizeof(MaterialSerialData);
 
     wStream.close();
     if (!wStream.good()) {
         std::cout << "Error occurred at writing time!" << std::endl;
     }
 }
-SerialData Material::ReadBinary(std::wstring filePath) {
+MaterialSerialData Material::ReadBinary(std::wstring filePath) {
     std::ifstream rStream(filePath, std::ios::in | std::ios::binary);
 
     if (!rStream) {
         std::cout << "Cannot open file!" << std::endl;
     }
 
+    int temp3 = sizeof(MaterialSerialData);
     MaterialSerialData data;
-    char readBuff[sizeof(MaterialSerialData)];
-    rStream.read(readBuff, sizeof(MaterialSerialData));
+    rStream.read((char*)&data, sizeof(MaterialSerialData));
     rStream.close();
     if (!rStream.good()) {
         std::cout << "Error occurred at reading time!" << std::endl;
     }
 
-    data = *reinterpret_cast<MaterialSerialData*>(readBuff);
-    /*
-    this->colorTint = data.colorTint;
-    this->roughness = data.roughness;
-    std::shared_ptr<AssetManager> assetManager = AssetManager::GetInstance();
-    for (int i = 0; i < 16; i++)
-    {
-        if (data.srvFileNames[i] == L"")
-            continue;
+    //data = *reinterpret_cast<MaterialSerialData*>(readBuff);
 
-        Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv = assetManager->LoadSRV(data.srvFileNames[i], true);
-        //assetManager->AddSRVToMap(data.srvTypes[i], data.srvFileNames[i], true);
-        AddTextureSRV(data.srvNames[i], srv, assetManager->WideToString(data.srvFileNames[i]));
-    }
-    */
-
-    delete[] readBuff;
+    //delete[] readBuff;
     return data;
 }

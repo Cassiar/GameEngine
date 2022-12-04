@@ -112,6 +112,9 @@ void Game::Init()
 	//load create the shapes and skybox
 	CreateBasicGeometry();
 
+	MaterialSerialData data = m_AssetManager->GetMaterial(0)->ReadBinary(m_AssetManager->GetFullPathTo_Wide(L"MyMat.nsm"));
+	//MaterialSerialData serialTest = *reinterpret_cast<MaterialSerialData*>(&data);
+
 	//create the shadow resources
 	//unique sampler and rasterizer state
 	CreateShadowResources();
@@ -1532,7 +1535,7 @@ void PassShadowObjs() {
 }
 
 void Game::Save() {
-	m_AssetManager->GetMaterial(0)->WriteToBinary(L"MyMat.nsm");
+	m_AssetManager->GetMaterial(0)->WriteToBinary(L"x64/Debug/MyMat.nsm");
 	//WriteToFile("TestFile.txt", m_AssetManager->GetMaterial(0)->SerializeToString());
 }
 
