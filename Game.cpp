@@ -1532,6 +1532,7 @@ void PassShadowObjs() {
 }
 
 void Game::Save() {
+	m_AssetManager->GetMaterial(0)->WriteToBinary(L"MyMat.nsm");
 	//WriteToFile("TestFile.txt", m_AssetManager->GetMaterial(0)->SerializeToString());
 }
 
