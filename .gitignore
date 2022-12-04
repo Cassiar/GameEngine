@@ -35,7 +35,11 @@ x64/Debug/*
 !x64/Debug/PhysXCommon_64.dll
 !x64/Debug/PhysX_64.dll
 
-!include/VLD/bin/Win64/*
+!include/VLD/bin
+include/VLD/bin/*
+!include/VLD/bin/Win64/
+include/VLD/bin/Wind64/*
+
 !include/VLD/bin/Win64/vld_x64.dll
 !include/VLD/bin/Win64/dbghelp.dll
 
