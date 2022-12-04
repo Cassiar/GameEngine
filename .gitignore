@@ -34,8 +34,10 @@ x64/Debug/*
 !x64/Debug/PhysXCooking_64.dll
 !x64/Debug/PhysXCommon_64.dll
 !x64/Debug/PhysX_64.dll
-!x64/Debug/vld_x64.dll
-!x64/Debug/dbghelp.dll
+
+!include/VLD/bin/Win64/*
+!include/VLD/bin/Win64/vld_x64.dll
+!include/VLD/bin/Win64/dbghelp.dll
 
 x86/
 [Aa][Rr][Mm]/
