@@ -211,11 +211,11 @@ void AssetManager::InitMaterials()
 	//add textures to each material
 	for (unsigned int i = 0; i < m_materials.size(); i++) {
 		m_materials[i]->AddSampler("BasicSampler",			m_samplers["basicSampler"]);
-		m_materials[i]->AddTextureSRV("AlbedoTexture",		m_srvMaps[Albedo][i],		m_srvFileNames[Albedo][i]);
-		m_materials[i]->AddTextureSRV("RoughnessTexture",	m_srvMaps[Roughness][i],	m_srvFileNames[Roughness][i]);
-		m_materials[i]->AddTextureSRV("AmbientTexture",		m_srvMaps[AO][i],			m_srvFileNames[AO][i]);
-		m_materials[i]->AddTextureSRV("NormalTexture",		m_srvMaps[Normal][i],		m_srvFileNames[Normal][i]);
-		m_materials[i]->AddTextureSRV("MetalnessTexture",	m_srvMaps[Metalness][i],	m_srvFileNames[Metalness][i]);
+		m_materials[i]->AddTextureSRV("AlbedoTexture",		m_srvMaps[Albedo][i],		m_srvFileNames[Albedo][i], Albedo);
+		m_materials[i]->AddTextureSRV("RoughnessTexture",	m_srvMaps[Roughness][i],	m_srvFileNames[Roughness][i], Roughness);
+		m_materials[i]->AddTextureSRV("AmbientTexture",		m_srvMaps[AO][i],			m_srvFileNames[AO][i], AO);
+		m_materials[i]->AddTextureSRV("NormalTexture",		m_srvMaps[Normal][i],		m_srvFileNames[Normal][i], Normal);
+		m_materials[i]->AddTextureSRV("MetalnessTexture",	m_srvMaps[Metalness][i],	m_srvFileNames[Metalness][i], Metalness);
 	}
 
 	//toon shader. for testing uses scifi panel
@@ -223,11 +223,11 @@ void AssetManager::InitMaterials()
 
 	m_toonMaterials[0]->AddSampler("BasicSampler",			m_samplers["basicSampler"]);
 	m_toonMaterials[0]->AddSampler("RampSampler",			m_samplers["ppLightRaysSampler"]);
-	m_toonMaterials[0]->AddTextureSRV("AlbedoTexture",		m_srvMaps[ToonAlbedo][0],		m_srvFileNames[ToonAlbedo][0]);
-	m_toonMaterials[0]->AddTextureSRV("RoughnessTexture",	m_srvMaps[ToonRoughness][0],	m_srvFileNames[ToonRoughness][0]);
-	m_toonMaterials[0]->AddTextureSRV("AmbientTexture",		m_srvMaps[ToonAO][0],			m_srvFileNames[ToonAO][0]);
-	m_toonMaterials[0]->AddTextureSRV("RampTexture",		m_srvMaps[SampleTexture][0],	m_srvFileNames[SampleTexture][0]);
-	m_toonMaterials[0]->AddTextureSRV("MetalnessTexture",	m_srvMaps[ToonMetalness][0],	m_srvFileNames[ToonMetalness][0]);
+	m_toonMaterials[0]->AddTextureSRV("AlbedoTexture",		m_srvMaps[ToonAlbedo][0],		m_srvFileNames[ToonAlbedo][0], ToonAlbedo);
+	m_toonMaterials[0]->AddTextureSRV("RoughnessTexture",	m_srvMaps[ToonRoughness][0],	m_srvFileNames[ToonRoughness][0], ToonRoughness);
+	m_toonMaterials[0]->AddTextureSRV("AmbientTexture",		m_srvMaps[ToonAO][0],			m_srvFileNames[ToonAO][0], ToonAO);
+	m_toonMaterials[0]->AddTextureSRV("RampTexture",		m_srvMaps[SampleTexture][0],	m_srvFileNames[SampleTexture][0], SampleTexture);
+	m_toonMaterials[0]->AddTextureSRV("MetalnessTexture",	m_srvMaps[ToonMetalness][0],	m_srvFileNames[ToonMetalness][0], ToonMetalness);
 }
 
 
@@ -545,9 +545,9 @@ void AssetManager::InitSabaMaterials(std::shared_ptr<SabaMesh> mesh) {
 		m_sabaMaterials[i]->AddSampler("TexSampler", m_textureSampler);
 		m_sabaMaterials[i]->AddSampler("ToonTexSampler", m_toonTextureSampler);
 		m_sabaMaterials[i]->AddSampler("SphereTexSampler", m_sphereTextureSampler);
-		m_sabaMaterials[i]->AddTextureSRV("Tex", albedo, WideToString(widePath));
-		m_sabaMaterials[i]->AddTextureSRV("ToonTex", albedo,WideToString(widePath));
-		m_sabaMaterials[i]->AddTextureSRV("SphereTex", albedo, WideToString(widePath));
+		m_sabaMaterials[i]->AddTextureSRV("Tex", albedo, WideToString(widePath), Albedo);
+		m_sabaMaterials[i]->AddTextureSRV("ToonTex", albedo,WideToString(widePath), ToonAlbedo);
+		m_sabaMaterials[i]->AddTextureSRV("SphereTex", albedo, WideToString(widePath), SampleTexture);
 
 		m_sabaEdgeMaterials.push_back(std::make_shared<Material>(DirectX::XMFLOAT4(1.0, 1.0, 1.0f, 1.0f), 0.5f, m_vertexShaders["edgeVertexShader"], m_pixelShaders["edgePixelShader"]));
 	}
@@ -827,6 +827,41 @@ std::shared_ptr<Material> AssetManager::ReadMaterialFromFile(std::wstring path) 
 	delete[] readC;
 
 	return m_materials[0];
+}
+
+void AssetManager::MakeMaterialFromSerial(MaterialSerialData data, std::shared_ptr<Material> writeMaterial) {
+	writeMaterial->SetColorTint(data.colorTint);
+	writeMaterial->SetRoughness(data.roughness);
+
+	for (int i = 0; i < MATERIAL_MAX_SERIAL_SRVS; i++)
+	{
+		if (data.srvFileNames[i] == "")
+			continue;
+
+		SRVMaps type = data.srvTypes[i];
+		AddSRVToMap(type, StringToWide(data.srvFileNames[i]), true);
+		int lastIndex = m_srvMaps[type].size() - 1;
+		writeMaterial->AddTextureSRV(data.srvNames[i], m_srvMaps[type][lastIndex], data.srvFileNames[i], data.srvTypes[i]);
+	}
+
+	if (m_vertexShaders[data.vsName] == nullptr)
+	{
+		AddVertShaderToMap(data.vsName, data.vsFileName);
+	}
+	writeMaterial->SetVertexShader(m_vertexShaders[data.vsName], data.vsFileName, data.vsName);
+	
+	if (m_pixelShaders[data.psName] == nullptr)
+	{
+		AddPixelShaderToMap(data.psName, data.psFileName);
+	}
+	writeMaterial->SetPixelShader(m_pixelShaders[data.psName], data.psFileName, data.psName);
+
+	for (int i = 0; i < MATERIAL_MAX_SERIAL_SAMPLERS; i++) {
+		if (m_samplers[data.samplerNames[i]] == nullptr)
+			continue;
+
+		writeMaterial->AddSampler(data.samplerNames[i], m_samplers[data.samplerNames[i]]);
+	}
 }
 
 ///------------------ Written by Chris Cascioli ------------------------------///

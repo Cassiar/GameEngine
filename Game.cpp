@@ -1532,7 +1532,7 @@ void PassShadowObjs() {
 }
 
 void Game::Save() {
-	WriteToFile("TestFile.txt", m_AssetManager->GetMaterial(0)->SerializeToString());
+	//WriteToFile("TestFile.txt", m_AssetManager->GetMaterial(0)->SerializeToString());
 }
 
 void Game::WriteToFile(std::string name, std::string writeString) {

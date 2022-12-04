@@ -90,7 +90,7 @@
     <ClCompile Include="PhysXManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Serializable.cpp">
+    <ClCompile Include="StringSerializable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SabaMesh.cpp">
@@ -180,6 +180,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SabaMesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StringSerializable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SRVMapsEnum.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

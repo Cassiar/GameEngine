@@ -10,21 +10,6 @@
 #include <map>
 #include <WICTextureLoader.h>
 
-enum SRVMaps
-{
-	Albedo,
-	Roughness,
-	AO,
-	Normal,
-	Metalness,
-	ToonAlbedo,
-	ToonRoughness,
-	ToonAO,
-	ToonMetalness,
-	SampleTexture,
-	SkyBox
-};
-
 // mmd shader constant buffer
 
 //========================
@@ -173,6 +158,7 @@ public:
 	void MakeRasterizerState(D3D11_RASTERIZER_DESC rastDesc, Microsoft::WRL::ComPtr<ID3D11RasterizerState>& rastLocation);
 
 	std::shared_ptr<Material> ReadMaterialFromFile(std::wstring path);
+	void MakeMaterialFromSerial(MaterialSerialData data, std::shared_ptr<Material> writeMaterial);
 
 	///------------------ Written by Chris Cascioli ------------------------------///
 	// Helpers for determining the actual path to the executable
