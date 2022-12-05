@@ -170,6 +170,21 @@ void Game::CreateBasicGeometry()
 	m_EntityManager->GetEntity(2)->GetTransform()->MoveAbsolute(XMFLOAT3(0, 0, 20));
 	m_EntityManager->GetEntity(2)->GetTransform()->Rotate(XMFLOAT3(0, XM_PI, 0));//face toward starting pos
 
+	//allocate memory for morph weights
+	morphWeights = std::make_shared<std::vector<float>>();
+
+	std::shared_ptr<saba::PMXModel> model = m_AssetManager->GetSabaMesh(0)->GetModel();
+	saba::MMDMorphManager* morphMan = model->GetMorphManager();
+	size_t morphCount = morphMan->GetMorphCount();
+	morphWeights->reserve(morphCount);
+	for (size_t morphIdx = 0; morphIdx < morphCount; morphIdx++)
+	{
+		saba::MMDMorph* morph = morphMan->GetMorph(morphIdx);
+		float weight = morph->GetWeight();
+		morphWeights->push_back(weight);
+	}
+
+
 	//create sky obj
 	sky = std::make_shared<Sky>(meshes[0], m_AssetManager->GetSampler("basicSampler"), m_AssetManager->GetSRV(SkyBox, 0), device, context, m_AssetManager->GetVertexShader("skyVertexShader"), m_AssetManager->GetPixelShader("skyPixelShader"));
 }
@@ -1129,8 +1144,6 @@ void Game::CreateGui(float deltaTime) {
 
 		ImGui::PopID();
 
-		morphWeights = std::make_shared<std::vector<float>>();
-
 		ImGui::PushID(5);
 
 		//ImGui::PushFont(font);
@@ -1153,20 +1166,12 @@ void Game::CreateGui(float deltaTime) {
 			auto model = m_AssetManager->GetSabaMesh(0)->GetModel();
 			auto morphMan = model->GetMorphManager();
 			size_t morphCount = morphMan->GetMorphCount();
-			morphWeights->reserve(morphCount);
 			for (size_t morphIdx = 0; morphIdx < morphCount; morphIdx++)
 			{
 				auto morph = morphMan->GetMorph(morphIdx);
-				float weight = morph->GetWeight();
-				morphWeights->push_back(weight);
 				//printf("%zi, %s", morphIdx, morph->GetName());
 				//std::cout << "ID: " << morphIdx << ", Name: " << morph->GetName() << std::endl;
-				if (ImGui::SliderFloat(morph->GetName().c_str(), &(*morphWeights)[morphIdx], 0.0f, 1.0f))
-				{
-					//(*morphWeights)[morphIdx] = weight;
-					//morph->SetWeight(weight);
-					//m_AssetManager->GetSabaMesh(0)->GetModel()->UpdateMorphAnimation();
-				}
+				ImGui::SliderFloat(morph->GetName().c_str(), &(*morphWeights)[morphIdx], 0.0f, 1.0f);
 			}
 			ImGui::TreePop();
 		}
