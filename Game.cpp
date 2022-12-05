@@ -70,6 +70,8 @@ Game::~Game()
 		ImGui_ImplWin32_Shutdown();
 		ImGui::DestroyContext();
 	}
+
+	//delete[] m_materialSaveBuffer;
 }
 
 
@@ -107,13 +109,18 @@ void Game::Init()
 		ImGui_ImplDX11_Init(device.Get(), context.Get());
 	}
 
+	//m_materialSaveBuffer = new char[16];
 
 
 	//load create the shapes and skybox
 	CreateBasicGeometry();
 
 	MaterialSerialData data;
-	m_AssetManager->GetMaterial(0)->ReadBinary(m_AssetManager->GetFullPathTo_Wide(L"MyMat.nsm"), data);
+	std::shared_ptr<Material> tempWrite = std::make_shared<Material>(DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, nullptr, "", "", nullptr, "", "");
+	tempWrite->ReadBinary(L"Assets/Materials/TESTMAT.nsm", data);
+	m_AssetManager->MakeMaterialFromSerial(data, tempWrite);
+	m_EntityManager->GetEntity(0)->SetMaterial(tempWrite);
+
 	//MaterialSerialData serialTest = *reinterpret_cast<MaterialSerialData*>(&data);
 
 	//create the shadow resources
@@ -820,7 +827,7 @@ void Game::OnResize()
 
 void Game::CreateGui(float deltaTime) {
 	Input& input = Input::GetInstance();
-
+	//static bool matEditorOpen = false;
 	{
 		// Reset input manager's gui state
 		// so we don't taint our own input
@@ -829,6 +836,7 @@ void Game::CreateGui(float deltaTime) {
 
 		// Set io info
 		ImGuiIO& io = ImGui::GetIO();
+		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 		io.DeltaTime = deltaTime;
 		io.DisplaySize.x = (float)this->width;
 		io.DisplaySize.y = (float)this->height;
@@ -842,6 +850,20 @@ void Game::CreateGui(float deltaTime) {
 		io.MouseDown[2] = input.MouseMiddleDown();
 		io.MouseWheel = input.GetMouseWheel();
 		input.GetKeyArray(io.KeysDown, 256);
+		static bool lastFrameBuff[256];
+		for (int i = 32; i < 256; i++)
+		{
+			//Not perfect currently but it works somewhat
+			if (io.KeysDown[i] && !lastFrameBuff[i])
+				io.AddInputCharacter(i);
+
+			lastFrameBuff[i] = io.KeysDown[i];
+		}
+		//if (io.KeysDown[io.KeyMap[ImGuiKey_Backspace]])
+		//{
+		//	io.ClearInputCharacters();
+		//}
+
 
 		// Reset the frame
 		ImGui_ImplDX11_NewFrame();
@@ -1165,7 +1187,18 @@ void Game::CreateGui(float deltaTime) {
 			ImGui::TreePop();
 		}
 		ImGui::PopID();
+
+		ImGui::PushID(6);
+		matEditorOpen = ImGui::Button("Create New Material") ? !matEditorOpen : matEditorOpen;
+		ImGui::PopID();
+		
 	}
+
+	if (matEditorOpen)
+	{
+		CreateMaterialGUI(deltaTime);
+	}
+	
 }
 
 void Game::CreateMaterialGUI(float deltaTime) {
@@ -1175,6 +1208,7 @@ void Game::CreateMaterialGUI(float deltaTime) {
 		// Set io info
 		ImGuiIO& io = ImGui::GetIO();
 		input.GetKeyArray(io.KeysDown, 256);
+		
 
 		ImGui::Begin("Create a new Material");
 
@@ -1190,12 +1224,174 @@ void Game::CreateMaterialGUI(float deltaTime) {
 		static int selectedTextureIndex = 0;
 
 		ImGui::PushID(5);
-		ImGui::Text("Texture Index");
+
+		//ImGui::Text("Material Name");
+		//ImGui::SameLine();
+		//ImGui::InputTextWithHint(" ", "Max 16 chars", m_materialSaveBuffer, 16 * sizeof(char));
+
+		static bool tintInEditor = false;
+		ImGui::Text("Show tint in editor");
+		ImGui::Checkbox(" ", &tintInEditor);
+
+		ImGui::Text("Color Tint");
 		ImGui::SameLine();
-		ImGui::DragInt(" ", &selectedTextureIndex, 1, static_cast<int>(0), 3);//m_AssetManager->sr.size()));
-		ImGui::Image(m_AssetManager->GetSRV(Albedo, selectedTextureIndex).Get(), ImVec2(256, 256), uv_min, uv_max, tint_col, border_col);
-		
+		ImGui::ColorEdit3("  ", &m_newMaterialStore.colorTint.x);
+
+		ImGui::Text("Roughness");
+		ImGui::SameLine();
+		ImGui::DragFloat("    ", &m_newMaterialStore.roughness, 0.001, 0.0f, 1.0f);
+
+		static bool isToon = false;
+		ImGui::Text("Toon Material");
+		ImGui::Checkbox("   ", &isToon);
+
+		std::unordered_map<std::string, std::string> vertFileNamesMap = m_AssetManager->GetVertShaderFileNames();
+		//This being hardcoded is a bit of a pain but i doubt we'll need to ever support more than 64 unique vertex shaders
+		const char* vertNames[64];		// = new char[vertFileNamesMap.size()];
+		const char* vertFileNames[64];	// = new char[vertFileNamesMap.size()];
+		int index = 0;
+		for (const auto& kv : vertFileNamesMap) {
+			vertNames[index] = kv.first.c_str();
+			vertFileNames[index] = kv.second.c_str();
+			index++;
+		}
+
+		static int selectedVertIndex = 0;
+		if (ImGui::BeginCombo("Vertex Shader", vertNames[selectedVertIndex]))
+		{
+			for (int i = 0; i < index; i++)
+			{
+				bool is_selected = (selectedVertIndex == i);
+				//Doing this because I'm too lazy to figure out how to get around possible mem comparison rather than value comp of vertNames[i] == ""
+				std::string conversion = vertNames[i];
+				if (!vertNames[i] || conversion == "") {
+					continue;
+				}
+
+				if (ImGui::Selectable(vertNames[i], is_selected)) {
+					selectedVertIndex = i;
+					if (is_selected) {
+						ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+
+						m_newMaterialStore.vsName = vertNames[i];
+						m_newMaterialStore.vsFileName = vertFileNames[i];
+					}
+				}
+			}
+			ImGui::EndCombo();
+		}
+
+		std::unordered_map<std::string, std::string> pixelFileNamesMap = m_AssetManager->GetPixelShaderFileNames();
+		//This being hardcoded is a bit of a pain but i doubt we'll need to ever support more than 64 unique vertex shaders
+		const char* pixelNames[64];		// = new char[vertFileNamesMap.size()];
+		const char* pixelFileNames[64];	// = new char[vertFileNamesMap.size()];
+		index = 0;
+		for (const auto& kv : pixelFileNamesMap) {
+			pixelNames[index] = kv.first.c_str();
+			pixelFileNames[index] = kv.second.c_str();
+			index++;
+		}
+
+		static int selectedPixelIndex = 0;
+		if (ImGui::BeginCombo("Pixel Shader", pixelNames[selectedPixelIndex]))
+		{
+			for (int i = 0; i < index; i++)
+			{
+				bool is_selected = (selectedPixelIndex == i);
+
+				//Doing this because I'm too lazy to figure out how to get around possible mem comparison rather than value comp of pixelNames[i] == ""
+				std::string conversion = pixelNames[i];
+				if (!pixelNames[i] || conversion == "") {
+					continue;
+				}
+
+				if (ImGui::Selectable(pixelNames[i], is_selected)) {
+					selectedPixelIndex = i;
+					is_selected = true;// (selectedPixelIndex == i);
+					if (is_selected) {
+						ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+
+						m_newMaterialStore.psName = pixelNames[i];
+						m_newMaterialStore.psFileName = pixelFileNames[i];
+					}
+				}
+			}
+			ImGui::EndCombo();
+		}
+
+		if (tintInEditor)
+		{
+			tint_col.x = m_newMaterialStore.colorTint.x;
+			tint_col.y = m_newMaterialStore.colorTint.y;
+			tint_col.z = m_newMaterialStore.colorTint.z;
+		}
+		else 
+		{
+			tint_col.x = 1.0f;
+			tint_col.y = 1.0f;
+			tint_col.z = 1.0f;
+		}
 		ImGui::PopID();
+
+		static int callCount = 0;
+		static auto addTextureByType = [&](std::string label, SRVMaps textureType, int& textureIndex) {
+			ImGui::PushID(6 + callCount);
+
+			if (ImGui::TreeNode(label.c_str()))
+			{
+				std::string fileName = m_AssetManager->GetSRVFileName(textureType, textureIndex);
+				ImGui::Text(fileName.c_str());
+				ImGui::Text("Texture Index");
+				ImGui::InputInt(" ", &textureIndex, 1);
+				//Clamps to valid range
+				textureIndex = std::min(std::max(textureIndex, 0), m_AssetManager->GetNumSRVsOfType(textureType) - 1);
+				ImGui::Image(m_AssetManager->GetSRV(textureType, textureIndex).Get(), ImVec2(128, 128), uv_min, uv_max, tint_col, border_col);
+				ImGui::TreePop();
+
+				m_newMaterialStore.srvTypes[callCount] = textureType;
+				m_newMaterialStore.srvNames[callCount] = label;
+				m_newMaterialStore.srvFileNames[callCount] = fileName;
+			}
+			ImGui::PopID();
+
+			callCount++;
+		};
+
+		static int albedoIndex = 0;
+		addTextureByType("Albedo",		!isToon ? Albedo : ToonAlbedo, albedoIndex);
+		static int roughnessIndex = 0;
+		addTextureByType("Roughness",	!isToon ? Roughness : ToonRoughness, roughnessIndex);
+		static int ambientIndex = 0;
+		addTextureByType("Ambient",		!isToon ? AO : ToonAO, ambientIndex);
+		static int normalIndex = 0;
+		addTextureByType("Normal",		!isToon ? Normal : Normal, normalIndex);
+		static int metalnessIndex = 0;
+		addTextureByType("Metalness",	!isToon ? Metalness : ToonMetalness, metalnessIndex);
+
+		callCount = 0;
+		
+		ImGui::PushID(20);
+
+		ImGui::Text("File Name (saved as *.nsm)");
+		ImGui::SameLine();
+		static char inputBuffer[128];
+		ImGui::InputText(".nsm", inputBuffer, IM_ARRAYSIZE(inputBuffer));
+
+		if (ImGui::Button("Save Material")) {
+			std::shared_ptr<Material> tempWrite = std::make_shared<Material>(DirectX::XMFLOAT4(1.0f,1.0f,1.0f,1.0f), 0.5f, nullptr, "", "", nullptr, "", "");
+			m_newMaterialStore.samplerNames[0] = "basicSampler";
+			m_AssetManager->MakeMaterialFromSerial(m_newMaterialStore, tempWrite);
+			tempWrite->WriteToBinary(L"Assets/Materials/" + m_AssetManager->StringToWide(inputBuffer) + L".nsm");
+			matEditorOpen = false;
+		}
+
+		ImGui::PopID();
+
+		//ImGui::PushID(20);
+		//matEditorOpen = ImGui::Button("Save Material") ? !matEditorOpen : matEditorOpen;
+		//ImGui::PopID();
+
+		//ImGui::PopID();
 		ImGui::End();
 	}
 }
@@ -1264,7 +1460,6 @@ void Game::Update(float deltaTime, float totalTime)
 	m_PhysicsManager->UpdatePhysics(deltaTime);
 
 	CreateGui(deltaTime);
-	//CreateMaterialGUI(deltaTime);
 
 	camera->Update(deltaTime);
 }

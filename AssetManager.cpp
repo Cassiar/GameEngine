@@ -639,6 +639,15 @@ SabaTexture AssetManager::GetTexture(const std::string& texturePath)
 	}
 }
 
+std::vector<std::string> AssetManager::GetSamplerNames()
+{
+	std::vector<std::string> names = std::vector<std::string>();
+	for (const auto& kv : m_samplers)
+		names.push_back(kv.first);
+
+	return names;
+}
+
 //helper function to create cube map from 6 textures.
 //used with permission from Chris Cascioli
 // --------------------------------------------------------

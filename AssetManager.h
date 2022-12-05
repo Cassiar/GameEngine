@@ -129,6 +129,7 @@ public:
 	std::shared_ptr<SimplePixelShader> GetPixelShader(std::string shaderName) { return m_pixelShaders[shaderName]; }
 
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> GetSampler(std::string samplerName) { return m_samplers[samplerName]; }
+	std::vector<std::string> GetSamplerNames();
 
 	// Helper for creating a cubemap from 6 individual textures
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> CreateCubemap(
@@ -146,12 +147,16 @@ public:
 
 	//void AddSRVToMap(SRVMaps mapTypeName, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srvToAdd);
 	void AddSRVToMap(SRVMaps mapTypeName, std::wstring srvPath, bool customPath = false);
+	int GetNumSRVsOfType(SRVMaps map) { return m_srvMaps[map].size(); }
+	std::string GetSRVFileName(SRVMaps map, int index) { return m_srvFileNames[map][index]; }
 
 	void AddVertShaderToMap(std::string key, std::string filename);
 	std::shared_ptr<SimpleVertexShader> MakeSimpleVertexShader(std::wstring csoName);
+	std::unordered_map<std::string, std::string> GetVertShaderFileNames() { return m_vertShaderCsoNames; }
 
 	void AddPixelShaderToMap(std::string key, std::string filename);
 	std::shared_ptr<SimplePixelShader> MakeSimplePixelShader(std::wstring csoName);
+	std::unordered_map<std::string, std::string> GetPixelShaderFileNames() { return m_pixelShaderCsoNames; }
 
 	void AddSabaMesh(std::shared_ptr<SabaMesh> mesh) { m_sabaMeshes.push_back(mesh); }
 

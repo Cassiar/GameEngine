@@ -168,5 +168,9 @@ private:
 	bool morphAnim = false;
 
 	std::shared_ptr<std::vector<float>> morphWeights;
+
+	MaterialSerialData m_newMaterialStore;
+	//char* m_materialSaveBuffer;
+	bool matEditorOpen = false;
 };
 
