@@ -96,6 +96,9 @@
     <ClCompile Include="SabaMesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Serializable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Vertex.h">

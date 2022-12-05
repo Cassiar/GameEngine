@@ -112,13 +112,15 @@ void Game::Init()
 	//load create the shapes and skybox
 	CreateBasicGeometry();
 
-	MaterialSerialData data = m_AssetManager->GetMaterial(0)->ReadBinary(m_AssetManager->GetFullPathTo_Wide(L"MyMat.nsm"));
+	MaterialSerialData data;
+	m_AssetManager->GetMaterial(0)->ReadBinary(m_AssetManager->GetFullPathTo_Wide(L"MyMat.nsm"), data);
 	//MaterialSerialData serialTest = *reinterpret_cast<MaterialSerialData*>(&data);
 
 	//create the shadow resources
 	//unique sampler and rasterizer state
 	CreateShadowResources();
 
+	data.colorTint.x = 2.0f;
 	// Tell the input assembler stage of the pipeline what kind of
 	// geometric primitives (points, lines or triangles) we want to draw.  
 	// Essentially: "What kind of shape should the GPU draw with our data?"

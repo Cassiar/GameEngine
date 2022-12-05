@@ -73,7 +73,7 @@ public:
 	std::string SerializeToString();
 
 	void WriteToBinary(std::wstring filePath) override;
-	MaterialSerialData ReadBinary(std::wstring filePath); //override;
+	MaterialSerialData ReadBinary(std::wstring filePath, MaterialSerialData& data); //override;
 	
 private:
 	DirectX::XMFLOAT4 colorTint;

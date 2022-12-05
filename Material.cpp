@@ -113,7 +113,8 @@ void Material::WriteToBinary(std::wstring filePath) {
         std::cout << "Cannot open file!" << std::endl;
         return;
     }
-
+    /*
+#pragma region viaStruct
     MaterialSerialData data;
     data.colorTint = colorTint;
     data.roughness = roughness;
@@ -134,10 +135,10 @@ void Material::WriteToBinary(std::wstring filePath) {
 
     data.vsFileName = vsFileName; //AssetManager::GetInstance()->StringToWide(vsFileName);
     data.vsName = vsName;
-    
+
     data.psFileName = psFileName; //AssetManager::GetInstance()->StringToWide(psFileName);
     data.psName = psName;
-    
+
     index = 0;
     for (auto kv : samplers)
     {
@@ -149,25 +150,103 @@ void Material::WriteToBinary(std::wstring filePath) {
     }
 
     wStream.write((char*)&data, sizeof(data));
+#pragma endregion*/
 
-    int temp = sizeof(data);
-    int temp2 = sizeof(MaterialSerialData);
+#pragma region viaWrite
+    wStream.write((char*)&colorTint, sizeof(DirectX::XMFLOAT4));
+    wStream.write((char*)&roughness, sizeof(float));
+
+    char stackStringBuffer[512];
+    int index = 0;
+    for (auto kv : textureSRVs)
+    {
+        if (index == MATERIAL_MAX_SERIAL_SRVS)
+            break;
+
+        std::string key = kv.first;
+        wStream.write((char*)&textureTypes[key], sizeof(SRVMaps));
+
+        WriteString(wStream, key);
+
+        WriteString(wStream, textureFiles[kv.first]);
+
+        index++;
+    }
+
+    WriteString(wStream, vsFileName);
+    WriteString(wStream, vsName);
+    
+    WriteString(wStream, psFileName);
+    WriteString(wStream, psName);
+
+    index = 0;
+    for (auto kv : samplers)
+    {
+        if (index == MATERIAL_MAX_SERIAL_SAMPLERS)
+            break;
+
+        WriteString(wStream, kv.first);
+    }
+
+    //wStream.write((char*)&data, sizeof(data));
+#pragma endregion
 
     wStream.close();
     if (!wStream.good()) {
         std::cout << "Error occurred at writing time!" << std::endl;
     }
 }
-MaterialSerialData Material::ReadBinary(std::wstring filePath) {
+
+MaterialSerialData Material::ReadBinary(std::wstring filePath, MaterialSerialData& data) {
     std::ifstream rStream(filePath, std::ios::in | std::ios::binary);
 
     if (!rStream) {
         std::cout << "Cannot open file!" << std::endl;
     }
 
-    int temp3 = sizeof(MaterialSerialData);
-    MaterialSerialData data;
+    /*
+#pragma region viaStructRead
+    //MaterialSerialData data;
     rStream.read((char*)&data, sizeof(MaterialSerialData));
+#pragma endregion
+*/
+
+#pragma region viaRead
+    rStream.read((char*)&data.colorTint, sizeof(DirectX::XMFLOAT4));
+    rStream.read((char*)&data.roughness, sizeof(float));
+    int index = 0;
+    for (auto kv : textureSRVs)
+    {
+        if (index == MATERIAL_MAX_SERIAL_SRVS)
+            break;
+
+        std::string key = kv.first;
+        rStream.read((char*)&data.srvTypes[index], sizeof(SRVMaps));
+
+        data.srvNames[index] = ReadString(rStream);
+
+        data.srvFileNames[index] = ReadString(rStream);
+
+        index++;
+    }
+
+    data.vsFileName = ReadString(rStream);
+    data.vsName     = ReadString(rStream);
+
+    data.psFileName = ReadString(rStream);
+    data.psName     = ReadString(rStream);
+
+    index = 0;
+    for (auto kv : samplers)
+    {
+        if (index == MATERIAL_MAX_SERIAL_SAMPLERS)
+            break;
+
+        data.samplerNames[index] = ReadString(rStream);
+    }
+#pragma endregion
+
+    
     rStream.close();
     if (!rStream.good()) {
         std::cout << "Error occurred at reading time!" << std::endl;
