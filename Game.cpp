@@ -3,7 +3,6 @@
 #include "Input.h"
 #include "BufferStructs.h"
 
-#include "imgui.h"
 #include "imgui_impl_dx11.h"
 #include "imgui_impl_win32.h"
 //#include "imgui_draw.cpp"
@@ -91,12 +90,17 @@ void Game::Init()
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
 
-		//const ImWchar* ranges = io.Fonts->GetGlyphRangesJapanese();
+		//io.Fonts->AddFontFromFileTTF("Arial.ttf", 13.0f);
+
+
+		const ImWchar* ranges = io.Fonts->GetGlyphRangesJapanese();
 		//load font with japanese support
-		//(*io.Fonts).AddFontFromFileTTF("E:\\College Semester 7\\IGME550\\GameEngine\\Assets\\mplus-1m-regular.ttf", 13.0f);// , NULL, ranges);
-		//io.Fonts->AddFontFromFileTTF("Arial.ttf", 13);
-		//ImGui::PushFont(font);
+		font = (*io.Fonts).AddFontFromFileTTF("E:/College Semester 7/IGME550/GameEngine/Assets/mplus-1m-regular.ttf", 13.0f , NULL, ranges);
+		//io.Fonts->GetTexDataAsRGBA32();
+
 		io.Fonts->Build();
+		//io.Fonts->AddFontFromFileTTF("Arial.ttf", 13);
+		
 		
 		// Pick a style
 		ImGui::StyleColorsDark();
@@ -862,17 +866,6 @@ void Game::CreateGui(float deltaTime) {
 		ImGui::Text("FPS: %i", lastFrameCount);
 
 		ImGui::PushID(1);
-		ImGui::Text("Enable animation: ");
-		ImGui::SameLine();
-		ImGui::Checkbox("    ", &animOn);
-		if (animOn) {
-			ImGui::Text("Enable Run: ");
-			ImGui::SameLine();
-			ImGui::Checkbox("     ", &runAnim);
-			ImGui::Text("Enable Morph: ");
-			ImGui::SameLine();
-			ImGui::Checkbox("      ", &morphAnim);
-		}
 
 		bool entitiesOpen = ImGui::TreeNode("Entities", "%s", "Entities");
 		if (entitiesOpen) {
@@ -1135,11 +1128,27 @@ void Game::CreateGui(float deltaTime) {
 		}
 
 		ImGui::PopID();
+
 		morphWeights = std::make_shared<std::vector<float>>();
+
 		ImGui::PushID(5);
+
+		//ImGui::PushFont(font);
+
+		ImGui::Text("Enable animation: ");
+		ImGui::SameLine();
+		ImGui::Checkbox("    ", &animOn);
+		if (animOn) {
+			ImGui::Text("Enable Run: ");
+			ImGui::SameLine();
+			ImGui::Checkbox("     ", &runAnim);
+			ImGui::Text("Enable Morph: ");
+			ImGui::SameLine();
+			ImGui::Checkbox("      ", &morphAnim);
+		}
 		// Show the demo window
 		//ImGui::ShowDemoWindow();	
-		if (ImGui::TreeNode("Morph"))
+		if (morphAnim && ImGui::TreeNode("Morph"))
 		{
 			auto model = m_AssetManager->GetSabaMesh(0)->GetModel();
 			auto morphMan = model->GetMorphManager();
@@ -1150,6 +1159,8 @@ void Game::CreateGui(float deltaTime) {
 				auto morph = morphMan->GetMorph(morphIdx);
 				float weight = morph->GetWeight();
 				morphWeights->push_back(weight);
+				//printf("%zi, %s", morphIdx, morph->GetName());
+				//std::cout << "ID: " << morphIdx << ", Name: " << morph->GetName() << std::endl;
 				if (ImGui::SliderFloat(morph->GetName().c_str(), &(*morphWeights)[morphIdx], 0.0f, 1.0f))
 				{
 					//(*morphWeights)[morphIdx] = weight;
@@ -1159,6 +1170,7 @@ void Game::CreateGui(float deltaTime) {
 			}
 			ImGui::TreePop();
 		}
+		//ImGui::PopFont();
 		ImGui::PopID();
 	}
 }
