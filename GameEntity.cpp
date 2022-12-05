@@ -99,11 +99,19 @@ GameEntity::GameEntity(std::shared_ptr<Mesh> in_mesh, std::shared_ptr<Material> 
 		std::shared_ptr<AssetManager> assetManager = AssetManager::GetInstance();
 		std::shared_ptr<Material> debugMat = std::make_shared<Material>(DirectX::XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f,
 			assetManager->GetVertexShader("vertexShader"),
-			assetManager->GetPixelShader("debugPixelShader"));
+			"VertexShader.cso",
+			"vertexShader",
+			assetManager->GetPixelShader("debugPixelShader"),
+			"DebugPixelShader.cso",
+			"debugPixelShader");
 
 		std::shared_ptr<Material> debugMat2 = std::make_shared<Material>(DirectX::XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), 0.5f,
 			assetManager->GetVertexShader("vertexShader"),
-			assetManager->GetPixelShader("debugPixelShader"));
+			"VertexShader.cso",
+			"vertexShader",
+			assetManager->GetPixelShader("debugPixelShader"),
+			"DebugPixelShader.cso",
+			"debugPixelShader");
 
 		m_sphere = std::make_shared<GameEntity>(assetManager->GetMesh(3), debugMat, in_camera, false, true);
 		m_cube = std::make_shared<GameEntity>(assetManager->GetMesh(0), debugMat2, in_camera, false, true);

@@ -1537,6 +1537,11 @@ void PassShadowObjs() {
 }
 
 void Game::Save() {
+	for (int index = 0; index < m_AssetManager->GetMaterials().size(); index++) {
+		std::wstring num = std::to_wstring(index+1);
+		m_AssetManager->GetMaterial(0)->WriteToBinary(L"Assets/Materials/Mat" + num + L".nsm");
+		//index++;
+	}
 	m_AssetManager->GetMaterial(0)->WriteToBinary(L"x64/Debug/MyMat.nsm");
 	//WriteToFile("TestFile.txt", m_AssetManager->GetMaterial(0)->SerializeToString());
 }

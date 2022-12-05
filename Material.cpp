@@ -1,11 +1,16 @@
 #include "Material.h"
 
-Material::Material(DirectX::XMFLOAT4 in_color, float roughness, std::shared_ptr<SimpleVertexShader> in_vs, std::shared_ptr<SimplePixelShader> in_ps)
+Material::Material(DirectX::XMFLOAT4 in_color, float roughness, std::shared_ptr<SimpleVertexShader> in_vs, std::string vsfilename, std::string vsname, std::shared_ptr<SimplePixelShader> in_ps, std::string psfilename, std::string psname)
 {
     colorTint = in_color;
     this->roughness = roughness;
     vs = in_vs;
+    vsFileName = vsfilename;
+    vsName = vsname;
+
     ps = in_ps;
+    psFileName = psfilename;
+    psName = psname;
 }
 
 Material::~Material()
@@ -158,6 +163,8 @@ void Material::WriteToBinary(std::wstring filePath) {
 
     char stackStringBuffer[512];
     int index = 0;
+    int numSRVs = textureSRVs.size();
+    wStream.write(reinterpret_cast<const char*>(&numSRVs), sizeof(int));
     for (auto kv : textureSRVs)
     {
         if (index == MATERIAL_MAX_SERIAL_SRVS)
@@ -179,7 +186,8 @@ void Material::WriteToBinary(std::wstring filePath) {
     WriteString(wStream, psFileName);
     WriteString(wStream, psName);
 
-    index = 0;
+    int numSamplers = samplers.size();
+    wStream.write(reinterpret_cast<const char*>(&numSamplers), sizeof(int));
     for (auto kv : samplers)
     {
         if (index == MATERIAL_MAX_SERIAL_SAMPLERS)
@@ -214,20 +222,19 @@ MaterialSerialData Material::ReadBinary(std::wstring filePath, MaterialSerialDat
 #pragma region viaRead
     rStream.read((char*)&data.colorTint, sizeof(DirectX::XMFLOAT4));
     rStream.read((char*)&data.roughness, sizeof(float));
-    int index = 0;
-    for (auto kv : textureSRVs)
+
+    int numSrvs = 0;
+    rStream.read(reinterpret_cast<char*>(&numSrvs), sizeof(int));
+    for (int index = 0; index < numSrvs; index++)
     {
         if (index == MATERIAL_MAX_SERIAL_SRVS)
             break;
 
-        std::string key = kv.first;
         rStream.read((char*)&data.srvTypes[index], sizeof(SRVMaps));
 
         data.srvNames[index] = ReadString(rStream);
 
         data.srvFileNames[index] = ReadString(rStream);
-
-        index++;
     }
 
     data.vsFileName = ReadString(rStream);
@@ -236,8 +243,9 @@ MaterialSerialData Material::ReadBinary(std::wstring filePath, MaterialSerialDat
     data.psFileName = ReadString(rStream);
     data.psName     = ReadString(rStream);
 
-    index = 0;
-    for (auto kv : samplers)
+    int numSamplers = 0;
+    rStream.read(reinterpret_cast<char*>(&numSamplers), sizeof(int));
+    for (int index = 0; index < numSamplers; index++)
     {
         if (index == MATERIAL_MAX_SERIAL_SAMPLERS)
             break;

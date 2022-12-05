@@ -41,7 +41,7 @@ class Material : Serializable, StringSerializable
 {
 public:
 	//create a materal. Must have color tint vertex and pixel shaders
-	Material(DirectX::XMFLOAT4 in_color, float roughness, std::shared_ptr<SimpleVertexShader> in_vs, std::shared_ptr<SimplePixelShader> in_ps);
+	Material(DirectX::XMFLOAT4 in_color, float roughness, std::shared_ptr<SimpleVertexShader> in_vs, std::string vsfilename, std::string vsname, std::shared_ptr<SimplePixelShader> in_ps, std::string psfilename, std::string psname);
 	~Material();
 
 	//get a copy of the color tint

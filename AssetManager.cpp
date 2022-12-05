@@ -201,10 +201,20 @@ void AssetManager::InitSamplers()
 void AssetManager::InitMaterials()
 {
 	//create the materials
-	m_materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, m_vertexShaders["vertexShader"], m_pixelShaders["pixelShader"]));//white material for medieval floor
-	m_materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, m_vertexShaders["vertexShader"], m_pixelShaders["pixelShader"]));//white material for scifi panel
-	m_materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, m_vertexShaders["vertexShader"], m_pixelShaders["pixelShader"]));//white material for cobblestone wall
-	m_materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, m_vertexShaders["vertexShader"], m_pixelShaders["pixelShader"]));//white material for bronze
+
+	for (int i = 1; i < 5; i++)
+	{
+		std::shared_ptr<Material> temp = std::make_shared<Material>(XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f), 0.0f, nullptr, "", "", nullptr, "", "");
+		MaterialSerialData thisMat;
+		std::wstring path(L"Assets/Materials/Mat" + std::to_wstring(i) + L".nsm");
+		temp->ReadBinary(path, thisMat);
+		MakeMaterialFromSerial(thisMat, temp);
+		m_materials.push_back(temp);
+	}
+	//m_materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, m_vertexShaders["vertexShader"], m_vertShaderCsoNames["vertexShader"], "vertexShader", m_pixelShaders["pixelShader"], m_pixelShaderCsoNames["pixelShader"], "pixelShader"));//white material for medieval floor
+	//m_materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, m_vertexShaders["vertexShader"], m_vertShaderCsoNames["vertexShader"], "vertexShader", m_pixelShaders["pixelShader"], m_pixelShaderCsoNames["pixelShader"], "pixelShader"));//white material for scifi panel
+	//m_materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, m_vertexShaders["vertexShader"], m_vertShaderCsoNames["vertexShader"], "vertexShader", m_pixelShaders["pixelShader"], m_pixelShaderCsoNames["pixelShader"], "pixelShader"));//white material for cobblestone wall
+	//m_materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, m_vertexShaders["vertexShader"], m_vertShaderCsoNames["vertexShader"], "vertexShader", m_pixelShaders["pixelShader"], m_pixelShaderCsoNames["pixelShader"], "pixelShader"));//white material for bronze
 	//materials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, toonPixelShader)); //toon shader material for testing
 	//catapultMaterial = std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, vertexShader, catapultPixelShader);
 
@@ -219,7 +229,7 @@ void AssetManager::InitMaterials()
 	}
 
 	//toon shader. for testing uses scifi panel
-	m_toonMaterials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, m_vertexShaders["vertexShader"], m_pixelShaders["toonPixelShader"]));
+	m_toonMaterials.push_back(std::make_shared<Material>(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), 0.5f, m_vertexShaders["vertexShader"], m_vertShaderCsoNames["vertexShader"], "vertexShader", m_pixelShaders["toonPixelShader"], m_pixelShaderCsoNames["toonPixelShader"], "toonPixelShader"));
 
 	m_toonMaterials[0]->AddSampler("BasicSampler",			m_samplers["basicSampler"]);
 	m_toonMaterials[0]->AddSampler("RampSampler",			m_samplers["ppLightRaysSampler"]);
@@ -541,7 +551,7 @@ void AssetManager::InitSabaMaterials(std::shared_ptr<SabaMesh> mesh) {
 		DirectX::CreateWICTextureFromFile(m_device.Get(), m_context.Get(),
 			widePath.c_str(), nullptr, albedo.GetAddressOf());
 
-		m_sabaMaterials.push_back(std::make_shared<Material>(DirectX::XMFLOAT4(1.0, 1.0, 1.0f, 1.0f), 0.5f, m_vertexShaders["mmdVertexShader"], m_pixelShaders["mmdPixelShader"]));
+		m_sabaMaterials.push_back(std::make_shared<Material>(DirectX::XMFLOAT4(1.0, 1.0, 1.0f, 1.0f), 0.5f, m_vertexShaders["mmdVertexShader"], m_vertShaderCsoNames["mmdVertexShader"], "mmdVertexShader", m_pixelShaders["mmdPixelShader"], m_pixelShaderCsoNames["mmdPixelShader"], "mmdPixelShader"));
 		m_sabaMaterials[i]->AddSampler("TexSampler", m_textureSampler);
 		m_sabaMaterials[i]->AddSampler("ToonTexSampler", m_toonTextureSampler);
 		m_sabaMaterials[i]->AddSampler("SphereTexSampler", m_sphereTextureSampler);
@@ -549,7 +559,7 @@ void AssetManager::InitSabaMaterials(std::shared_ptr<SabaMesh> mesh) {
 		m_sabaMaterials[i]->AddTextureSRV("ToonTex", albedo,WideToString(widePath), ToonAlbedo);
 		m_sabaMaterials[i]->AddTextureSRV("SphereTex", albedo, WideToString(widePath), SampleTexture);
 
-		m_sabaEdgeMaterials.push_back(std::make_shared<Material>(DirectX::XMFLOAT4(1.0, 1.0, 1.0f, 1.0f), 0.5f, m_vertexShaders["edgeVertexShader"], m_pixelShaders["edgePixelShader"]));
+		m_sabaEdgeMaterials.push_back(std::make_shared<Material>(DirectX::XMFLOAT4(1.0, 1.0, 1.0f, 1.0f), 0.5f, m_vertexShaders["edgeVertexShader"], m_vertShaderCsoNames["edgeVertexShader"], "edgeVertexShader", m_pixelShaders["edgePixelShader"], m_pixelShaderCsoNames["edgePixelShader"], "mmdPixelShader"));
 	}
 }
 
