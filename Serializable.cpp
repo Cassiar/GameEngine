@@ -41,7 +41,7 @@ std::string Serializable::SerializeSamplerDesc(D3D11_SAMPLER_DESC desc) {
 
 D3D11_SAMPLER_DESC DeSerializeSamplerDesc(std::string serialized) {
 	D3D11_SAMPLER_DESC desc = {};
-	int pos = serialized.find("\n");
+	int pos = (int)serialized.find("\n");
 	//desc.Filter = static_cast<D3D11_FILTER>(serialized.substr(0, pos));
 
 	return desc;

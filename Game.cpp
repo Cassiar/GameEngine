@@ -1220,8 +1220,8 @@ void Game::Update(float deltaTime, float totalTime)
 
 	//m_AssetManager->GetSabaMesh(0)->GetModel()->UpdateMorphAnimation();
 	if (animOn) {
-		double time = saba::GetTime();
-		double elapsed = time - saveTime;
+		float time = (float)saba::GetTime();
+		float elapsed = time - saveTime;
 		if (elapsed > 1.0 / 30.0)
 		{
 			elapsed = 1.0 / 30.0;
@@ -1471,7 +1471,7 @@ void Game::Draw(float deltaTime, float totalTime)
 		}
 
 		
-		float density = pow(lightRaysDensity, 1/(dot+0.001));
+		float density = (float)pow(lightRaysDensity, 1/(dot+0.001));
 		printf("scale amount : % f\n", density);
 
 		ppLightRaysVertexShader->SetMatrix4x4("world", lightWorldMat.GetWorldMatrix());

@@ -20,7 +20,7 @@ SabaMesh::SabaMesh(const char* path, const char* texpath, Microsoft::WRL::ComPtr
 		m_verts.push_back(temp);
 		//printf("i: %d \tU: %f, \tV: %f\n", i,temp.UVCoord.x, temp.UVCoord.y);
 	}
-	numIndices = model->GetIndexCount();
+	numIndices = (unsigned int)model->GetIndexCount();
 
 	//create the buffers and send to GPU
 	D3D11_BUFFER_DESC vbd = {};
