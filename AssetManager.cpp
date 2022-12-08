@@ -879,7 +879,7 @@ void AssetManager::MakeMaterialFromSerial(MaterialSerialData data, std::shared_p
 		if (m_samplers[data.samplerNames[i]] == nullptr)
 			continue;
 
-		//TODO nshields - remove literal Temp for a test
+		//TODO nshields - remove string literal. Temp for a test
 		writeMaterial->AddSampler("BasicSampler", m_samplers[data.samplerNames[i]]);
 	}
 }
