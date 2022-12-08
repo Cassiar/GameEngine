@@ -1263,7 +1263,7 @@ void Game::CreateMaterialGUI(float deltaTime) {
 			{
 				bool is_selected = (selectedVertIndex == i);
 				//Doing this because I'm too lazy to figure out how to get around possible mem comparison rather than value comp of vertNames[i] == ""
-				std::string conversion = vertNames[i];
+				std::string conversion(vertNames[i]);
 				if (!vertNames[i] || conversion == "") {
 					continue;
 				}
@@ -1300,7 +1300,7 @@ void Game::CreateMaterialGUI(float deltaTime) {
 				bool is_selected = (selectedPixelIndex == i);
 
 				//Doing this because I'm too lazy to figure out how to get around possible mem comparison rather than value comp of pixelNames[i] == ""
-				std::string conversion = pixelNames[i];
+				std::string conversion(pixelNames[i]);
 				if (!pixelNames[i] || conversion == "") {
 					continue;
 				}
@@ -1358,15 +1358,15 @@ void Game::CreateMaterialGUI(float deltaTime) {
 		};
 
 		static int albedoIndex = 0;
-		addTextureByType("Albedo",		!isToon ? Albedo : ToonAlbedo, albedoIndex);
+		addTextureByType("AlbedoTexture",		!isToon ? Albedo : ToonAlbedo, albedoIndex);
 		static int roughnessIndex = 0;
-		addTextureByType("Roughness",	!isToon ? Roughness : ToonRoughness, roughnessIndex);
+		addTextureByType("RoughnessTexture",	!isToon ? Roughness : ToonRoughness, roughnessIndex);
 		static int ambientIndex = 0;
-		addTextureByType("Ambient",		!isToon ? AO : ToonAO, ambientIndex);
+		addTextureByType("AmbientTexture",		!isToon ? AO : ToonAO, ambientIndex);
 		static int normalIndex = 0;
-		addTextureByType("Normal",		!isToon ? Normal : Normal, normalIndex);
+		addTextureByType("NormalTexture",		!isToon ? Normal : Normal, normalIndex);
 		static int metalnessIndex = 0;
-		addTextureByType("Metalness",	!isToon ? Metalness : ToonMetalness, metalnessIndex);
+		addTextureByType("MetalnessTexture",	!isToon ? Metalness : ToonMetalness, metalnessIndex);
 
 		callCount = 0;
 		
@@ -1379,8 +1379,9 @@ void Game::CreateMaterialGUI(float deltaTime) {
 
 		if (ImGui::Button("Save Material")) {
 			std::shared_ptr<Material> tempWrite = std::make_shared<Material>(DirectX::XMFLOAT4(1.0f,1.0f,1.0f,1.0f), 0.5f, nullptr, "", "", nullptr, "", "");
-			m_newMaterialStore.samplerNames[0] = "basicSampler";
+			m_newMaterialStore.samplerNames[0] = "BasicSampler";
 			m_AssetManager->MakeMaterialFromSerial(m_newMaterialStore, tempWrite);
+			//m_EntityManager->GetEntity(0)->SetMaterial(tempWrite);
 			tempWrite->WriteToBinary(L"Assets/Materials/" + m_AssetManager->StringToWide(inputBuffer) + L".nsm");
 			matEditorOpen = false;
 		}
