@@ -1,5 +1,7 @@
 #pragma once
 
+#include "imgui.h"
+
 #include "AssetManager.h"
 #include "Camera.h"
 #include "DXCore.h"
@@ -24,7 +26,7 @@
 #include <Saba/Model/MMD/VMDAnimation.h>
 #include <Saba/Model/MMD/VMDFile.h>
 
-#define IMGUI_USE_WCHAR32
+#define IMGUI_ENABLE_STB_TRUETYPE
 
 //handles updating game logic and stores objects that are drawn
 class Game 
@@ -166,7 +168,7 @@ private:
 	bool animOn = false;
 	bool runAnim = false;
 	bool morphAnim = false;
-
+	ImFont* font;
 	std::shared_ptr<std::vector<float>> morphWeights;
 
 	MaterialSerialData m_newMaterialStore;

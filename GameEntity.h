@@ -55,7 +55,7 @@ public:
 	void DrawPMX(DirectX::XMFLOAT4X4 world, DirectX::XMFLOAT4X4 view, DirectX::XMFLOAT4X4 projection,
 		/*DirectX::XMFLOAT3 m_lightColor, DirectX::XMFLOAT3 m_lightDir,*/int numLights, Light* light,
 		Microsoft::WRL::ComPtr<ID3D11RenderTargetView> m_renderTargetView, Microsoft::WRL::ComPtr<ID3D11DepthStencilView> m_depthStencilView,
-		float m_screenWidth, float m_screenHeight);
+		unsigned int m_screenWidth, unsigned int m_screenHeight);
 	//Updates entity and checks for collisions
 	void Update(float dt, std::vector<std::shared_ptr<GameEntity>>& collisionEntities);
 	

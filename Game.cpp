@@ -3,7 +3,6 @@
 #include "Input.h"
 #include "BufferStructs.h"
 
-#include "imgui.h"
 #include "imgui_impl_dx11.h"
 #include "imgui_impl_win32.h"
 //#include "imgui_draw.cpp"
@@ -93,12 +92,17 @@ void Game::Init()
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
 
-		//const ImWchar* ranges = io.Fonts->GetGlyphRangesJapanese();
+		//io.Fonts->AddFontFromFileTTF("Arial.ttf", 13.0f);
+
+
+		const ImWchar* ranges = io.Fonts->GetGlyphRangesJapanese();
 		//load font with japanese support
-		//(*io.Fonts).AddFontFromFileTTF("E:\\College Semester 7\\IGME550\\GameEngine\\Assets\\mplus-1m-regular.ttf", 13.0f);// , NULL, ranges);
-		//io.Fonts->AddFontFromFileTTF("Arial.ttf", 13);
-		//ImGui::PushFont(font);
+		font = (*io.Fonts).AddFontFromFileTTF("E:/College Semester 7/IGME550/GameEngine/Assets/mplus-1m-regular.ttf", 13.0f , NULL, ranges);
+		//io.Fonts->GetTexDataAsRGBA32();
+
 		io.Fonts->Build();
+		//io.Fonts->AddFontFromFileTTF("Arial.ttf", 13);
+		
 		
 		// Pick a style
 		ImGui::StyleColorsDark();
@@ -177,6 +181,21 @@ void Game::CreateBasicGeometry()
 
 	m_EntityManager->GetEntity(2)->GetTransform()->MoveAbsolute(XMFLOAT3(0, 0, 20));
 	m_EntityManager->GetEntity(2)->GetTransform()->Rotate(XMFLOAT3(0, XM_PI, 0));//face toward starting pos
+
+	//allocate memory for morph weights
+	morphWeights = std::make_shared<std::vector<float>>();
+
+	std::shared_ptr<saba::PMXModel> model = m_AssetManager->GetSabaMesh(0)->GetModel();
+	saba::MMDMorphManager* morphMan = model->GetMorphManager();
+	size_t morphCount = morphMan->GetMorphCount();
+	morphWeights->reserve(morphCount);
+	for (size_t morphIdx = 0; morphIdx < morphCount; morphIdx++)
+	{
+		saba::MMDMorph* morph = morphMan->GetMorph(morphIdx);
+		float weight = morph->GetWeight();
+		morphWeights->push_back(weight);
+	}
+
 
 	//create sky obj
 	sky = std::make_shared<Sky>(meshes[0], m_AssetManager->GetSampler("basicSampler"), m_AssetManager->GetSRV(SkyBox, 0), device, context, m_AssetManager->GetVertexShader("skyVertexShader"), m_AssetManager->GetPixelShader("skyPixelShader"));
@@ -889,17 +908,6 @@ void Game::CreateGui(float deltaTime) {
 		ImGui::Text("FPS: %i", lastFrameCount);
 
 		ImGui::PushID(1);
-		ImGui::Text("Enable animation: ");
-		ImGui::SameLine();
-		ImGui::Checkbox("    ", &animOn);
-		if (animOn) {
-			ImGui::Text("Enable Run: ");
-			ImGui::SameLine();
-			ImGui::Checkbox("     ", &runAnim);
-			ImGui::Text("Enable Morph: ");
-			ImGui::SameLine();
-			ImGui::Checkbox("      ", &morphAnim);
-		}
 
 		bool entitiesOpen = ImGui::TreeNode("Entities", "%s", "Entities");
 		if (entitiesOpen) {
@@ -1162,30 +1170,39 @@ void Game::CreateGui(float deltaTime) {
 		}
 
 		ImGui::PopID();
-		morphWeights = std::make_shared<std::vector<float>>();
+
 		ImGui::PushID(5);
+
+		//ImGui::PushFont(font);
+
+		ImGui::Text("Enable animation: ");
+		ImGui::SameLine();
+		ImGui::Checkbox("    ", &animOn);
+		if (animOn) {
+			ImGui::Text("Enable Run: ");
+			ImGui::SameLine();
+			ImGui::Checkbox("     ", &runAnim);
+			ImGui::Text("Enable Morph: ");
+			ImGui::SameLine();
+			ImGui::Checkbox("      ", &morphAnim);
+		}
 		// Show the demo window
 		//ImGui::ShowDemoWindow();	
-		if (ImGui::TreeNode("Morph"))
+		if (morphAnim && ImGui::TreeNode("Morph"))
 		{
 			auto model = m_AssetManager->GetSabaMesh(0)->GetModel();
 			auto morphMan = model->GetMorphManager();
 			size_t morphCount = morphMan->GetMorphCount();
-			morphWeights->reserve(morphCount);
 			for (size_t morphIdx = 0; morphIdx < morphCount; morphIdx++)
 			{
 				auto morph = morphMan->GetMorph(morphIdx);
-				float weight = morph->GetWeight();
-				morphWeights->push_back(weight);
-				if (ImGui::SliderFloat(morph->GetName().c_str(), &(*morphWeights)[morphIdx], 0.0f, 1.0f))
-				{
-					//(*morphWeights)[morphIdx] = weight;
-					//morph->SetWeight(weight);
-					//m_AssetManager->GetSabaMesh(0)->GetModel()->UpdateMorphAnimation();
-				}
+				//printf("%zi, %s", morphIdx, morph->GetName());
+				//std::cout << "ID: " << morphIdx << ", Name: " << morph->GetName() << std::endl;
+				ImGui::SliderFloat(morph->GetName().c_str(), &(*morphWeights)[morphIdx], 0.0f, 1.0f);
 			}
 			ImGui::TreePop();
 		}
+		//ImGui::PopFont();
 		ImGui::PopID();
 
 		ImGui::PushID(6);
@@ -1405,8 +1422,8 @@ void Game::Update(float deltaTime, float totalTime)
 
 	//m_AssetManager->GetSabaMesh(0)->GetModel()->UpdateMorphAnimation();
 	if (animOn) {
-		double time = saba::GetTime();
-		double elapsed = time - saveTime;
+		float time = (float)saba::GetTime();
+		float elapsed = time - saveTime;
 		if (elapsed > 1.0 / 30.0)
 		{
 			elapsed = 1.0 / 30.0;
@@ -1655,7 +1672,7 @@ void Game::Draw(float deltaTime, float totalTime)
 		}
 
 		
-		float density = pow(lightRaysDensity, 1/(dot+0.001));
+		float density = (float)pow(lightRaysDensity, 1/(dot+0.001));
 		printf("scale amount : % f\n", density);
 
 		ppLightRaysVertexShader->SetMatrix4x4("world", lightWorldMat.GetWorldMatrix());
