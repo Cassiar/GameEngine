@@ -97,7 +97,7 @@ void Game::Init()
 
 		const ImWchar* ranges = io.Fonts->GetGlyphRangesJapanese();
 		//load font with japanese support
-		font = (*io.Fonts).AddFontFromFileTTF("E:/College Semester 7/IGME550/GameEngine/Assets/mplus-1m-regular.ttf", 13.0f , NULL, ranges);
+		font = (*io.Fonts).AddFontFromFileTTF(m_AssetManager->GetFullPathTo("../../Assets/mplus-1m-regular.ttf").c_str(), 13.0f, NULL, ranges);
 		//io.Fonts->GetTexDataAsRGBA32();
 
 		io.Fonts->Build();
