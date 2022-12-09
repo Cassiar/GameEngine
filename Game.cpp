@@ -1430,10 +1430,15 @@ void Game::Update(float deltaTime, float totalTime)
 		}
 		saveTime = time;
 		animTime += float(elapsed);
+		//reset anim after a second of play
+		//makes it loop infinitely
+		if (animTime > 1.0) {
+			animTime = 0.0;
+		}
 		std::shared_ptr<saba::PMXModel> tempModel = m_AssetManager->GetSabaMesh(0)->GetModel();
 		tempModel->BeginAnimation();
 		if (runAnim) {
-			tempModel->UpdateAllAnimation(anim.get(), animTime * 30.0f, elapsed);
+			tempModel->UpdateAllAnimation(anim.get(), animTime * 35.0f, elapsed);
 		}
 		if (morphAnim) {
 			auto morphManager = m_AssetManager->GetSabaMesh(0)->GetModel()->GetMorphManager();
