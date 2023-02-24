@@ -107,7 +107,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalLibraryDirectories>$(SolutionDir)Vendor/imgui-1.87;$(SolutionDir)Vendor/PhysX;$(SolutionDir)include;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Vendor/imgui-1.87;$(SolutionDir)Vendor/PhysX;$(SolutionDir)include/VLD/bin/Win64;$(SolutionDir)include;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <Profile>true</Profile>
       <AdditionalDependencies>PhysXExtensions_static_64.lib;PhysXVehicle_static_64.lib;PhysXPvdSDK_static_64.lib;LowLevelDynamics_static_64.lib;PhysXCharacterKinematic_static_64.lib;LowLevel_static_64.lib;LowLevelAABB_static_64.lib;SimulationController_static_64.lib;PhysXTask_static_64.lib;SceneQuery_static_64.lib;PhysX_64.lib;PhysXCooking_64.lib;PhysXCommon_64.lib;PhysXFoundation_64.lib;Saba/Saba.lib;Bullet/BulletDynamics_Debug.lib;Bullet/BulletCollision_Debug.lib;Bullet/LinearMath_Debug.lib;Bullet/BulletSoftBody_Debug.lib;VLD/lib/Win64/vld.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>

@@ -1,7 +1,7 @@
 //#include <Saba/Base/Log.h>
 #include <Windows.h>
 #include "Game.h"
-#include <VLD/include/vld.h>
+//#include <VLD/include/vld.h>
 
 // --------------------------------------------------------
 // Entry point for a graphical (non-console) Windows application
